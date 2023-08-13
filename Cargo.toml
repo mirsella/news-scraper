@@ -1,0 +1,14 @@
+[package]
+name = "news-scraper"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow = "1.0.72"
+futures = "0.3.28"
+headless_chrome = { git = "https://github.com/atroche/rust-headless-chrome", features = [
+  "fetch",
+] }
+tokio = { version = "1.30", features = ["full"] }
