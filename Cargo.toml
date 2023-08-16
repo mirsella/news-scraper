@@ -7,8 +7,18 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0.72"
+env_logger = "0.10.0"
 futures = "0.3.28"
 headless_chrome = { git = "https://github.com/atroche/rust-headless-chrome", features = [
   "fetch",
 ] }
-tokio = { version = "1.30", features = ["full"] }
+lazy_static = "1.4.0"
+log = "0.4.20"
+serde = "1.0.183"
+serde_json = "1.0.105"
+tokio = { version = "1.30", features = [
+  "rt-multi-thread",
+  "macros",
+  "time",
+  "sync",
+] }
