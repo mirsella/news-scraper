@@ -1,7 +1,6 @@
-use std::fs::File;
-
-use lazy_static::lazy_static;
+use anyhow::Context;
 use serde::Deserialize;
+use std::fs::File;
 
 #[derive(Deserialize, Debug)]
 pub struct Config {
@@ -12,12 +11,10 @@ pub struct Config {
     pub concurrent_tabs: usize,
 }
 
-lazy_static! {
-    pub static ref CONFIG: Config = load_config();
-}
-
-fn load_config() -> Config {
-    let file = File::open("config.json").unwrap();
+pub fn load_config(path: Option<&str>) -> Config {
+    let file = File::open(path.unwrap_or("config.json"))
+        .context("opening config.json")
+        .unwrap();
     let reader = std::io::BufReader::new(file);
     serde_json::from_reader(reader).unwrap()
 }

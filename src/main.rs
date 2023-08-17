@@ -5,9 +5,9 @@ use log::{error, info};
 #[tokio::main]
 async fn main() {
     env_logger::init();
-    let mut rx = newsfetcher::new();
+    let config = crate::config::load_config(None);
+    let mut rx = newsfetcher::new(&config);
     while let Some(recved) = rx.recv().await {
-        // TODO: implement logging to db
         let news = match recved {
             Ok(news) => news,
             Err(err) => {
