@@ -1,16 +1,27 @@
 extern crate proc_macro;
 
-use std::fs;
-
 use proc_macro::TokenStream;
+use std::fs;
 
 #[proc_macro]
 pub fn vec_sources_fn(input: TokenStream) -> TokenStream {
     // Convert the input TokenStream to a String
-    let dir_path = input.to_string().trim_matches('"').to_string();
+    let input = input.to_string();
+
+    // Extract directory and function name from the input
+    let parts: Vec<&str> = input.split(',').collect();
+    if parts.len() != 2 {
+        panic!("Expected two arguments: directory path and function name");
+    }
+
+    let dir_path = parts[0]
+        .trim_matches(|c| c == '"' || c == '(' || c == ' ')
+        .to_string();
+    let fn_name = parts[1]
+        .trim_matches(|c| c == '"' || c == ')' || c == ' ')
+        .to_string();
 
     let mut fn_pointers = vec![];
-
     for entry in fs::read_dir(&dir_path).unwrap() {
         let entry = entry.unwrap();
         if entry.file_type().unwrap().is_file() {
@@ -23,7 +34,7 @@ pub fn vec_sources_fn(input: TokenStream) -> TokenStream {
                 continue;
             }
             let filename = filename.trim_end_matches(".rs");
-            fn_pointers.push(format!("{}::get_news,", filename));
+            fn_pointers.push(format!("{}::{},", filename, fn_name));
         }
     }
 

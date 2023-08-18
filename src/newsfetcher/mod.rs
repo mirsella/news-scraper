@@ -1,9 +1,10 @@
-use crate::config::Config;
-
 automod::dir!("src/newsfetcher");
+
+use crate::config::Config;
 use futures::{stream::FuturesUnordered, StreamExt};
 use headless_chrome::{Browser, LaunchOptionsBuilder};
 use log::error;
+use macros::vec_sources_fn;
 use tokio::{
     sync::mpsc::{channel, Receiver},
     task::{spawn_blocking, JoinHandle},
@@ -24,7 +25,8 @@ pub fn new(config: &Config) -> Receiver<anyhow::Result<News>> {
             .unwrap(),
     )
     .unwrap();
-    let mut sources = macros::vec_sources_fn!("src/newsfetcher");
+
+    let mut sources = vec_sources_fn!("src/newsfetcher");
     let mut futures: FuturesUnordered<JoinHandle<anyhow::Result<Vec<News>>>> =
         FuturesUnordered::new();
 
