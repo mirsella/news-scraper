@@ -17,7 +17,7 @@ headless_chrome = { git = "https://github.com/atroche/rust-headless-chrome", fea
 lazy_static = "1.4.0"
 log = "0.4.20"
 serde = "1.0.183"
-serde_json = "1.0.105"
 tokio = { version = "1.30", features = ["rt-multi-thread", "macros", "sync"] }
 macros = { path = "macros" }
 clap = "4.3.21"
+toml = "0.7.6"

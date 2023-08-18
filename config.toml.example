@@ -1,0 +1,12 @@
+[db]
+host = ""
+user = ""
+password = ""
+
+[chrome]
+# optional, default to true
+headless = false
+# optional, default to 5
+concurrent = 10
+# optional, default to a random dir in /tmp
+data_dir = "chrome_data"

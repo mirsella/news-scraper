@@ -1,7 +1,0 @@
-{
-  "db_host": "",
-  "db_user": "",
-  "db_pass": "",
-  "headless": true,
-  "concurrent_tabs": 10
-}

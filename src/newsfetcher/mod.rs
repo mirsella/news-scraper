@@ -13,6 +13,8 @@ use tokio::{
 #[derive(Debug)]
 pub struct News {
     pub title: String,
+    pub description: String,
+    pub link: String,
 }
 
 pub fn new(config: &Config) -> Receiver<anyhow::Result<News>> {
@@ -20,17 +22,18 @@ pub fn new(config: &Config) -> Receiver<anyhow::Result<News>> {
 
     let browser = Browser::new(
         LaunchOptionsBuilder::default()
-            .headless(config.headless)
+            .headless(config.chrome.headless.unwrap_or(true))
+            .user_data_dir(config.chrome.data_dir.clone())
             .build()
             .unwrap(),
     )
     .unwrap();
 
-    let mut sources = vec_sources_fn!("src/newsfetcher");
+    let mut sources = vec_sources_fn!("src/newsfetcher", "get_news");
     let mut futures: FuturesUnordered<JoinHandle<anyhow::Result<Vec<News>>>> =
         FuturesUnordered::new();
 
-    for _ in 0..config.concurrent_tabs {
+    for _ in 0..config.chrome.concurrent_tabs.unwrap_or(5) {
         if let Some(fetch) = sources.pop() {
             let tab = browser.new_tab().unwrap();
             futures.push(spawn_blocking(move || fetch(tab)));
