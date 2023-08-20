@@ -1,6 +1,7 @@
 automod::dir!("src/newsfetcher");
 
 use crate::config::Config;
+use chrono::{DateTime, Utc};
 use futures::{stream::FuturesUnordered, StreamExt};
 use headless_chrome::{Browser, LaunchOptionsBuilder};
 use log::error;
@@ -10,10 +11,12 @@ use tokio::{
     task::{spawn_blocking, JoinHandle},
 };
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct News {
+    pub provider: String,
+    pub time: DateTime<Utc>,
     pub title: String,
-    pub description: String,
+    pub text: String,
     pub link: String,
 }
 
