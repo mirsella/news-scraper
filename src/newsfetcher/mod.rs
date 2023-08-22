@@ -36,10 +36,14 @@ pub fn new(config: &Config) -> Receiver<anyhow::Result<News>> {
     let mut futures: FuturesUnordered<JoinHandle<anyhow::Result<Vec<News>>>> =
         FuturesUnordered::new();
 
-    for _ in 0..config.chrome.concurrent_tabs.unwrap_or(5) {
+    for _ in 0..config.chrome.concurrent_tabs.unwrap_or(10) {
         if let Some(fetch) = sources.pop() {
             let tab = browser.new_tab().unwrap();
-            futures.push(spawn_blocking(move || fetch(tab)));
+            futures.push(spawn_blocking(move || {
+                let res = fetch(tab.clone());
+                tab.close_target().unwrap();
+                res
+            }));
         }
     }
     tokio::spawn(async move {
@@ -56,22 +60,15 @@ pub fn new(config: &Config) -> Receiver<anyhow::Result<News>> {
                     continue;
                 }
             };
-            // if let Some(url) = urls.pop() {
-            //     futures.push(get_title(browser.clone(), url.to_string()));
-            // }
+            if let Some(fetch) = sources.pop() {
+                let tab = browser.new_tab().unwrap();
+                futures.push(spawn_blocking(move || {
+                    let res = fetch(tab.clone());
+                    tab.close_target().unwrap();
+                    res
+                }));
+            }
         }
     });
     rx
 }
-
-// fn get_title(browser: Browser, url: String) -> JoinHandle<anyhow::Result<String>> {
-//     spawn_blocking(move || -> anyhow::Result<String> {
-//         let tab = browser.new_tab()?;
-//         tab.enable_stealth_mode()?;
-//         tab.navigate_to(&url)?;
-//         tab.wait_until_navigated()?;
-//         let title = tab.get_title()?;
-//         tab.close_with_unload()?;
-//         Ok(title)
-//     })
-// }
