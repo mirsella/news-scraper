@@ -3,7 +3,7 @@ use std::sync::Arc;
 use super::News;
 use anyhow::{anyhow, Context, Result};
 use headless_chrome::Tab;
-use log::{info, warn};
+use log::info;
 
 const CATEGORIES: [&str; 9] = [
     "politique",
@@ -17,8 +17,38 @@ const CATEGORIES: [&str; 9] = [
     "environnement",
 ];
 
-fn get_info_on_article(tab: &Arc<Tab>) -> Option<News> {
-    Some(News::default())
+fn get_info_on_article(tab: &Arc<Tab>, url: &str) -> Result<News> {
+    tab.navigate_to(url)?;
+    tab.wait_for_element(".c-body")?;
+    let texts = tab
+        .find_elements(
+            ".c-body p, .c-body h1, .c-body h2, .c-body h3, .c-body h4, .c-body h5, .c-body h6",
+        )
+        .context("find_elements on .c-body")?;
+    let body: String = texts.iter().map(|text| text.value.as_str()).collect();
+    let time = tab
+        .find_element(".publication-date__published > time")
+        .context("find_element on publication-date__published")?
+        .attributes
+        .ok_or(anyhow!("no attributes on time"))?
+        .get(1)
+        .ok_or(anyhow!("no second attributes for time"))?
+        .parse()?;
+    let new = News {
+        link: tab.get_url(),
+        provider: "francetvinfo".to_string(),
+        title: tab
+            .find_element(".c-title, h1[class$='__title']")
+            .context("find_element on .c-title")?
+            .value,
+        description: tab
+            .find_element(".c-chapo")
+            .context("find_element on .c-chapo")?
+            .value,
+        time,
+        body,
+    };
+    Ok(new)
 }
 
 fn get_articles_links(tab: &Arc<Tab>) -> Result<Vec<String>> {
@@ -46,7 +76,7 @@ fn get_articles_links(tab: &Arc<Tab>) -> Result<Vec<String>> {
 }
 
 pub fn get_news(tab: Arc<Tab>) -> Result<Vec<News>> {
-    let mut news = Vec::new();
+    let mut news = Vec::with_capacity(21 * CATEGORIES.len()); // about 21 articles by categorie
     for categorie in CATEGORIES {
         tab.navigate_to(&format!("https://www.francetvinfo.fr/{}/", categorie))?;
         tab.wait_until_navigated()?;
@@ -54,14 +84,16 @@ pub fn get_news(tab: Arc<Tab>) -> Result<Vec<News>> {
             cookies.click()?;
         }
         let links = get_articles_links(&tab)?;
-        info!("Found {} articles in {}", links.len(), categorie);
         for link in links {
-            tab.navigate_to(&format!("https://www.francetvinfo.fr/{}/", link))?;
-            tab.wait_until_navigated()?;
-            if let Some(new) = get_info_on_article(&tab) {
-                news.push(new);
-            }
+            news.push(
+                get_info_on_article(&tab, &format!("https://www.francetvinfo.fr/{}/", link))
+                    .context(link)?,
+            );
         }
     }
-    Ok(vec![News::default()])
+    if news.is_empty() {
+        return Err(anyhow!("didn't found any news"));
+    }
+    info!("francetvinfo: {} news found", news.len());
+    Ok(news)
 }

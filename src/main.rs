@@ -6,7 +6,6 @@ use log::{debug, error, info};
 async fn main() {
     env_logger::init();
     let config = crate::config::load_config(None);
-    debug!("{:#?}", config);
     let mut rx = newsfetcher::new(&config);
     while let Some(recved) = rx.recv().await {
         let news = match recved {
