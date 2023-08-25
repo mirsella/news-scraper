@@ -34,7 +34,11 @@ pub fn vec_sources_fn(input: TokenStream) -> TokenStream {
                 continue;
             }
             let filename = filename.trim_end_matches(".rs");
-            fn_pointers.push(format!("{}::{},", filename, fn_name));
+            if fn_name.is_empty() {
+                fn_pointers.push(format!("{},", filename));
+            } else {
+                fn_pointers.push(format!("{}::{},", filename, fn_name));
+            }
         }
     }
 
