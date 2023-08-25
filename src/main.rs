@@ -1,19 +1,22 @@
 mod config;
 mod newsfetcher;
+mod sources;
 use clap::Parser;
-use log::{error, info};
+use log::{error, info, trace};
 
 #[derive(Parser, Debug)]
 struct Cli {
     #[arg(long, short, value_delimiter = ',', num_args = 1..)]
     enabled: Option<Vec<String>>,
+    #[arg(long, short, default_value = "config.toml")]
+    config: Option<String>,
 }
 
 #[tokio::main]
 async fn main() {
     env_logger::init();
     let cli = Cli::parse();
-    let config = crate::config::load_config(None);
+    let config = crate::config::load_config(cli.config.as_deref());
     let mut rx = newsfetcher::new(&config, cli.enabled.unwrap_or_default());
     let mut counter = 0;
     while let Some(recved) = rx.recv().await {
@@ -24,7 +27,11 @@ async fn main() {
                 continue;
             }
         };
-        println!("title: {:.40?}..., link: {:?}", news.title, news.link);
+        trace!(
+            "recv news: title: {:.40?}..., link: {:?}",
+            news.title,
+            news.link
+        );
         counter += 1;
     }
     info!("Total news: {}", counter)

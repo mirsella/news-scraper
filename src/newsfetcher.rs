@@ -1,15 +1,13 @@
-automod::dir!("src/newsfetcher");
+use std::{ffi::OsStr, time::Duration};
 
-use std::{ffi::OsStr, sync::Arc, time::Duration};
-
-use crate::config::Config;
+use crate::sources::*;
+use crate::{config::Config, sources::SOURCES};
 use chrono::{DateTime, Utc};
 use futures::{stream::FuturesUnordered, StreamExt};
-use headless_chrome::{Browser, LaunchOptionsBuilder, Tab};
+use headless_chrome::{Browser, LaunchOptionsBuilder};
 use log::error;
-use macros::vec_sources_fn;
 use tokio::{
-    sync::mpsc::{channel, Receiver, Sender},
+    sync::mpsc::{channel, Receiver},
     task::{spawn_blocking, JoinHandle},
 };
 
@@ -23,15 +21,10 @@ pub struct News {
     pub link: String,
 }
 
-pub struct GetNewsOpts {
-    pub tab: Arc<Tab>,
-    pub tx: Sender<anyhow::Result<News>>,
-    pub seen_urls: Vec<String>,
-}
-pub trait NewsFetcher {
-    fn get_news(&self, opts: GetNewsOpts) -> anyhow::Result<()>;
-    fn get_provider(&self) -> &'static str;
-}
+// pub trait NewsFetcher {
+//     fn get_news(&self, opts: GetNewsOpts) -> anyhow::Result<()>;
+//     fn get_provider(&self) -> &'static str;
+// }
 
 pub fn new(config: &Config, enabled: Vec<String>) -> Receiver<anyhow::Result<News>> {
     let (tx, rx) = channel(500);
@@ -48,11 +41,11 @@ pub fn new(config: &Config, enabled: Vec<String>) -> Receiver<anyhow::Result<New
     .unwrap();
 
     let mut futures: FuturesUnordered<JoinHandle<anyhow::Result<()>>> = FuturesUnordered::new();
-    let mut sources = vec_sources_fn!("src/newsfetcher", "Fetcher");
+    let mut sources = SOURCES.to_vec();
 
     for _ in 0..config.chrome.concurrent_tabs.unwrap_or(10) {
         while let Some(fetch) = sources.pop() {
-            if enabled.contains(&fetch.get_provider().into()) || enabled.is_empty() {
+            if enabled.contains(&fetch.0.to_string()) || enabled.is_empty() {
                 let opts = GetNewsOpts {
                     tab: browser.new_tab().unwrap(),
                     tx: tx.clone(),
@@ -60,7 +53,7 @@ pub fn new(config: &Config, enabled: Vec<String>) -> Receiver<anyhow::Result<New
                     seen_urls: vec![],
                 };
                 opts.tab.enable_stealth_mode().unwrap();
-                futures.push(spawn_blocking(move || fetch.get_news(opts)));
+                futures.push(spawn_blocking(move || fetch.1(opts)));
                 break;
             }
         }
@@ -76,7 +69,7 @@ pub fn new(config: &Config, enabled: Vec<String>) -> Receiver<anyhow::Result<New
                 _ => (),
             };
             while let Some(fetch) = sources.pop() {
-                if enabled.contains(&fetch.get_provider().into()) || enabled.is_empty() {
+                if enabled.contains(&fetch.0.to_string()) || enabled.is_empty() {
                     let opts = GetNewsOpts {
                         tab: browser.new_tab().unwrap(),
                         tx: tx.clone(),
@@ -84,7 +77,7 @@ pub fn new(config: &Config, enabled: Vec<String>) -> Receiver<anyhow::Result<New
                         seen_urls: vec![],
                     };
                     opts.tab.enable_stealth_mode().unwrap();
-                    futures.push(spawn_blocking(move || fetch.get_news(opts)));
+                    futures.push(spawn_blocking(move || fetch.1(opts)));
                     break;
                 }
             }
