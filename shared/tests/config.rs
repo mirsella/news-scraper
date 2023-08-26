@@ -4,7 +4,7 @@ use shared::*;
 
 #[test]
 fn test_load_config_default_path() {
-    let config = load_config(Some("tests/mock_config.toml")).unwrap();
+    let config = load_config("tests/mock_config.toml").unwrap();
     assert_eq!(config.db.host, "custom_db_host");
     assert_eq!(config.db.user, "custom_db_user");
     assert_eq!(config.db.password, "custom_db_password");
@@ -16,7 +16,7 @@ fn test_load_config_default_path() {
 #[test]
 #[should_panic]
 fn test_load_config_invalid_path() {
-    let config = load_config(Some("nonexistent.toml"));
+    let config = load_config("nonexistent.toml");
     if let Err(e) = config {
         if e.to_string() == "No such file or directory (os error 2)" {
             panic!("got the right error");
