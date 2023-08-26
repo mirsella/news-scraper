@@ -4,7 +4,7 @@ use crate::sources::{GetNewsOpts, SOURCES};
 use futures::{stream::FuturesUnordered, StreamExt};
 use headless_chrome::{Browser, LaunchOptionsBuilder};
 use log::error;
-use shared::{config::*, *};
+use shared::*;
 use tokio::{
     sync::mpsc::{channel, Receiver},
     task::{spawn_blocking, JoinHandle},

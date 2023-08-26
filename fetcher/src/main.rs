@@ -2,7 +2,7 @@ mod newsfetcher;
 mod sources;
 use clap::Parser;
 use log::{error, info, trace};
-use shared::config::*;
+use shared::*;
 
 #[derive(Parser, Debug)]
 struct Cli {
