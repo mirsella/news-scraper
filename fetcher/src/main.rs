@@ -1,22 +1,39 @@
 mod newsfetcher;
 mod sources;
+use std::process::exit;
+
 use clap::Parser;
 use log::{error, info, trace};
 use shared::*;
 
 #[derive(Parser, Debug)]
 struct Cli {
-    #[arg(long, short, value_delimiter = ',', num_args = 1..)]
+    #[arg(
+        long,
+        short,
+        default_value = "false",
+        help = "List available news sources that can be used with --enabled"
+    )]
+    list: bool,
+    #[arg(long, short, value_delimiter = ',', num_args = 1.., help = "Enable ONLY specified news sources")]
     enabled: Option<Vec<String>>,
     #[arg(long, short, default_value = "config.toml")]
-    config: Option<String>,
+    config: String,
 }
 
 #[tokio::main]
 async fn main() {
     env_logger::init();
     let cli = Cli::parse();
-    let config = load_config(cli.config.as_deref()).unwrap();
+    if cli.list {
+        println!("Available sources:");
+        sources::SOURCES.iter().for_each(|s| println!("{}", s.0));
+        return;
+    }
+    let config = load_config(&cli.config).unwrap_or_else(|e| {
+        error!("{}: {}", cli.config, e);
+        exit(1);
+    });
     let mut rx = newsfetcher::new(&config, cli.enabled.unwrap_or_default());
     let mut counter = 0;
     while let Some(recved) = rx.recv().await {

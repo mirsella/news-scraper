@@ -1,3 +1,4 @@
+use anyhow::Context;
 use chrono::{DateTime, Utc};
 use serde::Deserialize;
 use std::{fs::read_to_string, path::PathBuf};
@@ -35,7 +36,6 @@ pub struct ChromeConfig {
     pub data_dir: Option<PathBuf>,
 }
 
-pub fn load_config(path: Option<&str>) -> anyhow::Result<Config> {
-    let path = path.unwrap_or("config.toml");
+pub fn load_config(path: &str) -> anyhow::Result<Config> {
     Ok(toml::from_str(read_to_string(path)?.as_str())?)
 }
