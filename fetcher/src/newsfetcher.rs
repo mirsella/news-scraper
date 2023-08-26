@@ -1,30 +1,14 @@
 use std::{ffi::OsStr, time::Duration};
 
-use crate::sources::*;
-use crate::{config::Config, sources::SOURCES};
-use chrono::{DateTime, Utc};
+use crate::sources::{GetNewsOpts, SOURCES};
 use futures::{stream::FuturesUnordered, StreamExt};
 use headless_chrome::{Browser, LaunchOptionsBuilder};
 use log::error;
+use shared::{config::*, *};
 use tokio::{
     sync::mpsc::{channel, Receiver},
     task::{spawn_blocking, JoinHandle},
 };
-
-#[derive(Debug, Default, Clone)]
-pub struct News {
-    pub provider: String,
-    pub time: DateTime<Utc>,
-    pub title: String,
-    pub description: String,
-    pub body: String,
-    pub link: String,
-}
-
-// pub trait NewsFetcher {
-//     fn get_news(&self, opts: GetNewsOpts) -> anyhow::Result<()>;
-//     fn get_provider(&self) -> &'static str;
-// }
 
 pub fn new(config: &Config, enabled: Vec<String>) -> Receiver<anyhow::Result<News>> {
     let (tx, rx) = channel(500);

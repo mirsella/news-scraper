@@ -1,0 +1,20 @@
+[package]
+name = "fetcher"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0.72"
+automod = "1.0.12"
+env_logger = "0.10.0"
+futures = "0.3.28"
+headless_chrome = { git = "https://github.com/atroche/rust-headless-chrome", features = [
+  "fetch",
+] }
+log = "0.4.20"
+tokio = { version = "1.30", features = ["rt-multi-thread", "macros", "sync"] }
+toml = "0.7.6"
+chrono = "0.4.26"
+clap = { version = "4.4.0", features = ["derive"] }
+serde = "1.0.188"
+shared = { path = "../shared" }

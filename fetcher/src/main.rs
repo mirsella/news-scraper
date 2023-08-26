@@ -1,8 +1,8 @@
-mod config;
 mod newsfetcher;
 mod sources;
 use clap::Parser;
 use log::{error, info, trace};
+use shared::config::*;
 
 #[derive(Parser, Debug)]
 struct Cli {
@@ -16,7 +16,7 @@ struct Cli {
 async fn main() {
     env_logger::init();
     let cli = Cli::parse();
-    let config = crate::config::load_config(cli.config.as_deref());
+    let config = load_config(cli.config.as_deref()).unwrap();
     let mut rx = newsfetcher::new(&config, cli.enabled.unwrap_or_default());
     let mut counter = 0;
     while let Some(recved) = rx.recv().await {

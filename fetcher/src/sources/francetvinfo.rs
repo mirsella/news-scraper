@@ -1,7 +1,7 @@
 use super::{GetNewsOpts, News};
 use anyhow::{anyhow, Context, Result};
 use headless_chrome::{Element, Tab};
-use log::{error, trace, warn};
+use log::{error, trace};
 use std::sync::Arc;
 
 const CATEGORIES: [&str; 9] = [
