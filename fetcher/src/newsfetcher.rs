@@ -15,10 +15,11 @@ pub fn new(config: &Config, enabled: Vec<String>) -> Receiver<anyhow::Result<New
 
     let browser = Browser::new(
         LaunchOptionsBuilder::default()
-            .headless(config.chrome.headless.unwrap_or(true))
-            .user_data_dir(config.chrome.data_dir.clone())
+            .headless(config.chrome_headless.unwrap_or(true))
+            .user_data_dir(config.chrome_data_dir.clone())
             .args(vec![OsStr::new("--blink-settings=imagesEnabled=false")])
             .idle_browser_timeout(Duration::from_secs(60))
+            .sandbox(false)
             .build()
             .unwrap(),
     )
@@ -27,7 +28,7 @@ pub fn new(config: &Config, enabled: Vec<String>) -> Receiver<anyhow::Result<New
     let mut futures: FuturesUnordered<JoinHandle<anyhow::Result<()>>> = FuturesUnordered::new();
     let mut sources = SOURCES.to_vec();
 
-    for _ in 0..config.chrome.concurrent_tabs.unwrap_or(10) {
+    for _ in 0..config.chrome_concurrent_tabs.unwrap_or(10) {
         while let Some(fetch) = sources.pop() {
             if enabled.contains(&fetch.0.to_string()) || enabled.is_empty() {
                 let opts = GetNewsOpts {

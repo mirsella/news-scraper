@@ -1,0 +1,54 @@
+version: "3.8"
+
+services:
+  deno-article-parser:
+    container_name: deno-article-parser
+    build:
+      context: .
+      dockerfile: docker/deno.dockerfile
+    ports:
+      - "8080:8080"
+
+  fetcher:
+    container_name: fetcher
+    build:
+      context: .
+      dockerfile: docker/cargo.dockerfile
+      target: fetcher
+    # depends_on:
+    #   - deno-article-parser
+    #   - surrealdb
+    environment:
+      DENO_SERVER_URL: "http://deno-article-parser:8080"
+      RUST_LOG: debug
+
+  rater:
+    container_name: rater
+    build:
+      context: .
+      dockerfile: docker/cargo.dockerfile
+      target: rater
+    depends_on:
+      - surrealdb
+    environment:
+      RUST_LOG: debug
+
+  surrealdb:
+    container_name: surrealdb
+    image: surrealdb/surrealdb:latest
+    env_file:
+      - .env
+    entrypoint:
+      - /surreal
+      - start
+      - --user
+      - $db_user
+      - --pass
+      - $db_password
+      - --log
+      - debug
+      - file:/db
+    volumes:
+      - ./db:/db
+    ports:
+      - 8000:8001

@@ -3,7 +3,7 @@ mod sources;
 use std::process::exit;
 
 use clap::Parser;
-use log::{error, info, trace};
+use log::{error, info};
 use shared::*;
 
 #[derive(Parser, Debug)]
@@ -17,8 +17,8 @@ struct Cli {
     list: bool,
     #[arg(long, short, value_delimiter = ',', num_args = 1.., help = "Enable ONLY specified news sources")]
     enabled: Option<Vec<String>>,
-    #[arg(long, short, default_value = "config.toml")]
-    config: String,
+    #[arg(long, default_value = "./.env")]
+    env_file: String,
 }
 
 #[tokio::main]
@@ -30,8 +30,8 @@ async fn main() {
         sources::SOURCES.iter().for_each(|s| println!("{}", s.0));
         return;
     }
-    let config = load_config(&cli.config).unwrap_or_else(|e| {
-        error!("{}: {}", cli.config, e);
+    let config = load_config(&cli.env_file).unwrap_or_else(|e| {
+        error!("{}: {}", cli.env_file, e);
         exit(1);
     });
     let mut rx = newsfetcher::new(&config, cli.enabled.unwrap_or_default());
@@ -44,10 +44,9 @@ async fn main() {
                 continue;
             }
         };
-        trace!(
+        info!(
             "recv news: title: {:.40?}..., link: {:?}",
-            news.title,
-            news.link
+            news.title, news.link
         );
         counter += 1;
     }

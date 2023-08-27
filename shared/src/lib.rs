@@ -1,7 +1,7 @@
 use anyhow::Context;
 use chrono::{DateTime, Utc};
 use serde::Deserialize;
-use std::{fs::read_to_string, path::PathBuf};
+use std::path::PathBuf;
 
 #[derive(Debug, Default, Clone)]
 pub struct News {
@@ -15,27 +15,15 @@ pub struct News {
 
 #[derive(Deserialize, Debug)]
 pub struct Config {
-    pub db: DbConfig,
-    pub chrome: ChromeConfig,
-}
-
-#[derive(Deserialize, Debug)]
-pub struct DbConfig {
-    pub host: String,
-    pub user: String,
-    pub password: String,
-}
-
-#[derive(Deserialize, Debug)]
-pub struct ChromeConfig {
-    #[serde(default)]
-    pub headless: Option<bool>,
-    #[serde(default)]
-    pub concurrent_tabs: Option<usize>,
-    #[serde(default)]
-    pub data_dir: Option<PathBuf>,
+    pub db_user: String,
+    pub db_password: String,
+    pub chrome_headless: Option<bool>,
+    pub chrome_concurrent_tabs: Option<usize>,
+    pub chrome_data_dir: Option<PathBuf>,
 }
 
 pub fn load_config(path: &str) -> anyhow::Result<Config> {
-    Ok(toml::from_str(read_to_string(path)?.as_str())?)
+    dotenv::from_filename(path)?;
+    let config: Config = envy::from_env().context("parsing env to Config")?;
+    Ok(config)
 }

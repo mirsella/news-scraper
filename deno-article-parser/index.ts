@@ -1,61 +1,37 @@
-import { Hono } from "https://deno.land/x/hono/mod.ts";
-
+import { Hono, Context } from "https://deno.land/x/hono@v3.5.4/mod.ts";
 import { extract, extractFromHtml } from "npm:@extractus/article-extractor";
 
 const app = new Hono();
 
-const meta = {
-  service: "article-parser",
-  lang: "typescript",
-  server: "hono",
-  platform: "deno",
-};
-
-app.get("/fetch", async (c) => {
+app.get("/fetch", async (c: Context) => {
   const url = c.req.query("url");
   if (!url) {
-    return c.json(meta);
+    c.status(400);
+    return c.json({ message: "url is required" });
   }
   try {
     const data = await extract(url);
-    return c.json({
-      error: 0,
-      message: "article has been extracted successfully",
-      data,
-      meta,
-    });
+    return c.json(data);
   } catch (err) {
-    return c.json({
-      error: 1,
-      message: err.message,
-      data: null,
-      meta,
-    });
+    c.status(500);
+    return c.json({ message: err.toString() });
   }
 });
 
-app.post("/parse", async (c) => {
+app.get("/parse", async (c: Context) => {
   const body = await c.req.text();
+  if (!body) {
+    c.status(400);
+    return c.json({ message: "html body is required" });
+  }
 
   try {
     const data = await extractFromHtml(body);
-    return c.json({
-      error: 0,
-      message: "article has been extracted successfully",
-      data,
-      meta,
-    });
+    return c.json(data);
   } catch (err) {
-    return c.json({
-      error: 1,
-      message: err.message,
-      data: null,
-      meta,
-    });
+    c.status(500);
+    return c.json({ message: err.toString() });
   }
 });
 
-// app.listen(3100).then(() => {
-//   console.log("Server is running at http://localhost:3100");
-// });
-Deno.serve({ port: 3100 }, app.fetch);
+Deno.serve({ port: 8080 }, app.fetch);
