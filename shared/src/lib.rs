@@ -1,4 +1,3 @@
-use anyhow::Context;
 use chrono::{DateTime, Utc};
 use serde::Deserialize;
 use std::path::PathBuf;
@@ -24,6 +23,6 @@ pub struct Config {
 
 pub fn load_config(path: &str) -> anyhow::Result<Config> {
     dotenv::from_filename(path)?;
-    let config: Config = envy::from_env().context("parsing env to Config")?;
+    let config: Config = envy::from_env()?;
     Ok(config)
 }

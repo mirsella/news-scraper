@@ -3,7 +3,7 @@ mod sources;
 use std::process::exit;
 
 use clap::Parser;
-use log::{error, info};
+use log::{debug, error, info};
 use shared::*;
 
 #[derive(Parser, Debug)]
@@ -34,6 +34,7 @@ async fn main() {
         error!("{}: {}", cli.env_file, e);
         exit(1);
     });
+    debug!("config: {:#?}", config);
     let mut rx = newsfetcher::new(&config, cli.enabled.unwrap_or_default());
     let mut counter = 0;
     while let Some(recved) = rx.recv().await {
