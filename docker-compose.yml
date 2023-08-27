@@ -46,9 +46,9 @@ services:
       - --pass
       - $db_password
       - --log
-      - debug
+      - trace
       - file:/db
     volumes:
       - ./db:/db
     ports:
-      - 8000:8001
+      - 8000:8000
