@@ -16,13 +16,15 @@ pub struct News {
 pub struct Config {
     pub db_user: String,
     pub db_password: String,
+    pub deno_server_url: String,
     pub chrome_headless: Option<bool>,
     pub chrome_concurrent_tabs: Option<usize>,
     pub chrome_data_dir: Option<PathBuf>,
 }
-
-pub fn load_config(path: &str) -> anyhow::Result<Config> {
-    dotenv::from_filename(path)?;
-    let config: Config = envy::from_env()?;
-    Ok(config)
+impl Config {
+    pub fn load(path: &str) -> anyhow::Result<Config> {
+        dotenvy::from_filename(path)?;
+        let config: Config = envy::from_env()?;
+        Ok(config)
+    }
 }

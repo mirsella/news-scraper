@@ -8,6 +8,6 @@ edition = "2021"
 [dependencies]
 anyhow = "1.0.75"
 chrono = "0.4.26"
-dotenv = "0.15.0"
+dotenvy = "0.15.7"
 envy = "0.4.2"
 serde = { version = "1.0.188", features = ["derive"] }

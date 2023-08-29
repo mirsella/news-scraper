@@ -15,9 +15,9 @@ services:
       context: .
       dockerfile: docker/cargo.dockerfile
       target: fetcher
-    # depends_on:
-    #   - deno-article-parser
-    #   - surrealdb
+    depends_on:
+      - deno-article-parser
+      - surrealdb
     environment:
       DENO_SERVER_URL: "http://deno-article-parser:8080"
       RUST_LOG: debug

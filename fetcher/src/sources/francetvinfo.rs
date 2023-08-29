@@ -19,7 +19,7 @@ const CATEGORIES: [&str; 9] = [
 // number of links keep per category
 const NUMBER_OF_ARTICLES_PER_CATEGORY: usize = 14;
 
-fn get_info_on_article(tab: &Arc<Tab>, url: &str) -> Result<News> {
+fn _get_info_on_article(url: &str, tab: &Arc<Tab>) -> Result<News> {
     tab.navigate_to(url)?;
     tab.wait_for_elements(".c-body p, .c-body h2, .p-para")
         .context("waiting for .c-body child")?;
@@ -90,12 +90,11 @@ fn get_articles_links(tab: &Arc<Tab>) -> Result<Vec<String>> {
     Ok(links)
 }
 
-pub fn get_news(opts: GetNewsOpts) -> Result<()> {
+pub fn get_news(mut opts: GetNewsOpts) -> Result<()> {
     let (tab, tx) = (opts.tab, opts.tx);
-    let mut seen_urls: Vec<String> =
-        Vec::with_capacity(CATEGORIES.len() * NUMBER_OF_ARTICLES_PER_CATEGORY);
-    for categorie in CATEGORIES {
-        tab.navigate_to(&format!("https://www.francetvinfo.fr/{}/", categorie))
+    for category in CATEGORIES {
+        trace!("checking out category {category}");
+        tab.navigate_to(&format!("https://www.francetvinfo.fr/{}/", category))
             .context("francetvinfo navigate_to")?;
         tab.wait_until_navigated()
             .context("francetvinfo wait_until_navigated")?;
@@ -105,23 +104,55 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
                 .context("francetvinfo clicking on cookies")?;
         }
         let links = get_articles_links(&tab)?;
+        trace!("found {} links on {category}", links.len());
         for link in links {
-            if seen_urls.contains(&link) {
+            if opts.seen_urls.contains(&link) {
                 trace!("already seen {link}");
-                break;
+                continue;
             }
-            seen_urls.push(link.clone());
-            let new = get_info_on_article(&tab, &format!("https://www.francetvinfo.fr/{}/", link))
-                .context(link);
-            if new
-                .as_ref()
-                .is_err_and(|e| e.to_string().contains("found faq-highlight"))
-            {
-                println!("error: {:#?}", new);
-                break;
+            opts.seen_urls.push(link.clone());
+            let url = format!("https://www.francetvinfo.fr/{}/", link);
+            // let new = get_info_on_article(&url, &tab)
+            //     .context(link);
+            // if new
+            //     .as_ref()
+            //     .is_err_and(|e| e.to_string().contains("found faq-highlight"))
+            // {
+            //     println!("error: {:#?}", new);
+            //     break;
+            // }
+            // let tx = tx.clone();
+            // if let Err(e) = tx.blocking_send(new) {
+            //     error!("blocking_send: {e:?}");
+            //     break;
+            // }
+
+            let mut res = super::fetch_article(&url);
+            if let Err(err) = res {
+                error!("fetch_article: {:#?}", err);
+                tab.navigate_to(&url)?;
+                tab.wait_for_elements(".c-body p, .c-body h2, .p-para")
+                    .context("waiting for .c-body child")?;
+                let doc = tab.get_content()?;
+                res = super::parse_article(&doc);
             }
+            let payload = match res {
+                Ok(res) => Ok(News {
+                    title: res.title,
+                    description: res.description,
+                    provider: "francetvinfo".to_string(),
+                    time: res.published.parse().unwrap_or_else(|_| chrono::Utc::now()),
+                    body: res.content,
+                    link: res.url,
+                }),
+                Err(err) => {
+                    error!("article parser: {:#?}", err);
+                    Err(err)
+                }
+            };
             let tx = tx.clone();
-            if let Err(e) = tx.blocking_send(new) {
+            println!("sending tx");
+            if let Err(e) = tx.blocking_send(payload) {
                 error!("blocking_send: {e:?}");
                 break;
             }

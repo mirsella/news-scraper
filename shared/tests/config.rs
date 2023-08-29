@@ -4,7 +4,7 @@ use shared::*;
 
 #[test]
 fn test_load_config_default_path() {
-    let config = load_config("tests/mock_env").unwrap();
+    let config = Config::load("tests/mock_env").unwrap();
     assert_eq!(config.db_user, "news");
     assert_eq!(config.db_password, "arstneoi");
     assert_eq!(config.chrome_headless, None);
@@ -15,7 +15,7 @@ fn test_load_config_default_path() {
 #[test]
 #[should_panic]
 fn test_load_config_invalid_path() {
-    let config = load_config("nonexistent.env");
+    let config = Config::load("nonexistent.env");
     dbg!(&config);
     config.unwrap();
 }
