@@ -34,7 +34,7 @@ async fn main() {
         error!("{}: {}", cli.env_file, e);
         exit(1);
     });
-    trace!("config: {:#?}", config);
+    println!("config: {}", config);
     let mut rx = newsfetcher::new(&config, cli.enabled.unwrap_or_default());
     let mut counter = 0;
     while let Some(recved) = rx.recv().await {
