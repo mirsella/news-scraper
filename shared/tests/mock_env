@@ -1,5 +1,6 @@
 db_password = "arstneoi"
 db_user = "news"
+deno_server_url = "http://localhost:8080"
 
 chrome_concurrent_tabs = 10
 chrome_data_dir = "/tmp/chrome"
