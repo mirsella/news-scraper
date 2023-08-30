@@ -1,11 +1,10 @@
 use super::{GetNewsOpts, News};
 use anyhow::{Context, Result};
 use headless_chrome::Tab;
-use log::{error, trace, warn};
+use log::{debug, error, trace, warn};
 use std::sync::Arc;
 
-// const KEYWORDS: [&str; 4] = ["bonne nouvelle", "joie", "optimisme", "entraide"];
-const KEYWORDS: [&str; 1] = ["bonne nouvelle"];
+const KEYWORDS: [&str; 4] = ["bonne nouvelle", "joie", "optimisme", "entraide"];
 
 fn get_articles_links(tab: &Arc<Tab>) -> Result<Vec<String>> {
     let articles = tab
@@ -38,7 +37,8 @@ pub fn get_news(mut opts: GetNewsOpts) -> Result<()> {
             cookies.click().context("clicking on cookies")?;
             tab.wait_until_navigated()?;
         }
-        tab.wait_for_element("#center_col")?;
+        tab.wait_for_element("#center_col")
+            .context("waiting on #center_col")?;
 
         let links = get_articles_links(&tab)?;
         trace!("found {} links on {keyword}", links.len());
@@ -51,7 +51,7 @@ pub fn get_news(mut opts: GetNewsOpts) -> Result<()> {
 
             let mut res = super::fetch_article(&url);
             if let Err(err) = res {
-                warn!("fetch_article: {:#?}", err);
+                trace!("fetch_article: {:#?}", err);
                 tab.navigate_to(&url)?;
                 tab.wait_until_navigated().context("wait_until_navigated")?;
                 if let Ok(el) = tab.find_element_by_xpath("//*[contains(text(), 'Accepter')]") {
@@ -72,7 +72,7 @@ pub fn get_news(mut opts: GetNewsOpts) -> Result<()> {
                     link: res.url,
                 }),
                 Err(err) => {
-                    warn!("article parser: {:#?}", err);
+                    debug!("parse_article: {:#?}", err);
                     // Err(err)
                     continue;
                 }
