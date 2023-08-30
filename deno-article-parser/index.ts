@@ -18,9 +18,10 @@ app.get("/fetch", async (c: Context) => {
   }
 });
 
-app.get("/parse", async (c: Context) => {
+app.post("/parse", async (c: Context) => {
   const body = await c.req.text();
   if (!body) {
+    console.log("body is required" + body);
     c.status(400);
     return c.json({ message: "html body is required" });
   }

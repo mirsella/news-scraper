@@ -95,13 +95,10 @@ pub fn get_news(mut opts: GetNewsOpts) -> Result<()> {
     for category in CATEGORIES {
         trace!("checking out category {category}");
         tab.navigate_to(&format!("https://www.francetvinfo.fr/{}/", category))
-            .context("francetvinfo navigate_to")?;
-        tab.wait_until_navigated()
-            .context("francetvinfo wait_until_navigated")?;
+            .context("navigate_to")?;
+        tab.wait_until_navigated().context("wait_until_navigated")?;
         if let Ok(cookies) = tab.find_element_by_xpath("#didomi-notice-agree-button") {
-            cookies
-                .click()
-                .context("francetvinfo clicking on cookies")?;
+            cookies.click().context("clicking on cookies")?;
         }
         let links = get_articles_links(&tab)?;
         trace!("found {} links on {category}", links.len());
@@ -112,6 +109,7 @@ pub fn get_news(mut opts: GetNewsOpts) -> Result<()> {
             }
             opts.seen_urls.push(link.clone());
             let url = format!("https://www.francetvinfo.fr/{}/", link);
+
             // let new = get_info_on_article(&url, &tab)
             //     .context(link);
             // if new
@@ -151,7 +149,6 @@ pub fn get_news(mut opts: GetNewsOpts) -> Result<()> {
                 }
             };
             let tx = tx.clone();
-            println!("sending tx");
             if let Err(e) = tx.blocking_send(payload) {
                 error!("blocking_send: {e:?}");
                 break;

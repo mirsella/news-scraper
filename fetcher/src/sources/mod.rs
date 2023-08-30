@@ -43,10 +43,13 @@ pub fn parse_article(str: &str) -> Result<ApiResponse, anyhow::Error> {
         "{}/parse",
         std::env::var("deno_server_url").expect("DENO_SERVER_URL not set")
     );
-    let response = ureq::get(&endpoint).send_string(str)?;
+    let response = ureq::post(&endpoint).send_string(str)?;
 
     let json_result: ApiResponse = response.into_json()?;
     Ok(json_result)
 }
 
-pub static SOURCES: [(&str, GetNewsFn); 1] = [("francetvinfo", francetvinfo::get_news)];
+pub static SOURCES: [(&str, GetNewsFn); 2] = [
+    ("francetvinfo", francetvinfo::get_news),
+    ("google", google::get_news),
+];

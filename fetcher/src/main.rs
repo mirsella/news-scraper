@@ -12,11 +12,11 @@ struct Cli {
         long,
         short,
         default_value = "false",
-        help = "List available news sources that can be used with --enabled"
+        help = "List available news sources that can be used with --enable"
     )]
     list: bool,
     #[arg(long, short, value_delimiter = ',', num_args = 1.., help = "Enable ONLY specified news sources")]
-    enabled: Option<Vec<String>>,
+    enable: Option<Vec<String>>,
     #[arg(long, default_value = "./.env")]
     env_file: String,
 }
@@ -35,7 +35,7 @@ async fn main() {
         exit(1);
     });
     println!("config: {:?}", config);
-    let mut rx = newsfetcher::new(&config, cli.enabled.unwrap_or_default());
+    let mut rx = newsfetcher::new(&config, cli.enable.unwrap_or_default());
     let mut counter = 0;
     while let Some(recved) = rx.recv().await {
         let news = match recved {
