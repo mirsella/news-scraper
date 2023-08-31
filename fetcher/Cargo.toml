@@ -17,3 +17,4 @@ clap = { version = "4.4.0", features = ["derive"] }
 serde = "1.0.188"
 shared = { path = "../shared" }
 ureq = { version = "2.7.1", features = ["json"] }
+surrealdb = "1.0.0-beta.9"

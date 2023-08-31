@@ -2,6 +2,7 @@ version: "3.8"
 
 services:
   deno-article-parser:
+    restart: always
     container_name: deno-article-parser
     build:
       context: .
@@ -24,6 +25,7 @@ services:
 
   rater:
     container_name: rater
+    restart: always
     build:
       context: .
       dockerfile: docker/cargo.dockerfile
@@ -35,6 +37,7 @@ services:
 
   surrealdb:
     container_name: surrealdb
+    restart: always
     image: surrealdb/surrealdb:latest
     env_file:
       - .env
