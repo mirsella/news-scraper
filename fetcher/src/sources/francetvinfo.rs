@@ -55,7 +55,7 @@ fn _get_info_on_article(url: &str, tab: &Arc<Tab>) -> Result<News> {
             .find_element(".c-title, h1[class$='__title']")
             .context("find_element on .c-title")?
             .get_inner_text()?,
-        description: tab
+        caption: tab
             .find_element(".c-chapo")
             .context("find_element on .c-chapo")?
             .get_inner_text()?,
@@ -137,7 +137,7 @@ pub fn get_news(mut opts: GetNewsOpts) -> Result<()> {
             let payload = match res {
                 Ok(res) => Ok(News {
                     title: res.title,
-                    description: res.description,
+                    caption: res.caption,
                     provider: "francetvinfo".to_string(),
                     time: res.published.parse().unwrap_or_else(|_| chrono::Utc::now()),
                     body: res.content,

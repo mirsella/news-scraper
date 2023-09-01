@@ -18,7 +18,7 @@ type GetNewsFn = fn(GetNewsOpts) -> anyhow::Result<()>;
 pub struct ApiResponse {
     url: String,
     title: String,
-    description: String,
+    caption: String,
     image: String,
     author: String,
     favicon: String,

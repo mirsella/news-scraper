@@ -65,7 +65,7 @@ pub fn get_news(mut opts: GetNewsOpts) -> Result<()> {
             let payload = match res {
                 Ok(res) => Ok(News {
                     title: res.title,
-                    description: res.description,
+                    caption: res.caption,
                     provider: "google".to_string(),
                     time: res.published.parse().unwrap_or_else(|_| chrono::Utc::now()),
                     body: res.content,

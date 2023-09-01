@@ -7,7 +7,7 @@ pub struct News {
     pub provider: String,
     pub time: DateTime<Utc>,
     pub title: String,
-    pub description: String,
+    pub caption: String,
     pub body: String,
     pub link: String,
 }
