@@ -38,7 +38,8 @@ services:
   surrealdb:
     container_name: surrealdb
     restart: always
-    image: surrealdb/surrealdb:1.0.0-beta.10
+    # image: surrealdb/surrealdb:1.0.0-beta.10 # see https://github.com/surrealdb/surrealdb/issues/2574
+    image: 1.0.0-beta.9-20230402
     env_file:
       - .env
     entrypoint:
@@ -55,3 +56,8 @@ services:
       - ./db:/db
     ports:
       - 8000:8000
+    healthcheck:
+      test: ["CMD", "/surreal", "isready", "-c", "http://localhost:8000"]
+      retries: 5
+      start_period: 20s
+      timeout: 10s
