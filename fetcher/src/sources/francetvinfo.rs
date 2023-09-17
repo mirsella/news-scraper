@@ -91,7 +91,7 @@ fn get_articles_links(tab: &Arc<Tab>) -> Result<Vec<String>> {
 }
 
 pub fn get_news(mut opts: GetNewsOpts) -> Result<()> {
-    let (tab, tx) = (opts.tab, opts.tx);
+    let tab = opts.browser.new_tab()?;
     for category in CATEGORIES {
         trace!("checking out category {category}");
         tab.navigate_to(&format!("https://www.francetvinfo.fr/{}/", category))
@@ -127,7 +127,7 @@ pub fn get_news(mut opts: GetNewsOpts) -> Result<()> {
 
             let mut res = super::fetch_article(&url);
             if let Err(err) = res {
-                error!("fetch_article: {:#?}", err);
+                trace!("fetch_article: {:#?}", err);
                 tab.navigate_to(&url)?;
                 tab.wait_for_elements(".c-body p, .c-body h2, .p-para")
                     .context("waiting for .c-body child")?;
@@ -137,7 +137,7 @@ pub fn get_news(mut opts: GetNewsOpts) -> Result<()> {
             let payload = match res {
                 Ok(res) => Ok(News {
                     title: res.title,
-                    caption: res.caption,
+                    caption: res.description,
                     provider: "francetvinfo".to_string(),
                     time: res.published.parse().unwrap_or_else(|_| chrono::Utc::now()),
                     body: res.content,
@@ -148,7 +148,7 @@ pub fn get_news(mut opts: GetNewsOpts) -> Result<()> {
                     Err(err)
                 }
             };
-            let tx = tx.clone();
+            let tx = opts.tx.clone();
             if let Err(e) = tx.blocking_send(payload) {
                 error!("blocking_send: {e:?}");
                 break;

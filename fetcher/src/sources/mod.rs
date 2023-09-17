@@ -8,7 +8,7 @@ use tokio::sync::mpsc::Sender;
 automod::dir!("src/sources");
 
 pub struct GetNewsOpts {
-    pub tab: Arc<Tab>,
+    pub browser: headless_chrome::Browser,
     pub tx: Sender<anyhow::Result<News>>,
     pub seen_urls: Vec<String>,
 }
@@ -18,7 +18,7 @@ type GetNewsFn = fn(GetNewsOpts) -> anyhow::Result<()>;
 pub struct ApiResponse {
     url: String,
     title: String,
-    caption: String,
+    description: String,
     image: String,
     author: String,
     favicon: String,

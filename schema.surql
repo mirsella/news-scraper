@@ -29,7 +29,7 @@ DEFINE TABLE news SCHEMAFULL;
 DEFINE FIELD body ON news TYPE string ASSERT $value != NONE;
 DEFINE FIELD caption ON news TYPE string ASSERT $value != NONE;
 DEFINE FIELD date ON news TYPE datetime ASSERT $value != NONE;
-DEFINE FIELD link ON news TYPE string ASSERT is::url($value);
+DEFINE FIELD link ON news TYPE string ASSERT string::is::url($value);
 DEFINE FIELD note ON news TYPE string;
 DEFINE FIELD provider ON news TYPE string ASSERT $value != NONE PERMISSIONS NONE;
 DEFINE FIELD rating ON news TYPE float ASSERT $value > 0 AND $value < $MAX_RATING;

@@ -24,7 +24,7 @@ fn get_articles_links(tab: &Arc<Tab>) -> Result<Vec<String>> {
 }
 
 pub fn get_news(mut opts: GetNewsOpts) -> Result<()> {
-    let (tab, tx) = (opts.tab, opts.tx);
+    let tab = opts.browser.new_tab()?;
     for keyword in KEYWORDS {
         trace!("checking out keyword {keyword}");
         tab.navigate_to(&format!(
@@ -33,6 +33,7 @@ pub fn get_news(mut opts: GetNewsOpts) -> Result<()> {
         ))
         .context("navigate_to")?;
         tab.wait_until_navigated().context("wait_until_navigated")?;
+        tab.bring_to_front().unwrap();
         if let Ok(cookies) = tab.find_element_by_xpath("//span[contains(text(), 'Tout refuser')]") {
             cookies.click().context("clicking on cookies")?;
             tab.wait_until_navigated()?;
@@ -65,7 +66,7 @@ pub fn get_news(mut opts: GetNewsOpts) -> Result<()> {
             let payload = match res {
                 Ok(res) => Ok(News {
                     title: res.title,
-                    caption: res.caption,
+                    caption: res.description,
                     provider: "google".to_string(),
                     time: res.published.parse().unwrap_or_else(|_| chrono::Utc::now()),
                     body: res.content,
@@ -77,7 +78,7 @@ pub fn get_news(mut opts: GetNewsOpts) -> Result<()> {
                     continue;
                 }
             };
-            let tx = tx.clone();
+            let tx = opts.tx.clone();
             if let Err(e) = tx.blocking_send(payload) {
                 error!("blocking_send: {e:?}");
                 break;

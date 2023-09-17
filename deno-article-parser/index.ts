@@ -11,6 +11,7 @@ app.get("/fetch", async (c: Context) => {
   }
   try {
     const data = await extract(url);
+    console.log(data);
     return c.json(data);
   } catch (err) {
     c.status(500);
@@ -28,6 +29,7 @@ app.post("/parse", async (c: Context) => {
 
   try {
     const data = await extractFromHtml(body);
+    console.log(data);
     return c.json(data);
   } catch (err) {
     c.status(500);

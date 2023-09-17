@@ -20,7 +20,9 @@ services:
       - deno-article-parser
       - surrealdb
     environment:
-      DENO_SERVER_URL: "http://deno-article-parser:8080"
+      # DENO_SERVER_URL: "http://deno-article-parser:8080"
+      chrome_headless: true
+      CHROME_HEADLESS: true
       RUST_LOG: debug
 
   rater:
@@ -38,8 +40,8 @@ services:
   surrealdb:
     container_name: surrealdb
     restart: always
-    # image: surrealdb/surrealdb:1.0.0-beta.10 # see https://github.com/surrealdb/surrealdb/issues/2574
-    image: 1.0.0-beta.9-20230402
+    image: surrealdb/surrealdb:1.0.0 # https://github.com/surrealdb/surrealdb/issues/2704
+    # image: surrealdb/surrealdb:1.0.0-beta.9-20230402
     env_file:
       - .env
     entrypoint:
@@ -49,6 +51,7 @@ services:
       - $db_user
       - --pass
       - $db_password
+      - --auth
       - --log
       - trace
       - file:/db

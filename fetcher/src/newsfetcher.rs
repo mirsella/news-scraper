@@ -10,9 +10,7 @@ use tokio::{
     task::{spawn_blocking, JoinHandle},
 };
 
-pub fn new(config: &Config, enabled: Vec<String>) -> Receiver<anyhow::Result<News>> {
-    let (tx, rx) = channel(500);
-
+fn new_browser(config: &Config) -> Browser {
     let browser = Browser::new(
         LaunchOptionsBuilder::default()
             .headless(config.chrome_headless.unwrap_or(true))
@@ -24,20 +22,25 @@ pub fn new(config: &Config, enabled: Vec<String>) -> Receiver<anyhow::Result<New
             .unwrap(),
     )
     .unwrap();
+    browser
+}
+
+pub fn new(config: &Config, enabled: Vec<String>) -> Receiver<anyhow::Result<News>> {
+    let config: Config = config.to_owned();
+    let (tx, rx) = channel(500);
 
     let mut futures: FuturesUnordered<JoinHandle<anyhow::Result<()>>> = FuturesUnordered::new();
     let mut sources = SOURCES.to_vec();
 
-    for _ in 0..config.chrome_concurrent_tabs.unwrap_or(10) {
+    for _ in 0..config.chrome_concurrent.unwrap_or(10) {
         while let Some(fetch) = sources.pop() {
             if enabled.contains(&fetch.0.to_string()) || enabled.is_empty() {
                 let opts = GetNewsOpts {
-                    tab: browser.new_tab().unwrap(),
+                    browser: new_browser(&config),
                     tx: tx.clone(),
                     // TODO: get in the db the latest urls for this source
                     seen_urls: vec![],
                 };
-                opts.tab.enable_stealth_mode().unwrap();
                 futures.push(spawn_blocking(move || fetch.1(opts)));
                 break;
             }
@@ -56,12 +59,11 @@ pub fn new(config: &Config, enabled: Vec<String>) -> Receiver<anyhow::Result<New
             while let Some(fetch) = sources.pop() {
                 if enabled.contains(&fetch.0.to_string()) || enabled.is_empty() {
                     let opts = GetNewsOpts {
-                        tab: browser.new_tab().unwrap(),
+                        browser: new_browser(&config),
                         tx: tx.clone(),
                         // TODO: get in the db the latest urls for this source
                         seen_urls: vec![],
                     };
-                    opts.tab.enable_stealth_mode().unwrap();
                     futures.push(spawn_blocking(move || fetch.1(opts)));
                     break;
                 }

@@ -3,7 +3,7 @@ mod sources;
 use std::process::exit;
 
 use clap::Parser;
-use log::{debug, error, info, trace};
+use log::{error, info};
 use shared::*;
 
 #[derive(Parser, Debug)]
