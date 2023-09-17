@@ -1,18 +1,19 @@
 use super::{GetNewsOpts, News};
 use anyhow::{Context, Result};
 use headless_chrome::Tab;
-use log::{debug, error, trace, warn};
+use log::{debug, error, trace};
 use std::sync::Arc;
 
 const KEYWORDS: [&str; 4] = ["bonne nouvelle", "joie", "optimisme", "entraide"];
 
 fn get_articles_links(tab: &Arc<Tab>) -> Result<Vec<String>> {
-    let articles = tab
-        .find_elements_by_xpath(
-            "/html/body/div[6]/div/div[11]/div/div[2]/div[2]/div/div/div/div/*/div/div/a",
-        )
+    let parent = tab
+        .find_element_by_xpath("/html/body/div[5]/div/div[11]/div/div[2]/div[2]/div/div/div/div")
         .context("finding parent of articles")?;
-    let links = articles
+
+    let links = parent
+        .find_elements("a")
+        .context("finding <a> on parent")?
         .iter()
         .map(|a| {
             a.get_attribute_value("href")
@@ -25,6 +26,7 @@ fn get_articles_links(tab: &Arc<Tab>) -> Result<Vec<String>> {
 
 pub fn get_news(mut opts: GetNewsOpts) -> Result<()> {
     let tab = opts.browser.new_tab()?;
+    tab.enable_stealth_mode()?;
     for keyword in KEYWORDS {
         trace!("checking out keyword {keyword}");
         tab.navigate_to(&format!(
@@ -55,7 +57,9 @@ pub fn get_news(mut opts: GetNewsOpts) -> Result<()> {
                 trace!("fetch_article: {:#?}", err);
                 tab.navigate_to(&url)?;
                 tab.wait_until_navigated().context("wait_until_navigated")?;
-                if let Ok(el) = tab.find_element_by_xpath("//*[contains(text(), 'Accepter')]") {
+                if let Ok(el) =
+                    tab.find_element_by_xpath("//*[contains(lower-case(text()), 'accepter')]")
+                {
                     el.click()?;
                     tab.wait_until_navigated()?;
                     std::thread::sleep(std::time::Duration::from_secs(1));
@@ -74,7 +78,6 @@ pub fn get_news(mut opts: GetNewsOpts) -> Result<()> {
                 }),
                 Err(err) => {
                     debug!("parse_article: {:#?}", err);
-                    // Err(err)
                     continue;
                 }
             };

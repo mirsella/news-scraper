@@ -92,6 +92,7 @@ fn get_articles_links(tab: &Arc<Tab>) -> Result<Vec<String>> {
 
 pub fn get_news(mut opts: GetNewsOpts) -> Result<()> {
     let tab = opts.browser.new_tab()?;
+    tab.enable_stealth_mode()?;
     for category in CATEGORIES {
         trace!("checking out category {category}");
         tab.navigate_to(&format!("https://www.francetvinfo.fr/{}/", category))
@@ -144,7 +145,7 @@ pub fn get_news(mut opts: GetNewsOpts) -> Result<()> {
                     link: res.url,
                 }),
                 Err(err) => {
-                    error!("article parser: {:#?}", err);
+                    error!("parse_article: {:#?}", err);
                     Err(err)
                 }
             };
