@@ -21,9 +21,9 @@ services:
       - surrealdb
     environment:
       # DENO_SERVER_URL: "http://deno-article-parser:8080"
-      chrome_headless: true
-      CHROME_HEADLESS: true
-      RUST_LOG: debug
+      chrome_headless: "true"
+      # CHROME_HEADLESS: true
+      RUST_LOG: "debug"
 
   rater:
     container_name: rater

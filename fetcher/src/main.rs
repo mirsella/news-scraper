@@ -46,7 +46,7 @@ async fn main() {
             }
         };
         info!(
-            "recv news: title: {:.40?}..., link: {:?}",
+            "recv news: title: {:.20?}..., link: {:?}",
             news.title, news.link
         );
         counter += 1;
