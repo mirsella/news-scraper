@@ -7,7 +7,7 @@ use std::{
 };
 
 use clap::Parser;
-use log::{info, trace};
+use log::{error, info, trace};
 use shared::*;
 use surrealdb::{engine::remote::ws::Ws, opt::auth::Root, Surreal};
 
