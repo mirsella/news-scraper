@@ -45,26 +45,3 @@ DEFINE FIELD name ON user TYPE string ASSERT $value != NONE;
 DEFINE FIELD password ON user TYPE string;
 
 DEFINE INDEX name ON user FIELDS name UNIQUE;
-
--- ------------------------------
--- TRANSACTION
--- ------------------------------
-
-BEGIN TRANSACTION;
-
--- ------------------------------
--- TABLE DATA: news
--- ------------------------------
-
-
--- ------------------------------
--- TABLE DATA: user
--- ------------------------------
-
-
--- ------------------------------
--- TRANSACTION
--- ------------------------------
-
-COMMIT TRANSACTION;
-
