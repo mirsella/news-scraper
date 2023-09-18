@@ -41,7 +41,6 @@ services:
     container_name: surrealdb
     restart: always
     image: surrealdb/surrealdb:1.0.0 # https://github.com/surrealdb/surrealdb/issues/2704
-    # image: surrealdb/surrealdb:1.0.0-beta.9-20230402
     env_file:
       - .env
     entrypoint:
