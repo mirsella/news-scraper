@@ -7,7 +7,7 @@ use std::{
 };
 
 use clap::Parser;
-use log::{debug, error, info};
+use log::{info, trace};
 use shared::*;
 use surrealdb::{engine::remote::ws::Ws, opt::auth::Root, Surreal};
 
@@ -48,7 +48,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     }
     println!("config: {:?}", config);
 
-    let db = Surreal::new::<Ws>("127.0.0.1:8000").await?;
+    let db = Surreal::new::<Ws>(&config.surrealdb_host).await?;
     db.signin(Root {
         username: &config.db_user,
         password: &config.db_password,
@@ -68,9 +68,10 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 continue;
             }
         };
-        debug!(
+        trace!(
             "recv news: title: {:.20?}..., link: {:?}",
-            news.title, news.link
+            news.title,
+            news.link
         );
         let result: Result<Vec<DbNews>, surrealdb::Error> = db
             .create("news")
@@ -84,12 +85,12 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 ..Default::default()
             })
             .await;
-        if result.is_err() {
-            error!("db.create: {:#?}", result);
+        if let Err(e) = result {
+            error!("db.create: {:#?}", e);
             continue;
         }
         counter += 1;
     }
-    info!("Total news: {}", counter);
+    info!("Total news recorded: {}", counter);
     Ok(())
 }

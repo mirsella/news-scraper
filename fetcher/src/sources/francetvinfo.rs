@@ -129,7 +129,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
 
             let mut res = super::fetch_article(&url);
             if let Err(err) = res {
-                trace!("fetch_article: {:#?}", err);
+                debug!("fetch_article: {:#?}", err);
                 tab.navigate_to(&url)?;
                 tab.wait_for_elements(".c-body p, .c-body h2, .p-para")
                     .context("waiting for .c-body child")?;
@@ -146,12 +146,11 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
                     link: url,
                 }),
                 Err(err) => {
-                    error!("parse_article: {:#?}", err);
-                    Err(err)
+                    debug!("parse_article: {:#?}", err);
+                    continue;
                 }
             };
-            let tx = opts.tx.clone();
-            if let Err(e) = tx.blocking_send(payload) {
+            if let Err(e) = opts.tx.blocking_send(payload) {
                 error!("blocking_send: {e}");
                 break;
             }

@@ -12,6 +12,7 @@ services:
 
   fetcher:
     container_name: fetcher
+    restart: on-failure:5
     build:
       context: .
       dockerfile: docker/cargo.dockerfile
@@ -20,14 +21,14 @@ services:
       - deno-article-parser
       - surrealdb
     environment:
-      # DENO_SERVER_URL: "http://deno-article-parser:8080"
+      deno_server_url: "http://deno-article-parser:8080"
+      surrealdb_host: "surrealdb:8000"
       chrome_headless: "true"
-      # CHROME_HEADLESS: true
       RUST_LOG: "debug"
 
   rater:
     container_name: rater
-    restart: always
+    restart: on-failure:5
     build:
       context: .
       dockerfile: docker/cargo.dockerfile
@@ -59,7 +60,7 @@ services:
     ports:
       - 8000:8000
     healthcheck:
-      test: ["CMD", "/surreal", "isready", "-c", "http://localhost:8000"]
+      test: ["CMD", "/surreal", "isready"]
       retries: 5
       start_period: 20s
       timeout: 10s

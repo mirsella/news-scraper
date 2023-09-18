@@ -81,8 +81,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
                     continue;
                 }
             };
-            let tx = opts.tx.clone();
-            if let Err(e) = tx.blocking_send(payload) {
+            if let Err(e) = opts.tx.blocking_send(payload) {
                 error!("blocking_send: {e}");
                 break;
             }
