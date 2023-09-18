@@ -1,15 +1,39 @@
 use chrono::{DateTime, Utc};
-use serde::Deserialize;
-use std::{fmt, path::PathBuf};
+use serde::{Deserialize, Serialize};
+use std::{borrow::Cow, fmt, path::PathBuf};
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Clone)]
 pub struct News {
     pub provider: String,
-    pub time: DateTime<Utc>,
+    pub date: DateTime<Utc>,
     pub title: String,
     pub caption: String,
     pub body: String,
     pub link: String,
+}
+impl Default for News {
+    fn default() -> Self {
+        News {
+            provider: "DefaultProvider".to_string(),
+            date: Utc::now(), // use the current time as default
+            title: "DefaultTitle".to_string(),
+            caption: "DefaultCaption".to_string(),
+            body: "DefaultBody".to_string(),
+            link: "http://example.com".to_string(),
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+pub struct DbNews {
+    pub body: Cow<'static, str>,
+    pub caption: Cow<'static, str>,
+    pub date: surrealdb::sql::Datetime,
+    pub link: Cow<'static, str>,
+    pub note: Cow<'static, str>,
+    pub provider: Cow<'static, str>,
+    pub rating: Option<i64>,
+    pub title: Cow<'static, str>,
 }
 
 #[derive(Deserialize, Clone)]

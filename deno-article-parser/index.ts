@@ -10,7 +10,9 @@ app.get("/fetch", async (c: Context) => {
     return c.json({ message: "url is required" });
   }
   try {
-    const data = await extract(url);
+    const controller = new AbortController();
+    setTimeout(() => controller.abort(), 5000);
+    const data = await extract(url, null, { signal: controller.signal });
     return c.json(data);
   } catch (err) {
     c.status(500);

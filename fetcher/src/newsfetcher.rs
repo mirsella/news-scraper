@@ -1,9 +1,13 @@
-use std::{ffi::OsStr, time::Duration};
+use std::{
+    ffi::OsStr,
+    sync::{Arc, Mutex},
+    time::Duration,
+};
 
 use crate::sources::{GetNewsOpts, SOURCES};
 use futures::{stream::FuturesUnordered, StreamExt};
 use headless_chrome::{Browser, LaunchOptionsBuilder};
-use log::error;
+use log::{error, trace};
 use shared::*;
 use tokio::{
     sync::mpsc::{channel, Receiver},
@@ -25,7 +29,11 @@ fn new_browser(config: &Config) -> Browser {
     browser
 }
 
-pub fn new(config: &Config, enabled: Vec<String>) -> Receiver<anyhow::Result<News>> {
+pub fn new(
+    config: &Config,
+    enabled: Vec<String>,
+    seen_urls: Arc<Mutex<Vec<String>>>,
+) -> Receiver<anyhow::Result<News>> {
     let config: Config = config.to_owned();
     let (tx, rx) = channel(500);
 
@@ -38,9 +46,9 @@ pub fn new(config: &Config, enabled: Vec<String>) -> Receiver<anyhow::Result<New
                 let opts = GetNewsOpts {
                     browser: new_browser(&config),
                     tx: tx.clone(),
-                    // TODO: get in the db the latest urls for this source
-                    seen_urls: vec![],
+                    seen_urls: seen_urls.clone(),
                 };
+                trace!("spawning {}", fetch.0);
                 futures.push(spawn_blocking(move || fetch.1(opts)));
                 break;
             }
@@ -61,9 +69,9 @@ pub fn new(config: &Config, enabled: Vec<String>) -> Receiver<anyhow::Result<New
                     let opts = GetNewsOpts {
                         browser: new_browser(&config),
                         tx: tx.clone(),
-                        // TODO: get in the db the latest urls for this source
-                        seen_urls: vec![],
+                        seen_urls: seen_urls.clone(),
                     };
+                    trace!("spawning {}", fetch.0);
                     futures.push(spawn_blocking(move || fetch.1(opts)));
                     break;
                 }

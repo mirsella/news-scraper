@@ -11,3 +11,4 @@ chrono = "0.4.26"
 dotenvy = "0.15.7"
 envy = "0.4.2"
 serde = { version = "1.0.188", features = ["derive"] }
+surrealdb = "1.0.0"

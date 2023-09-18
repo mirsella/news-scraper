@@ -24,7 +24,7 @@ fn get_articles_links(tab: &Arc<Tab>) -> Result<Vec<String>> {
     Ok(links)
 }
 
-pub fn get_news(mut opts: GetNewsOpts) -> Result<()> {
+pub fn get_news(opts: GetNewsOpts) -> Result<()> {
     let tab = opts.browser.new_tab()?;
     tab.enable_stealth_mode()?;
     for keyword in KEYWORDS {
@@ -46,11 +46,11 @@ pub fn get_news(mut opts: GetNewsOpts) -> Result<()> {
         let links = get_articles_links(&tab)?;
         trace!("found {} links on {keyword}", links.len());
         for url in links {
-            if opts.seen_urls.contains(&url) {
+            if opts.seen_urls.lock().unwrap().contains(&url) {
                 trace!("already seen {url}");
                 continue;
             }
-            opts.seen_urls.push(url.clone());
+            opts.seen_urls.lock().unwrap().push(url.clone());
 
             let mut res = super::fetch_article(&url);
             if let Err(err) = res {
@@ -72,9 +72,9 @@ pub fn get_news(mut opts: GetNewsOpts) -> Result<()> {
                     title: res.title,
                     caption: res.description,
                     provider: "google".to_string(),
-                    time: res.published.parse().unwrap_or_else(|_| chrono::Utc::now()),
+                    date: res.published.parse().unwrap_or_else(|_| chrono::Utc::now()),
                     body: res.content,
-                    link: res.url,
+                    link: url,
                 }),
                 Err(err) => {
                     debug!("parse_article: {:#?}", err);
@@ -83,7 +83,7 @@ pub fn get_news(mut opts: GetNewsOpts) -> Result<()> {
             };
             let tx = opts.tx.clone();
             if let Err(e) = tx.blocking_send(payload) {
-                error!("blocking_send: {e:?}");
+                error!("blocking_send: {e}");
                 break;
             }
         }

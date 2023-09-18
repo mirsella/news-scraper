@@ -1,7 +1,7 @@
 use super::{GetNewsOpts, News};
 use anyhow::{anyhow, Context, Result};
 use headless_chrome::{Element, Tab};
-use log::{error, trace};
+use log::{debug, error, trace};
 use std::sync::Arc;
 
 const CATEGORIES: [&str; 9] = [
@@ -40,7 +40,7 @@ fn _get_info_on_article(url: &str, tab: &Arc<Tab>) -> Result<News> {
         .iter()
         .filter_map(|text| text.get_inner_text().ok())
         .collect();
-    let time = tab
+    let date = tab
         .find_element(".publication-date__published > time")
         .context("find_element on publication-date__published")?
         .get_attributes()?
@@ -59,7 +59,7 @@ fn _get_info_on_article(url: &str, tab: &Arc<Tab>) -> Result<News> {
             .find_element(".c-chapo")
             .context("find_element on .c-chapo")?
             .get_inner_text()?,
-        time,
+        date,
         body,
     };
     Ok(new)
@@ -90,8 +90,9 @@ fn get_articles_links(tab: &Arc<Tab>) -> Result<Vec<String>> {
     Ok(links)
 }
 
-pub fn get_news(mut opts: GetNewsOpts) -> Result<()> {
+pub fn get_news(opts: GetNewsOpts) -> Result<()> {
     let tab = opts.browser.new_tab()?;
+    debug!("{:#?}", opts.seen_urls.lock().unwrap());
     tab.enable_stealth_mode()?;
     for category in CATEGORIES {
         trace!("checking out category {category}");
@@ -104,12 +105,12 @@ pub fn get_news(mut opts: GetNewsOpts) -> Result<()> {
         let links = get_articles_links(&tab)?;
         trace!("found {} links on {category}", links.len());
         for link in links {
-            if opts.seen_urls.contains(&link) {
-                trace!("already seen {link}");
+            let url = format!("https://www.francetvinfo.fr/{}/", link);
+            if opts.seen_urls.lock().unwrap().contains(&url) {
+                trace!("already seen {url}");
                 continue;
             }
-            opts.seen_urls.push(link.clone());
-            let url = format!("https://www.francetvinfo.fr/{}/", link);
+            opts.seen_urls.lock().unwrap().push(url.clone());
 
             // let new = get_info_on_article(&url, &tab)
             //     .context(link);
@@ -140,9 +141,9 @@ pub fn get_news(mut opts: GetNewsOpts) -> Result<()> {
                     title: res.title,
                     caption: res.description,
                     provider: "francetvinfo".to_string(),
-                    time: res.published.parse().unwrap_or_else(|_| chrono::Utc::now()),
+                    date: res.published.parse().unwrap_or_else(|_| chrono::Utc::now()),
                     body: res.content,
-                    link: res.url,
+                    link: url,
                 }),
                 Err(err) => {
                     error!("parse_article: {:#?}", err);
@@ -151,7 +152,7 @@ pub fn get_news(mut opts: GetNewsOpts) -> Result<()> {
             };
             let tx = opts.tx.clone();
             if let Err(e) = tx.blocking_send(payload) {
-                error!("blocking_send: {e:?}");
+                error!("blocking_send: {e}");
                 break;
             }
         }
