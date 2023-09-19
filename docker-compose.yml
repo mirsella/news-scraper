@@ -44,6 +44,7 @@ services:
     image: surrealdb/surrealdb:1.0.0 # https://github.com/surrealdb/surrealdb/issues/2704
     env_file:
       - .env
+    user: root
     entrypoint:
       - /surreal
       - start

@@ -29,6 +29,7 @@ DEFINE FIELD link ON news TYPE string ASSERT string::is::url($value);
 DEFINE FIELD note ON news TYPE string;
 DEFINE FIELD provider ON news TYPE string ASSERT $value != NONE PERMISSIONS NONE;
 DEFINE FIELD rating ON news TYPE option<int> ASSERT $value = NONE OR ($value > 0 AND $value < $MAX_RATING);
+DEFINE FIELD tags ON news TYPE option<array<string>>;
 DEFINE FIELD title ON news TYPE string;
 
 DEFINE INDEX link ON news FIELDS link UNIQUE;

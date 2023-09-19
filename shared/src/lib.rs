@@ -26,6 +26,7 @@ impl Default for News {
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct DbNews {
+    pub id: Option<surrealdb::sql::Id>,
     pub body: Cow<'static, str>,
     pub caption: Cow<'static, str>,
     pub date: surrealdb::sql::Datetime,
@@ -33,6 +34,7 @@ pub struct DbNews {
     pub note: Cow<'static, str>,
     pub provider: Cow<'static, str>,
     pub rating: Option<i64>,
+    pub tags: Option<Vec<Cow<'static, str>>>,
     pub title: Cow<'static, str>,
 }
 

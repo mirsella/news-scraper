@@ -30,6 +30,9 @@ app.post("/parse", async (c: Context) => {
 
   try {
     const data = await extractFromHtml(body);
+    if (data == null) {
+      c.status(500);
+    }
     return c.json(data);
   } catch (err) {
     c.status(500);

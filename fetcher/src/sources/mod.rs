@@ -41,6 +41,13 @@ pub fn fetch_article(url: &str) -> Result<ApiResponse, anyhow::Error> {
         .timeout(Duration::from_secs(5))
         .call()?;
 
+    if response.status() != 200 {
+        return Err(anyhow::anyhow!(
+            "deno server returned status code {}. err: {}",
+            response.status(),
+            response.into_string()?
+        ));
+    }
     let json_result: ApiResponse = response.into_json()?;
     Ok(json_result)
 }
@@ -53,6 +60,13 @@ pub fn parse_article(str: &str) -> Result<ApiResponse, anyhow::Error> {
         .timeout(Duration::from_secs(5))
         .send_string(str)?;
 
+    if response.status() != 200 {
+        return Err(anyhow::anyhow!(
+            "deno server returned status code {}. err: {}",
+            response.status(),
+            response.into_string()?
+        ));
+    }
     let json_result: ApiResponse = response.into_json()?;
     Ok(json_result)
 }
