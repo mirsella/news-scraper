@@ -1,6 +1,6 @@
 use std::{error::Error, process::exit};
 
-use log::{error, trace};
+use log::{error, info, trace};
 use shared::{Config, DbNews};
 use surrealdb::{engine::remote::ws::Ws, opt::auth::Root, Surreal};
 #[tokio::main]
@@ -25,14 +25,18 @@ async fn main() -> Result<(), Box<dyn Error>> {
             .await?
             .take(0)?;
         if db_news.is_empty() {
+            info!("no more news to rate");
             break Ok(());
         }
 
         while let Some(news) = db_news.pop() {
-            trace!("processing id {:?}, {:?}", news.id, news.link);
-            // db.update::<Option<DbNews>>(("news", news.id.unwrap()))
-            //     .await?;
+            let id = news.id.unwrap();
+            trace!("processing id {:?}, {:.60}", id.id, news.link);
+            // TODO: actually rate the news
+            let rating: Option<i64> = None;
+            db.update::<Option<DbNews>>(("news", id))
+                .merge(serde_json::json!({"rating": rating }))
+                .await?;
         }
-        // return Ok(());
     }
 }
