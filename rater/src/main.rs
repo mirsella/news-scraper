@@ -32,6 +32,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         while let Some(news) = db_news.pop() {
             let id = news.id.unwrap();
             trace!("processing id {:?}, {:.60}", id.id, news.link);
+            let text = html2text::from_read(news.body.as_bytes(), 0);
             // TODO: actually rate the news
             let rating: Option<i64> = None;
             db.update::<Option<DbNews>>(("news", id))

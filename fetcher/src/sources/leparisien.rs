@@ -4,16 +4,20 @@ use headless_chrome::Tab;
 use log::{debug, error, trace};
 use std::sync::Arc;
 
-const KEYWORDS: [&str; 4] = ["bonne nouvelle", "joie", "optimisme", "entraide"];
+const CATEGORIES: [&str; 7] = [
+    "faits-divers",
+    "politique",
+    "economie",
+    "societe",
+    "sports",
+    "culture-loisirs",
+    "etudiant",
+];
 
 fn get_articles_links(tab: &Arc<Tab>) -> Result<Vec<String>> {
-    let parent = tab
-        .find_element_by_xpath("/html/body/div[5]/div/div[11]/div/div[2]/div[2]/div/div/div/div")
-        .context("finding parent of articles")?;
-
-    let links = parent
-        .find_elements("a")
-        .context("finding <a> on parent")?
+    let links = tab
+        .find_elements("div[class^='story'] > a, *[class*='article__link']")
+        .context("finding div > a")?
         .iter()
         .map(|a| {
             a.get_attribute_value("href")
@@ -27,25 +31,23 @@ fn get_articles_links(tab: &Arc<Tab>) -> Result<Vec<String>> {
 pub fn get_news(opts: GetNewsOpts) -> Result<()> {
     let tab = opts.browser.new_tab()?;
     tab.enable_stealth_mode()?;
-    for keyword in KEYWORDS {
-        trace!("checking out keyword {keyword}");
-        tab.navigate_to(&format!(
-            "https://www.google.com/search?q={}&tbm=nws&tbs=qdr%3Ad",
-            keyword
-        ))
-        .context("navigate_to")?;
-        tab.wait_until_navigated().context("wait_until_navigated")?;
-        tab.activate().unwrap();
-        if let Ok(cookies) = tab.find_element_by_xpath("//span[contains(text(), 'Tout refuser')]") {
+    for category in CATEGORIES {
+        trace!("checking out category {category}");
+        tab.navigate_to(&format!("https://www.leparisien.fr/{category}"))
+            .context("navigate_to")?;
+        tab.wait_until_navigated()
+            .context("cagegory wait_until_navigated")?;
+        // tab.activate().unwrap();
+        if let Ok(cookies) = tab.find_element_by_xpath("//button[contains(text(), 'Accepter')]") {
             cookies.click().context("clicking on cookies")?;
-            tab.wait_until_navigated()?;
+            tab.wait_until_navigated()
+                .context("cookies wait_until_navigated")?;
         }
-        tab.wait_for_element("#center_col")
-            .context("waiting on #center_col")?;
 
         let links = get_articles_links(&tab)?;
-        trace!("found {} links on {keyword}", links.len());
+        trace!("found {} links on {category}", links.len());
         for url in links {
+            let url = "http:".to_owned() + &url;
             if opts.seen_urls.lock().unwrap().contains(&url) {
                 trace!("already seen {url}");
                 continue;
@@ -56,7 +58,8 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
             if let Err(err) = res {
                 debug!("fetch_article: {:#?}", err);
                 tab.navigate_to(&url)?;
-                tab.wait_until_navigated().context("wait_until_navigated")?;
+                tab.wait_until_navigated()
+                    .context("article wait_until_navigated")?;
                 std::thread::sleep(std::time::Duration::from_secs(1));
                 let doc = tab.get_content()?;
                 res = super::parse_article(&doc);
@@ -65,7 +68,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
                 Ok(res) => Ok(News {
                     title: res.title,
                     caption: res.description,
-                    provider: "google".to_string(),
+                    provider: "leparisien".to_string(),
                     date: res.published.parse().unwrap_or_else(|_| chrono::Utc::now()),
                     body: res.content,
                     link: url,
