@@ -1,32 +1,31 @@
 use super::{GetNewsOpts, News};
 use anyhow::{Context, Result};
-use headless_chrome::Tab;
-use log::{debug, error, trace};
+use headless_chrome::{protocol::cdp::Page::CaptureScreenshotFormatOption, Tab};
+use log::{debug, trace};
 use std::sync::Arc;
 
-const CATEGORIES: [&str; 7] = [
-    "faits-divers",
-    "politique",
-    "economie",
-    "societe",
-    "sports",
-    "culture-loisirs",
-    "etudiant",
+const CATEGORIES: [&str; 8] = [
+    "Nature",
+    "Climat-18",
+    "Luttes",
+    "Alternatives",
+    "International",
+    "Reportage",
+    "Enquete",
+    "idee",
 ];
 
 fn get_articles_links(tab: &Arc<Tab>) -> Result<Vec<String>> {
     let links = tab
-        .find_elements("div[class^='story'] > a, *[class*='article__link']")
-        .context("finding div > a")?
+        .find_elements(".lien_article")
+        .context("finding .lien_article")?
         .iter()
         .map(|a| {
             let mut link = a
                 .get_attribute_value("href")
                 .expect("getting href")
                 .expect("no href on article");
-            if !link.starts_with("http") {
-                link.insert_str(0, "http:");
-            }
+            link.insert_str(0, "https://reporterre.net/");
             link
         })
         .collect();
@@ -35,19 +34,15 @@ fn get_articles_links(tab: &Arc<Tab>) -> Result<Vec<String>> {
 
 pub fn get_news(opts: GetNewsOpts) -> Result<()> {
     let tab = opts.browser.new_tab()?;
-    tab.enable_stealth_mode()?;
+    let user_agent = opts.browser.get_version().unwrap().user_agent;
+    let user_agent = user_agent.replace("HeadlessChrome", "Chrome");
+    tab.set_user_agent(&user_agent, None, None)?;
     for category in CATEGORIES {
         trace!("checking out category {category}");
-        tab.navigate_to(&format!("https://www.leparisien.fr/{category}"))
+        tab.navigate_to(&format!("https://reporterre.net/{category}"))
             .context("navigate_to")?;
         tab.wait_until_navigated()
             .context("cagegory wait_until_navigated")?;
-        // tab.activate().unwrap();
-        if let Ok(cookies) = tab.find_element_by_xpath("//button[contains(text(), 'Accepter')]") {
-            cookies.click().context("clicking on cookies")?;
-            tab.wait_until_navigated()
-                .context("cookies wait_until_navigated")?;
-        }
 
         let links = get_articles_links(&tab)?;
         trace!("found {} links on {category}", links.len());
@@ -58,21 +53,15 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
             }
             opts.seen_urls.lock().unwrap().push(url.clone());
 
-            let mut res = super::fetch_article(&url);
-            if let Err(err) = res {
-                debug!("fetch_article: {:#?}", err);
-                tab.navigate_to(&url)?;
-                tab.wait_until_navigated()
-                    .context("article wait_until_navigated")?;
-                std::thread::sleep(std::time::Duration::from_secs(1));
-                let doc = tab.get_content()?;
-                res = super::parse_article(&doc);
-            }
+            tab.navigate_to(&url)?;
+            tab.wait_until_navigated()
+                .context("article wait_until_navigated")?;
+            let res = super::parse_article(&tab.get_content()?);
             let payload = match res {
                 Ok(res) => Ok(News {
                     title: res.title,
                     caption: res.description,
-                    provider: "leparisien".to_string(),
+                    provider: "reporterre".to_string(),
                     date: res.published.parse().unwrap_or_else(|_| chrono::Utc::now()),
                     body: res.content,
                     link: url,
@@ -82,10 +71,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
                     continue;
                 }
             };
-            if let Err(e) = opts.tx.blocking_send(payload) {
-                error!("blocking_send: {e}");
-                break;
-            }
+            opts.tx.blocking_send(payload)?;
         }
     }
     Ok(())

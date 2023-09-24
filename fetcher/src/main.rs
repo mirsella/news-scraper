@@ -69,7 +69,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
             }
         };
         trace!(
-            "recv news: title: {:.20?}..., link: {:?}",
+            "recv news: {}: {:.20?}..., link: {:?}",
+            news.provider,
             news.title,
             news.link
         );

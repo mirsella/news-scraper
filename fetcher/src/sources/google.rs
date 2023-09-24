@@ -35,7 +35,6 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
         ))
         .context("navigate_to")?;
         tab.wait_until_navigated().context("wait_until_navigated")?;
-        tab.activate().unwrap();
         if let Ok(cookies) = tab.find_element_by_xpath("//span[contains(text(), 'Tout refuser')]") {
             cookies.click().context("clicking on cookies")?;
             tab.wait_until_navigated()?;

@@ -92,7 +92,6 @@ fn get_articles_links(tab: &Arc<Tab>) -> Result<Vec<String>> {
 
 pub fn get_news(opts: GetNewsOpts) -> Result<()> {
     let tab = opts.browser.new_tab()?;
-    debug!("{:#?}", opts.seen_urls.lock().unwrap());
     tab.enable_stealth_mode()?;
     for category in CATEGORIES {
         trace!("checking out category {category}");
