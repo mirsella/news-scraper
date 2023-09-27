@@ -1,9 +1,15 @@
-use std::{error::Error, process::exit};
+use std::process::exit;
 
+use anyhow::{anyhow, Result};
 use log::{error, trace};
 use nanohtml2text::html2text;
 use shared::{Config, DbNews};
-use surrealdb::{engine::remote::ws::Ws, opt::auth::Root, Surreal};
+use surrealdb::{
+    engine::remote::ws::{Client, Ws},
+    opt::auth::Root,
+    sql::Thing,
+    Surreal,
+};
 
 fn clean_string(s: &str) -> String {
     s.split_whitespace()
@@ -12,8 +18,20 @@ fn clean_string(s: &str) -> String {
         .join(" ")
 }
 
+async fn lock_news(db: &Surreal<Client>, id: &Thing) -> Result<()> {
+    match db
+        .update::<Option<DbNews>>(("news", id.clone()))
+        .merge(serde_json::json!({"locked": true }))
+        .await
+    {
+        Ok(Some(_)) => Ok(()),
+        Err(e) => Err(anyhow!("{}", e)),
+        _ => Err(anyhow!("no news found")),
+    }
+}
+
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn Error>> {
+async fn main() -> Result<()> {
     env_logger::init();
     let config = Config::load(".env").unwrap_or_else(|e| {
         error!(".env: {}", e);
@@ -31,7 +49,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     loop {
         let news: Option<DbNews> = db
             .query(
-                "select * from news where rating == none AND date > time::floor(time::now(), 1w) AND locked == false limit 1",
+                "select * from only news where rating == none AND date > time::floor(time::now(), 1w) AND locked == false limit 1",
             )
             .await?
             .take(0)?;
@@ -44,17 +62,9 @@ async fn main() -> Result<(), Box<dyn Error>> {
             Some(news) => news,
         };
         let id = news.id.unwrap();
-        match db
-            .update::<Option<DbNews>>(("news", id.clone()))
-            .merge(serde_json::json!({"locked": true }))
-            .await
-        {
-            Ok(_) => (),
-            Err(e) => {
-                error!("failed to lock news {}: {}", id.id, e);
-                continue;
-            }
-        }
+        if let Err(e) = lock_news(&db, &id).await {
+            error!("failed to lock news {id}: {e}");
+        };
         trace!(
             "processing id {} body size {}, {}",
             id.id,
@@ -63,7 +73,6 @@ async fn main() -> Result<(), Box<dyn Error>> {
         );
         let text = html2text(&news.body);
         let text = clean_string(&text);
-        let title = clean_string(&news.title);
 
         // TODO: actually rate the news
         let rating: Option<i64> = None;
