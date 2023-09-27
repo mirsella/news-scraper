@@ -60,10 +60,13 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
 
             let mut res = super::fetch_article(&url);
             if let Err(err) = res {
-                debug!("fetch_article: {:#?}", err);
-                tab.navigate_to(&url)?;
-                tab.wait_until_navigated()
-                    .context("article wait_until_navigated")?;
+                debug!("fetch_article: {}", err);
+                if tab.navigate_to(&url).is_err() {
+                    continue;
+                }
+                if tab.wait_until_navigated().is_err() {
+                    continue;
+                }
                 std::thread::sleep(std::time::Duration::from_secs(1));
                 let doc = tab.get_content()?;
                 res = super::parse_article(&doc);
@@ -78,7 +81,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
                     link: url,
                 }),
                 Err(err) => {
-                    debug!("parse_article: {:#?}", err);
+                    debug!("parse_article: {}", err);
                     continue;
                 }
             };

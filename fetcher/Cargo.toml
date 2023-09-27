@@ -4,16 +4,16 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-anyhow = "1.0.72"
+anyhow = "1.0.75"
 automod = "1.0.12"
 env_logger = "0.10.0"
 futures = "0.3.28"
 headless_chrome = { git = "https://github.com/atroche/rust-headless-chrome" }
 log = "0.4.20"
-tokio = { version = "1.30", features = ["rt-multi-thread", "macros", "sync"] }
-chrono = "0.4.26"
-clap = { version = "4.4.0", features = ["derive"] }
+tokio = { version = "1.32", features = ["rt-multi-thread", "macros", "sync"] }
+chrono = "0.4.31"
+clap = { version = "4.4.5", features = ["derive"] }
 serde = "1.0.188"
 shared = { path = "../shared" }
 ureq = { version = "2.7.1", features = ["json"] }
-surrealdb = "1.0.0-beta.10"
+surrealdb = "1.0.0"

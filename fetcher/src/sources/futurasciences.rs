@@ -1,31 +1,22 @@
-use super::{GetNewsOpts, News};
+use super::{fetch_article, GetNewsOpts, News};
 use anyhow::{Context, Result};
 use headless_chrome::Tab;
 use log::{debug, trace};
 use std::sync::Arc;
 
-const CATEGORIES: [&str; 8] = [
-    "Nature",
-    "Climat-18",
-    "Luttes",
-    "Alternatives",
-    "International",
-    "Reportage",
-    "Enquete",
-    "idee",
-];
+const CATEGORIES: [&str; 5] = ["sciences", "sante", "tech", "maison", "planete"];
 
 fn get_articles_links(tab: &Arc<Tab>) -> Result<Vec<String>> {
     let links = tab
-        .find_elements(".lien_article")
-        .context("finding .lien_article")?
+        .find_elements(".article-card-box")
+        .context("finding .article-card-box")?
         .iter()
         .map(|a| {
             let mut link = a
                 .get_attribute_value("href")
                 .expect("getting href")
                 .expect("no href on article");
-            link.insert_str(0, "https://reporterre.net/");
+            link.insert_str(0, "https://futura-sciences.com");
             link
         })
         .collect();
@@ -39,8 +30,10 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
     tab.set_user_agent(&user_agent, None, None)?;
     for category in CATEGORIES {
         trace!("checking out category {category}");
-        tab.navigate_to(&format!("https://reporterre.net/{category}"))
-            .context("navigate_to")?;
+        tab.navigate_to(&format!(
+            "https://futura-sciences.com/{category}/actualites"
+        ))
+        .context("navigate_to")?;
         tab.wait_until_navigated()
             .context("cagegory wait_until_navigated")?;
 
@@ -53,21 +46,18 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
             }
             opts.seen_urls.lock().unwrap().push(url.clone());
 
-            tab.navigate_to(&url)?;
-            tab.wait_until_navigated()
-                .context("article wait_until_navigated")?;
-            let res = super::parse_article(&tab.get_content()?);
+            let res = fetch_article(&url);
             let payload = match res {
                 Ok(res) => Ok(News {
                     title: res.title,
                     caption: res.description,
-                    provider: "reporterre".to_string(),
+                    provider: "futura-sciences".to_string(),
                     date: res.published.parse().unwrap_or_else(|_| chrono::Utc::now()),
                     body: res.content,
                     link: url,
                 }),
                 Err(err) => {
-                    debug!("parse_article: {}", err);
+                    debug!("fetch_article: {}", err);
                     continue;
                 }
             };

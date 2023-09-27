@@ -128,10 +128,16 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
 
             let mut res = super::fetch_article(&url);
             if let Err(err) = res {
-                debug!("fetch_article: {:#?}", err);
-                tab.navigate_to(&url)?;
-                tab.wait_for_elements(".c-body p, .c-body h2, .p-para")
-                    .context("waiting for .c-body child")?;
+                debug!("fetch_article: {}", err);
+                if tab.navigate_to(&url).is_err() {
+                    continue;
+                };
+                if tab
+                    .wait_for_elements(".c-body p, .c-body h2, .p-para")
+                    .is_err()
+                {
+                    continue;
+                }
                 let doc = tab.get_content()?;
                 res = super::parse_article(&doc);
             }
@@ -145,7 +151,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
                     link: url,
                 }),
                 Err(err) => {
-                    debug!("parse_article: {:#?}", err);
+                    debug!("parse_article: {}", err);
                     continue;
                 }
             };

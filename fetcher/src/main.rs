@@ -30,7 +30,8 @@ struct Cli {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
-    env_logger::init();
+    env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("warn")).init();
+    info!("Starting newsfetcher");
 
     let cli = Cli::parse();
     if cli.list {
@@ -46,7 +47,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     if let Some(value) = cli.headless {
         config.chrome_headless = Some(value);
     }
-    println!("config: {:?}", config);
+    info!("config: {:?}", config);
 
     let db = Surreal::new::<Ws>(&config.surrealdb_host).await?;
     db.signin(Root {

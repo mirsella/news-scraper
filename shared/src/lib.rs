@@ -36,6 +36,8 @@ pub struct DbNews {
     pub rating: Option<i64>,
     pub tags: Option<Vec<Cow<'static, str>>>,
     pub title: Cow<'static, str>,
+    pub used: bool,
+    pub locked: bool,
 }
 
 #[derive(Deserialize, Clone)]
