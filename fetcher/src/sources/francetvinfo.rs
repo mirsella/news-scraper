@@ -98,10 +98,10 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
         tab.navigate_to(&format!("https://www.francetvinfo.fr/{}/", category))
             .context("navigate_to")?;
         tab.wait_until_navigated().context("wait_until_navigated")?;
-        if let Ok(cookies) = tab.find_element_by_xpath("#didomi-notice-agree-button") {
+        if let Ok(cookies) = tab.find_element("#didomi-notice-agree-button") {
             cookies.click().context("clicking on cookies")?;
         }
-        let links = get_articles_links(&tab)?;
+        let links = get_articles_links(&tab).context("francetvinfo")?;
         trace!("found {} links on {category}", links.len());
         for link in links {
             let url = format!("https://www.francetvinfo.fr/{}/", link);

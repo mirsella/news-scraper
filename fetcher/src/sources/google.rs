@@ -42,7 +42,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
         tab.wait_for_element("#center_col")
             .context("waiting on #center_col")?;
 
-        let links = get_articles_links(&tab)?;
+        let links = get_articles_links(&tab).context("google")?;
         trace!("found {} links on {keyword}", links.len());
         for url in links {
             if opts.seen_urls.lock().unwrap().contains(&url) {

@@ -74,6 +74,8 @@ async fn main() -> Result<()> {
         let text = html2text(&news.body);
         let text = clean_string(&text);
 
+        println!("{}", text);
+
         // TODO: actually rate the news
         let rating: Option<i64> = None;
         db.update::<Option<DbNews>>(("news", id))

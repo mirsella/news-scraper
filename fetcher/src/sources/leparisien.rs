@@ -49,7 +49,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
                 .context("cookies wait_until_navigated")?;
         }
 
-        let links = get_articles_links(&tab)?;
+        let links = get_articles_links(&tab).context("leparisien")?;
         trace!("found {} links on {category}", links.len());
         for url in links {
             if opts.seen_urls.lock().unwrap().contains(&url) {

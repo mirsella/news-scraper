@@ -37,7 +37,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
         tab.wait_until_navigated()
             .context("category wait_until_navigated")?;
 
-        let links = get_articles_links(&tab)?;
+        let links = get_articles_links(&tab).context("futura-sciences")?;
         trace!("found {} links on {category}", links.len());
         for url in links {
             if opts.seen_urls.lock().unwrap().contains(&url) {

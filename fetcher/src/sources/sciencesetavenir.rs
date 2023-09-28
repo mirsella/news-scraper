@@ -1,8 +1,8 @@
 use super::{fetch_article, GetNewsOpts, News};
 use anyhow::{Context, Result};
-use headless_chrome::Tab;
-use log::{debug, trace};
-use std::sync::Arc;
+use headless_chrome::{protocol::cdp::Page::CaptureScreenshotFormatOption, Tab};
+use log::{debug, error, trace};
+use std::{fs, sync::Arc, thread, time::Duration};
 
 const CATEGORIES: [&str; 8] = [
     "espace",
@@ -38,20 +38,31 @@ fn get_articles_links(tab: &Arc<Tab>, category: &str) -> Result<Vec<String>> {
 
 pub fn get_news(opts: GetNewsOpts) -> Result<()> {
     let tab = opts.browser.new_tab()?;
+    tab.enable_stealth_mode()?;
     let user_agent = opts.browser.get_version().unwrap().user_agent;
     let user_agent = user_agent.replace("HeadlessChrome", "Chrome");
     tab.set_user_agent(&user_agent, None, None)?;
     for category in CATEGORIES {
         trace!("checking out category {category}");
-        tab.navigate_to(&format!("https://sciencesetavenir.fr/{category}"))
+
+        let png = tab
+            .capture_screenshot(CaptureScreenshotFormatOption::Png, None, None, true)
+            .expect("capturing screenshot");
+        fs::write(format!("screenshot-before-{category}.png"), png).unwrap();
+
+        tab.navigate_to(&format!("https://www.sciencesetavenir.fr/{category}/"))
             .context("navigate_to")?;
-        tab.wait_until_navigated()
-            .context("category wait_until_navigated")?;
+
+        let png = tab
+            .capture_screenshot(CaptureScreenshotFormatOption::Png, None, None, true)
+            .expect("capturing screenshot");
+        fs::write(format!("screenshot-after-{category}.png"), png).unwrap();
+
+        tab.wait_for_element(".content-une")
+            .context("sciencesetavenir wait for element .content-une")?;
         if let Ok(cookies) = tab.find_element("#didomi-notice-agree-button") {
-            debug!("clicking on cookies");
+            trace!("clicking on cookies");
             cookies.click().context("clicking on cookies")?;
-            tab.wait_until_navigated()
-                .context("cookies wait_until_navigated")?;
         }
 
         let links = get_articles_links(&tab, category).context("sciencesetavenir")?;
