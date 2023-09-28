@@ -46,9 +46,15 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
         tab.navigate_to(&format!("https://sciencesetavenir.fr/{category}"))
             .context("navigate_to")?;
         tab.wait_until_navigated()
-            .context("cagegory wait_until_navigated")?;
+            .context("category wait_until_navigated")?;
+        if let Ok(cookies) = tab.find_element("#didomi-notice-agree-button") {
+            debug!("clicking on cookies");
+            cookies.click().context("clicking on cookies")?;
+            tab.wait_until_navigated()
+                .context("cookies wait_until_navigated")?;
+        }
 
-        let links = get_articles_links(&tab, category)?;
+        let links = get_articles_links(&tab, category).context("sciencesetavenir")?;
         trace!("found {} links on {category}", links.len());
         for url in links {
             if opts.seen_urls.lock().unwrap().contains(&url) {

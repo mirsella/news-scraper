@@ -64,7 +64,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         let news = match recved {
             Ok(news) => news,
             Err(err) => {
-                error!("recv: {:#?}", err);
+                error!("recv: {:?}", err);
                 continue;
             }
         };

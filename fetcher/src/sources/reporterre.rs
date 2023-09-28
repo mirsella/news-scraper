@@ -42,7 +42,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
         tab.navigate_to(&format!("https://reporterre.net/{category}"))
             .context("navigate_to")?;
         tab.wait_until_navigated()
-            .context("cagegory wait_until_navigated")?;
+            .context("category wait_until_navigated")?;
 
         let links = get_articles_links(&tab)?;
         trace!("found {} links on {category}", links.len());

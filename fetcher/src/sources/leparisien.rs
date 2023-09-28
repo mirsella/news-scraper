@@ -41,7 +41,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
         tab.navigate_to(&format!("https://www.leparisien.fr/{category}"))
             .context("navigate_to")?;
         tab.wait_until_navigated()
-            .context("cagegory wait_until_navigated")?;
+            .context("category wait_until_navigated")?;
         // tab.activate().unwrap();
         if let Ok(cookies) = tab.find_element_by_xpath("//button[contains(text(), 'Accepter')]") {
             cookies.click().context("clicking on cookies")?;
