@@ -49,7 +49,7 @@ async fn main() -> Result<()> {
     loop {
         let news: Option<DbNews> = db
             .query(
-                "select * from only news where rating == none AND date > time::floor(time::now(), 1w) AND locked == false limit 1",
+                "select * from news where rating == none AND date > time::floor(time::now(), 1w) AND locked == false limit 1",
             )
             .await?
             .take(0)?;

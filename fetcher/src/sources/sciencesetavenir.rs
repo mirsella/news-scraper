@@ -15,18 +15,11 @@ const CATEGORIES: [&str; 8] = [
     "fondamental",
 ];
 
-fn get_articles_links(tab: &Arc<Tab>, category: &str) -> Result<Vec<String>> {
+fn get_articles_links(tab: &Arc<Tab>) -> Result<Vec<String>> {
     let links = tab
-        .find_elements(&format!(
-            "a[href^='https://www.sciencesetavenir.fr/{category}']"
-        ))
+        .find_elements(".alaune > div.visuel > a, a.overlay")
         .context("finding a[href^='https://www.sciencesetavenir.fr/{category}']")?
         .iter()
-        .filter(|el| {
-            el.get_attribute_value("title")
-                .expect("getting title")
-                .is_some()
-        })
         .map(|a| {
             a.get_attribute_value("href")
                 .expect("getting href")
@@ -44,20 +37,8 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
     tab.set_user_agent(&user_agent, None, None)?;
     for category in CATEGORIES {
         trace!("checking out category {category}");
-
-        let png = tab
-            .capture_screenshot(CaptureScreenshotFormatOption::Png, None, None, true)
-            .expect("capturing screenshot");
-        fs::write(format!("screenshot-before-{category}.png"), png).unwrap();
-
         tab.navigate_to(&format!("https://www.sciencesetavenir.fr/{category}/"))
             .context("navigate_to")?;
-
-        let png = tab
-            .capture_screenshot(CaptureScreenshotFormatOption::Png, None, None, true)
-            .expect("capturing screenshot");
-        fs::write(format!("screenshot-after-{category}.png"), png).unwrap();
-
         tab.wait_for_element(".content-une")
             .context("sciencesetavenir wait for element .content-une")?;
         if let Ok(cookies) = tab.find_element("#didomi-notice-agree-button") {
@@ -65,7 +46,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
             cookies.click().context("clicking on cookies")?;
         }
 
-        let links = get_articles_links(&tab, category).context("sciencesetavenir")?;
+        let links = get_articles_links(&tab).context("sciencesetavenir")?;
         trace!("found {} links on {category}", links.len());
         for url in links {
             if opts.seen_urls.lock().unwrap().contains(&url) {

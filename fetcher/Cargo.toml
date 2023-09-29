@@ -8,7 +8,7 @@ anyhow = "1.0.75"
 automod = "1.0.12"
 env_logger = "0.10.0"
 futures = "0.3.28"
-headless_chrome = { git = "https://github.com/atroche/rust-headless-chrome" }
+headless_chrome = { git = "https://github.com/mirsella/rust-headless-chrome" }
 log = "0.4.20"
 tokio = { version = "1.32", features = ["rt-multi-thread", "macros", "sync"] }
 chrono = "0.4.31"
