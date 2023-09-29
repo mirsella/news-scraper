@@ -1,8 +1,8 @@
 use super::{fetch_article, GetNewsOpts, News};
 use anyhow::{Context, Result};
-use headless_chrome::{protocol::cdp::Page::CaptureScreenshotFormatOption, Tab};
-use log::{debug, error, trace};
-use std::{fs, sync::Arc, thread, time::Duration};
+use headless_chrome::Tab;
+use log::{debug, trace};
+use std::sync::Arc;
 
 const CATEGORIES: [&str; 8] = [
     "espace",
@@ -32,9 +32,9 @@ fn get_articles_links(tab: &Arc<Tab>) -> Result<Vec<String>> {
 pub fn get_news(opts: GetNewsOpts) -> Result<()> {
     let tab = opts.browser.new_tab()?;
     tab.enable_stealth_mode()?;
-    let user_agent = opts.browser.get_version().unwrap().user_agent;
-    let user_agent = user_agent.replace("HeadlessChrome", "Chrome");
-    tab.set_user_agent(&user_agent, None, None)?;
+    // let user_agent = opts.browser.get_version().unwrap().user_agent;
+    // let user_agent = user_agent.replace("HeadlessChrome", "Chrome");
+    // tab.set_user_agent(&user_agent, None, None)?;
     for category in CATEGORIES {
         trace!("checking out category {category}");
         tab.navigate_to(&format!("https://www.sciencesetavenir.fr/{category}/"))
