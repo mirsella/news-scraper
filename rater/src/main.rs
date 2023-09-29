@@ -1,4 +1,4 @@
-use std::process::exit;
+use std::{process::exit, time::Duration};
 
 use anyhow::{anyhow, Result};
 use log::{error, trace};
@@ -11,11 +11,16 @@ use surrealdb::{
     Surreal,
 };
 
-fn clean_string(s: &str) -> String {
-    s.split_whitespace()
+fn extract_clean_text(html: &str) -> String {
+    let s = html2text(html);
+    let re = regex::Regex::new(r"\(?https?://[^\s]+").unwrap();
+    let s = re.replace_all(&s, "").to_string();
+    let s = s
+        .split_whitespace()
         .map(|s| s.trim().replace('\n', ""))
         .collect::<Vec<String>>()
-        .join(" ")
+        .join(" ");
+    s
 }
 
 async fn lock_news(db: &Surreal<Client>, id: &Thing) -> Result<()> {
@@ -71,12 +76,13 @@ async fn main() -> Result<()> {
             news.body.len(),
             news.link
         );
-        let text = html2text(&news.body);
-        let text = clean_string(&text);
+        let text = extract_clean_text(&news.body);
 
         println!("{}", text);
 
         // TODO: actually rate the news
+        std::thread::sleep(Duration::from_secs(1));
+
         let rating: Option<i64> = None;
         db.update::<Option<DbNews>>(("news", id))
             .merge(serde_json::json!({"rating": rating, "locked": false }))
