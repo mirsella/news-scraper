@@ -1,6 +1,6 @@
 use super::{GetNewsOpts, News};
 use anyhow::{anyhow, Context, Result};
-use headless_chrome::{Element, Tab};
+use headless_chrome::Tab;
 use log::{debug, error, trace};
 use std::sync::Arc;
 
@@ -18,52 +18,6 @@ const CATEGORIES: [&str; 9] = [
 
 // number of links keep per category
 const NUMBER_OF_ARTICLES_PER_CATEGORY: usize = 14;
-
-fn _get_info_on_article(url: &str, tab: &Arc<Tab>) -> Result<News> {
-    tab.navigate_to(url)?;
-    tab.wait_for_elements(".c-body p, .c-body h2, .p-para")
-        .context("waiting for .c-body child")?;
-    if tab.find_element(".faq-highlight").is_ok() {
-        return Err(anyhow!("found faq-highlight"));
-    }
-    let texts: Vec<Element> = tab
-        .find_elements(".c-body p, .c-body h2, .p-para")
-        .context("find_elements on .c-body")?
-        .into_iter()
-        .filter(|e| {
-            e.get_inner_text().map_or(false, |text| {
-                !["LIRE AUSSI", "EDITO"].contains(&text.to_uppercase().as_str())
-            })
-        })
-        .collect();
-    let body: String = texts
-        .iter()
-        .filter_map(|text| text.get_inner_text().ok())
-        .collect();
-    let date = tab
-        .find_element(".publication-date__published > time")
-        .context("find_element on publication-date__published")?
-        .get_attributes()?
-        .ok_or(anyhow!("no attributes on time"))?
-        .get(1)
-        .ok_or(anyhow!("no second attributes for time"))?
-        .parse()?;
-    let new = News {
-        link: tab.get_url(),
-        provider: "francetvinfo".to_string(),
-        title: tab
-            .find_element(".c-title, h1[class$='__title']")
-            .context("find_element on .c-title")?
-            .get_inner_text()?,
-        caption: tab
-            .find_element(".c-chapo")
-            .context("find_element on .c-chapo")?
-            .get_inner_text()?,
-        date,
-        body,
-    };
-    Ok(new)
-}
 
 fn get_articles_links(tab: &Arc<Tab>) -> Result<Vec<String>> {
     let mut articles = tab
@@ -111,36 +65,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
             }
             opts.seen_urls.lock().unwrap().push(url.clone());
 
-            // let new = get_info_on_article(&url, &tab)
-            //     .context(link);
-            // if new
-            //     .as_ref()
-            //     .is_err_and(|e| e.to_string().contains("found faq-highlight"))
-            // {
-            //     println!("error: {:#?}", new);
-            //     break;
-            // }
-            // let tx = tx.clone();
-            // if let Err(e) = tx.blocking_send(new) {
-            //     error!("blocking_send: {e:?}");
-            //     break;
-            // }
-
-            let mut res = super::fetch_article(&url);
-            if let Err(err) = res {
-                debug!("fetch_article: {}", err);
-                if tab.navigate_to(&url).is_err() {
-                    continue;
-                };
-                if tab
-                    .wait_for_elements(".c-body p, .c-body h2, .p-para")
-                    .is_err()
-                {
-                    continue;
-                }
-                let doc = tab.get_content()?;
-                res = super::parse_article(&doc);
-            }
+            let res = super::fetch_article(&url);
             let payload = match res {
                 Ok(res) => Ok(News {
                     title: res.title,
@@ -151,7 +76,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
                     link: url,
                 }),
                 Err(err) => {
-                    debug!("parse_article: {}", err);
+                    debug!("fetch_article: {err}");
                     continue;
                 }
             };

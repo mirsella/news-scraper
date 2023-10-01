@@ -79,9 +79,10 @@ async fn main() -> Result<(), Box<dyn Error>> {
             .content(DbNews {
                 title: news.title.into(),
                 link: news.link.into(),
+                html_body: news.body.clone().into(),
+                text_body: news.body.into(),
                 provider: news.provider.into(),
                 date: news.date.into(),
-                body: news.body.into(),
                 caption: news.caption.into(),
                 ..Default::default()
             })

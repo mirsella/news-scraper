@@ -3,6 +3,7 @@ use std::{
     time::Duration,
 };
 
+use log::error;
 use serde::{Deserialize, Serialize};
 use shared::News;
 
@@ -37,17 +38,15 @@ pub fn fetch_article(url: &str) -> Result<ApiResponse, anyhow::Error> {
         std::env::var("deno_server_url").expect("DENO_SERVER_URL not set"),
         url
     );
-    let response = ureq::get(&endpoint)
-        .timeout(Duration::from_secs(5))
-        .call()?;
+    let response = ureq::get(&endpoint).timeout(Duration::from_secs(5)).call();
 
-    if response.status() != 200 {
-        return Err(anyhow::anyhow!(
-            "deno server returned status code {}. err: {}",
-            response.status(),
-            response.into_string()?
-        ));
-    }
+    let response = match response {
+        Ok(res) => res,
+        Err(e) => {
+            error!("ureq: {}", e);
+            return Err(e.into());
+        }
+    };
     let json_result: ApiResponse = response.into_json()?;
     Ok(json_result)
 }
@@ -58,15 +57,15 @@ pub fn parse_article(str: &str) -> Result<ApiResponse, anyhow::Error> {
     );
     let response = ureq::post(&endpoint)
         .timeout(Duration::from_secs(5))
-        .send_string(str)?;
+        .send_string(str);
 
-    if response.status() != 200 {
-        return Err(anyhow::anyhow!(
-            "deno server returned status code {}. err: {}",
-            response.status(),
-            response.into_string()?
-        ));
-    }
+    let response = match response {
+        Ok(res) => res,
+        Err(e) => {
+            error!("ureq: {}", e);
+            return Err(e.into());
+        }
+    };
     let json_result: ApiResponse = response.into_json()?;
     Ok(json_result)
 }

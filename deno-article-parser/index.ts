@@ -12,7 +12,7 @@ app.get("/fetch", async (c: Context) => {
   try {
     const controller = new AbortController();
     setTimeout(() => controller.abort(), 5000);
-    const data = await extract(url, null, { signal: controller.signal });
+    const data = await extract(url, undefined, { signal: controller.signal });
     return c.json(data);
   } catch (err) {
     c.status(500);

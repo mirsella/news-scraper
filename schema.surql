@@ -22,7 +22,8 @@ DEFINE SCOPE user SESSION 12h SIGNUP (CREATE user CONTENT { name: $name, passwor
 
 DEFINE TABLE news SCHEMAFULL CHANGEFEED 1w;
 
-DEFINE FIELD body ON news TYPE string;
+DEFINE FIELD html_body ON news TYPE string;
+DEFINE FIELD text_body ON news TYPE string;
 DEFINE FIELD caption ON news TYPE string;
 DEFINE FIELD date ON news TYPE datetime ASSERT $value != NONE;
 DEFINE FIELD link ON news TYPE string ASSERT string::is::url($value);
