@@ -26,7 +26,9 @@ fn get_articles_links(tab: &Arc<Tab>) -> Result<Vec<String>> {
 
 pub fn get_news(opts: GetNewsOpts) -> Result<()> {
     let tab = opts.browser.new_tab()?;
-    tab.enable_stealth_mode()?;
+    let user_agent = opts.browser.get_version().unwrap().user_agent;
+    let user_agent = user_agent.replace("HeadlessChrome", "Chrome");
+    tab.set_user_agent(&user_agent, None, None)?;
     for keyword in KEYWORDS {
         trace!("checking out keyword {keyword}");
         tab.navigate_to(&format!(
