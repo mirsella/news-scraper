@@ -56,7 +56,7 @@ pub fn parse_article(str: &str) -> Result<ApiResponse, anyhow::Error> {
     Ok(json_result)
 }
 
-pub static SOURCES: [(&str, GetNewsFn); 8] = [
+pub static SOURCES: [(&str, GetNewsFn); 9] = [
     ("francetvinfo", francetvinfo::get_news),
     ("google", google::get_news),
     ("leparisien", leparisien::get_news),
@@ -65,4 +65,5 @@ pub static SOURCES: [(&str, GetNewsFn); 8] = [
     ("sciencesetavenir", sciencesetavenir::get_news),
     ("reddit-upliftingnews", reddit_upliftingnews::get_news),
     ("goodnewsnetwork", goodnewsnetwork::get_news),
+    ("positivr", positivr::get_news),
 ];
