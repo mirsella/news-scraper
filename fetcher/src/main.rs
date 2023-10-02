@@ -74,13 +74,15 @@ async fn main() -> Result<(), Box<dyn Error>> {
             news.title,
             news.link
         );
+        let html_body = sanitize_html(&news.body);
+        let text_body = extract_clean_text(&html_body);
         let result: Result<Vec<DbNews>, surrealdb::Error> = db
             .create("news")
             .content(DbNews {
                 title: news.title.into(),
                 link: news.link.into(),
-                html_body: news.body.clone().into(),
-                text_body: news.body.into(),
+                html_body: html_body.into(),
+                text_body: text_body.into(),
                 provider: news.provider.into(),
                 date: news.date.into(),
                 caption: news.caption.into(),

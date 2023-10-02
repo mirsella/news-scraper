@@ -4,12 +4,12 @@ import { extract, extractFromHtml } from "npm:@extractus/article-extractor";
 const app = new Hono();
 
 app.get("/fetch", async (c: Context) => {
-  const url = c.req.query("url");
-  if (!url) {
-    c.status(400);
-    return c.json({ message: "url is required" });
-  }
   try {
+    const url = c.req.query("url");
+    if (!url) {
+      c.status(400);
+      return c.json({ message: "url is required" });
+    }
     const controller = new AbortController();
     setTimeout(() => controller.abort(), 5000);
     const data = await extract(url, undefined, { signal: controller.signal });
@@ -21,14 +21,14 @@ app.get("/fetch", async (c: Context) => {
 });
 
 app.post("/parse", async (c: Context) => {
-  const body = await c.req.text();
-  if (!body) {
-    console.log("body is required" + body);
-    c.status(400);
-    return c.json({ message: "html body is required" });
-  }
-
   try {
+    const body = await c.req.text();
+    if (!body) {
+      console.log("body is required" + body);
+      c.status(400);
+      return c.json({ message: "html body is required" });
+    }
+
     const data = await extractFromHtml(body);
     if (data == null) {
       c.status(500);

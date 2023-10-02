@@ -2,40 +2,13 @@ use std::{process::exit, time::Duration};
 
 use anyhow::{anyhow, Result};
 use log::{error, trace};
-use nanohtml2text::html2text;
 use shared::{Config, DbNews};
 use surrealdb::{
     engine::remote::ws::{Client, Ws},
-    opt::auth::Root,
+    opt::{auth::Root, RecordId},
     sql::Thing,
     Surreal,
 };
-
-fn sanitize_html(html: &str) -> String {
-    let tags = maplit::hashset![
-        "b", "i", "u", "em", "strong", "strike", "code", "hr", "br", "div", "table", "thead",
-        "caption", "tbody", "tr", "th", "td", "p",
-    ];
-    let allowed_attributes = ["href", "title", "src", "alt", "colspan"];
-    ammonia::Builder::new()
-        .tags(tags)
-        .link_rel(None)
-        .add_generic_attributes(&allowed_attributes)
-        .clean(html)
-        .to_string()
-}
-
-fn extract_clean_text(html: &str) -> String {
-    let s = html2text(html);
-    let re = regex::Regex::new(r"\(?https?://[^\s]+").unwrap();
-    let s = re.replace_all(&s, "").to_string();
-    let s = s
-        .split_whitespace()
-        .map(|s| s.trim().replace('\n', ""))
-        .collect::<Vec<String>>()
-        .join(" ");
-    s
-}
 
 async fn lock_news(db: &Surreal<Client>, id: &Thing) -> Result<()> {
     match db
@@ -65,7 +38,8 @@ async fn main() -> Result<()> {
     .await?;
     db.use_ns("news").use_db("news").await?;
 
-    loop {
+    let mut last_id: Option<RecordId> = None;
+    let res: Result<()> = loop {
         let news: Option<DbNews> = db
             .query(
                 "select * from news where rating == none AND date > time::floor(time::now(), 1w) AND locked == false limit 1",
@@ -80,21 +54,19 @@ async fn main() -> Result<()> {
             }
             Some(news) => news,
         };
-        let id = news.id.unwrap();
+        if news.id == last_id {
+            break Err(anyhow!("found two time the same unrated news"));
+        }
+        let id = news.id.clone().unwrap();
         if let Err(e) = lock_news(&db, &id).await {
             error!("failed to lock news {id}: {e}");
         };
         trace!(
-            "processing id {} body size {}, {}",
+            "processing id {}, text size {}, {}",
             id.id,
-            news.html_body.len(),
+            news.text_body.len(),
             news.link
         );
-        let html = sanitize_html(&news.html_body);
-        let text = extract_clean_text(&html);
-
-        println!("pure body:{}\n\n", news.html_body);
-        println!("size {}: {html}\n\nsize {}: {text}", html.len(), text.len());
 
         // TODO: actually rate the news
         std::thread::sleep(Duration::from_secs(1));
@@ -103,5 +75,13 @@ async fn main() -> Result<()> {
         db.update::<Option<DbNews>>(("news", id))
             .merge(serde_json::json!({"rating": rating, "locked": false }))
             .await?;
+        last_id = news.id;
+    };
+    match res {
+        Ok(_) => Ok(()),
+        Err(e) => {
+            error!("{}", e);
+            Err(e)
+        }
     }
 }

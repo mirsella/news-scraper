@@ -3,7 +3,6 @@ use std::{
     time::Duration,
 };
 
-use log::error;
 use serde::{Deserialize, Serialize};
 use shared::News;
 
@@ -38,15 +37,9 @@ pub fn fetch_article(url: &str) -> Result<ApiResponse, anyhow::Error> {
         std::env::var("deno_server_url").expect("DENO_SERVER_URL not set"),
         url
     );
-    let response = ureq::get(&endpoint).timeout(Duration::from_secs(5)).call();
-
-    let response = match response {
-        Ok(res) => res,
-        Err(e) => {
-            error!("ureq: {}", e);
-            return Err(e.into());
-        }
-    };
+    let response = ureq::get(&endpoint)
+        .timeout(Duration::from_secs(5))
+        .call()?;
     let json_result: ApiResponse = response.into_json()?;
     Ok(json_result)
 }
@@ -57,24 +50,18 @@ pub fn parse_article(str: &str) -> Result<ApiResponse, anyhow::Error> {
     );
     let response = ureq::post(&endpoint)
         .timeout(Duration::from_secs(5))
-        .send_string(str);
+        .send_string(str)?;
 
-    let response = match response {
-        Ok(res) => res,
-        Err(e) => {
-            error!("ureq: {}", e);
-            return Err(e.into());
-        }
-    };
     let json_result: ApiResponse = response.into_json()?;
     Ok(json_result)
 }
 
-pub static SOURCES: [(&str, GetNewsFn); 6] = [
+pub static SOURCES: [(&str, GetNewsFn); 7] = [
     ("francetvinfo", francetvinfo::get_news),
     ("google", google::get_news),
     ("leparisien", leparisien::get_news),
     ("reporterre", reporterre::get_news),
     ("futurasciences", futurasciences::get_news),
     ("sciencesetavenir", sciencesetavenir::get_news),
+    ("reddit-upliftingnews", reddit_upliftingnews::get_news),
 ];
