@@ -16,6 +16,7 @@ app.get("/fetch", async (c: Context) => {
     return c.json(data);
   } catch (err) {
     c.status(500);
+    console.error(err);
     return c.json({ message: err.toString() });
   }
 });
@@ -36,6 +37,7 @@ app.post("/parse", async (c: Context) => {
     return c.json(data);
   } catch (err) {
     c.status(500);
+    console.error(err);
     return c.json({ message: err.toString() });
   }
 });
