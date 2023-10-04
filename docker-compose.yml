@@ -1,12 +1,12 @@
 version: "3.8"
 
 services:
-  deno-article-parser:
+  article-parser:
     restart: always
-    container_name: deno-article-parser
+    container_name: article-parser
     build:
       context: .
-      dockerfile: docker/deno.dockerfile
+      dockerfile: docker/article-parser.dockerfile
     ports:
       - "8080:8080"
 
@@ -18,10 +18,10 @@ services:
       dockerfile: docker/cargo.dockerfile
       target: fetcher
     depends_on:
-      - deno-article-parser
+      - article-parser
       - surrealdb
     environment:
-      deno_server_url: "http://deno-article-parser:8080"
+      article_parser_url: "http://article-parser:8080"
       surrealdb_host: "surrealdb:8000"
       chrome_headless: "true"
       RUST_LOG: "debug"

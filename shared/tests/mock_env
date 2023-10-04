@@ -1,6 +1,6 @@
 db_password = "arstneoi"
 db_user = "news"
-deno_server_url = "http://localhost:8080"
+article_parser_url = "http://localhost:8080"
 surrealdb_host = localhost:8000
 
 chrome_concurrent = 10
