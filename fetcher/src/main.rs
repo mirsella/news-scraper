@@ -1,14 +1,13 @@
 mod newsfetcher;
 mod sources;
-use std::{
-    error::Error,
-    process::exit,
-    sync::{Arc, Mutex},
-};
-
+use anyhow::Result;
 use clap::Parser;
 use log::{error, info, trace};
 use shared::*;
+use std::{
+    process::exit,
+    sync::{Arc, Mutex},
+};
 use surrealdb::{engine::remote::ws::Ws, opt::auth::Root, Surreal};
 
 #[derive(Parser, Debug)]
@@ -29,7 +28,7 @@ struct Cli {
 }
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn Error>> {
+async fn main() -> Result<()> {
     env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
 
     let cli = Cli::parse();
