@@ -17,7 +17,7 @@ app.get("/fetch", async (req, res) => {
   } catch (err) {
     res.status(500);
     console.error(err);
-    return res.json(err);
+    return res.json({ message: err.toString() });
   }
 });
 
@@ -36,7 +36,7 @@ app.post("/parse", async (req, res) => {
   } catch (err) {
     c.status(500);
     console.error(err);
-    return c.json({ message: err.toString() });
+    return res.json({ message: err.toString() });
   }
 });
 
