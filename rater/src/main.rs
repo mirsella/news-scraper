@@ -1,9 +1,10 @@
-use std::process::exit;
-
 use anyhow::{anyhow, Result};
 use async_openai::{config::OpenAIConfig, Client as ChatClient};
 use log::{error, info, trace};
 use shared::{config::Config, db_news::DbNews};
+use std::process::exit;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
 use surrealdb::{
     engine::remote::ws::Ws,
     opt::{auth::Root, RecordId},
@@ -13,8 +14,17 @@ use surrealdb::{
 #[tokio::main]
 async fn main() -> Result<()> {
     env_logger::init();
+
+    let running = Arc::new(AtomicBool::new(true));
+    let r = running.clone();
+    ctrlc::set_handler(move || {
+        info!("Ctrl-C received!");
+        r.store(false, Ordering::Relaxed);
+    })
+    .expect("Error setting Ctrl-C handler");
+
     let config = Config::load(".env").unwrap_or_else(|e| {
-        error!(".env: {:?}", e);
+        error!("config: {:?}", e);
         exit(1);
     });
 
@@ -31,6 +41,9 @@ async fn main() -> Result<()> {
 
     let mut last_id: Option<RecordId> = None;
     let res: Result<()> = loop {
+        if !running.load(Ordering::Relaxed) {
+            break Ok(());
+        }
         let news = DbNews::new_nonrated(&db).await;
         let mut news = match news {
             Err(e) if e.to_string() == "no news found" => {
@@ -45,12 +58,7 @@ async fn main() -> Result<()> {
             break Err(anyhow!("found two time the same unrated news"));
         }
         let id = news.id.clone().expect("no id wtf");
-        trace!(
-            "processing id {}, text size {}, {}",
-            id.id,
-            news.text_body.len(),
-            news.link
-        );
+        trace!("processing {}, {}", id.id, news.link);
 
         match news.rate(&openai, &config.rating_chat_prompt).await {
             Ok(res) => {
