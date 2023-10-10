@@ -12,7 +12,7 @@ services:
 
   fetcher:
     container_name: fetcher
-    restart: on-failure:5
+    restart: on-failure:3
     build:
       context: .
       dockerfile: docker/cargo.dockerfile
@@ -24,11 +24,10 @@ services:
       article_parser_url: "http://article-parser:8080"
       surrealdb_host: "surrealdb:8000"
       chrome_headless: "true"
-      RUST_LOG: "debug"
+      RUST_LOG: "fetcher=trace"
 
   rater:
-    container_name: rater
-    restart: on-failure:5
+    restart: on-failure:3
     build:
       context: .
       dockerfile: docker/cargo.dockerfile
@@ -36,7 +35,8 @@ services:
     depends_on:
       - surrealdb
     environment:
-      RUST_LOG: debug
+      RUST_LOG: "rater=trace"
+      surrealdb_host: "surrealdb:8000"
 
   surrealdb:
     container_name: surrealdb

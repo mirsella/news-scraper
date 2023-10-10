@@ -4,11 +4,6 @@ import { extract, extractFromHtml } from "npm:@extractus/article-extractor";
 const app = new Hono();
 
 app.get("/fetch", async (c: Context) => {
-  console.log(
-    await extract(
-      "https://www.lavoixdunord.fr/1380867/article/2023-10-04/le-chef-republicain-kevin-mccarthy-destitue-une-premiere-dans-l-histoire-des",
-    ),
-  );
   try {
     const url = c.req.query("url");
     if (!url) {

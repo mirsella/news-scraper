@@ -9,6 +9,7 @@ FROM alpine:3.18.3 AS fetcher
 RUN apk add --no-cache chromium
 COPY .env /.env
 COPY --from=builder /app/target/x86_64-unknown-linux-musl/release/fetcher /fetcher
+# CMD ["/fetcher", "-e", "leparisien"]
 CMD ["/fetcher"]
 
 # Rater runtime

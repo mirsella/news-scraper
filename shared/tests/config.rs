@@ -7,6 +7,7 @@ fn test_load_config_default_path() {
     let config = Config::load("tests/mock_env").unwrap();
     assert_eq!(config.db_user, "news");
     assert_eq!(config.db_password, "arstneoi");
+    assert_eq!(config.openai_api_key, "KEYY");
     assert_eq!(config.article_parser_url, "http://localhost:8080");
     assert_eq!(config.surrealdb_host, "localhost:8000");
     assert_eq!(config.chrome_headless, None);

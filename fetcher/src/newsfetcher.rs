@@ -41,7 +41,7 @@ pub fn new(
     let mut futures: FuturesUnordered<JoinHandle<anyhow::Result<()>>> = FuturesUnordered::new();
     let mut sources = SOURCES.to_vec();
 
-    for _ in 0..config.chrome_concurrent.unwrap_or(5) {
+    for _ in 0..config.chrome_concurrent.unwrap_or(4) {
         while let Some(fetch) = sources.pop() {
             if enabled.contains(&fetch.0.to_string()) || enabled.is_empty() {
                 let opts = GetNewsOpts {

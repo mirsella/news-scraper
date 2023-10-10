@@ -1,26 +1,15 @@
 use std::{process::exit, time::Duration};
 
 use anyhow::{anyhow, Result};
+use async_openai::Client as ChatClient;
 use log::{error, trace};
 use shared::{Config, DbNews};
 use surrealdb::{
-    engine::remote::ws::{Client, Ws},
+    engine::remote::ws::{Client as DbClient, Ws},
     opt::{auth::Root, RecordId},
     sql::Thing,
     Surreal,
 };
-
-async fn lock_news(db: &Surreal<Client>, id: &Thing) -> Result<()> {
-    match db
-        .update::<Option<DbNews>>(("news", id.clone()))
-        .merge(serde_json::json!({"locked": true }))
-        .await
-    {
-        Ok(Some(_)) => Ok(()),
-        Err(e) => Err(anyhow!("{}", e)),
-        _ => Err(anyhow!("no news found")),
-    }
-}
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -38,14 +27,11 @@ async fn main() -> Result<()> {
     .await?;
     db.use_ns("news").use_db("news").await?;
 
+    let client = ChatClient::new();
+
     let mut last_id: Option<RecordId> = None;
     let res: Result<()> = loop {
-        let news: Option<DbNews> = db
-            .query(
-                "select * from news where rating == none AND date > time::floor(time::now(), 1w) AND locked == false limit 1",
-            )
-            .await?
-            .take(0)?;
+        let news = DbNews::get_nonrated(&db).await;
         let news = match news {
             None => {
                 trace!("no news to process");

@@ -9,10 +9,15 @@ fn get_articles_links(tab: &Arc<Tab>) -> Result<Vec<String>> {
         .find_elements(".article-wrapper > a")
         .expect(".article-wrapper > a")
         .iter()
-        .map(|el| {
+        .filter_map(|el| {
             let mut link = el.get_attribute_value("href").unwrap().expect("no href ??");
-            link.insert_str(0, "https://www.sudouest.fr");
-            link
+            if !link.starts_with("http") {
+                link.insert_str(0, "https://www.sudouest.fr");
+            }
+            if link.contains("youtube.com") {
+                return None;
+            }
+            Some(link)
         })
         .collect();
     Ok(links)

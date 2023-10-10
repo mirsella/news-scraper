@@ -2,7 +2,7 @@ use super::{GetNewsOpts, News};
 use anyhow::{Context, Result};
 use headless_chrome::Tab;
 use log::{debug, error, trace};
-use std::sync::Arc;
+use std::{sync::Arc, thread};
 
 const CATEGORIES: [&str; 7] = [
     "faits-divers",
@@ -17,7 +17,7 @@ const CATEGORIES: [&str; 7] = [
 fn get_articles_links(tab: &Arc<Tab>) -> Result<Vec<String>> {
     let links = tab
         .find_elements("div[class^='story'] > a, *[class*='article__link']")
-        .context("finding div > a")?
+        .context("finding div[class^='story'] > a, *[class*='article__link']")?
         .iter()
         .map(|a| {
             let mut link = a
@@ -42,14 +42,25 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
             .context("navigate_to")?;
         tab.wait_until_navigated()
             .context("category wait_until_navigated")?;
-        // tab.activate().unwrap();
         if let Ok(cookies) = tab.find_element_by_xpath("//button[contains(text(), 'Accepter')]") {
             cookies.click().context("clicking on cookies")?;
             tab.wait_until_navigated()
                 .context("cookies wait_until_navigated")?;
-        }
+            thread::sleep(std::time::Duration::from_secs(1));
+        };
 
-        let links = get_articles_links(&tab).context("leparisien")?;
+        // let links = get_articles_links(&tab).context("leparisien")?;
+        let links = match get_articles_links(&tab) {
+            Ok(links) => links,
+            Err(e) => {
+                error!("get_articles_links: {e}");
+                // let pngdata =
+                //     tab.capture_screenshot(CaptureScreenshotFormatOption::Png, None, None, false)?;
+                // std::fs::write("/app/leparisien.png", pngdata)?;
+                // warn!("wrote leparisien.png");
+                continue;
+            }
+        };
         trace!("found {} links on {category}", links.len());
         for url in links {
             if opts.seen_urls.lock().unwrap().contains(&url) {

@@ -41,10 +41,6 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
             .context("navigate_to")?;
         tab.wait_for_element(".content-une")
             .context("sciencesetavenir wait for element .content-une")?;
-        if let Ok(cookies) = tab.find_element("#didomi-notice-agree-button") {
-            trace!("clicking on cookies");
-            cookies.click().context("clicking on cookies")?;
-        }
 
         let links = get_articles_links(&tab).context("sciencesetavenir")?;
         trace!("found {} links on {category}", links.len());

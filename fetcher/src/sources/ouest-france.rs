@@ -24,10 +24,6 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
     tab.navigate_to("https://www.ouest-france.fr/actualite-en-continu/archives/")
         .context("navigate_to")?;
     tab.wait_until_navigated().context("wait_until_navigated")?;
-    if let Ok(el) = tab.find_element(".didomi-continue-without-agreeing") {
-        debug!("clicking on cookies");
-        el.click()?;
-    }
 
     let links = get_articles_links(&tab).context("ouest-france")?;
     for url in links {
@@ -36,9 +32,10 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
             continue;
         }
         opts.seen_urls.lock().unwrap().push(url.clone());
+
         let mut res = super::fetch_article(&url);
         if let Err(e) = res {
-            trace!("fetch_article: {}", e);
+            trace!("fetch_article {url}: {}", e);
             tab.navigate_to(&url)
                 .context("ouest-france navigate_to url")?;
             tab.wait_until_navigated()
@@ -56,7 +53,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
                 link: url,
             }),
             Err(err) => {
-                debug!("parse_article: {err}");
+                debug!("parse_article {url}: {err}");
                 continue;
             }
         };
