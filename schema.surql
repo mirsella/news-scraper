@@ -8,7 +8,7 @@ OPTION IMPORT;
 -- PARAMS
 -- ------------------------------
 
-DEFINE PARAM $MAX_RATING VALUE 1000;
+DEFINE PARAM $MAX_RATING VALUE 100;
 
 -- ------------------------------
 -- SCOPES
@@ -29,8 +29,8 @@ DEFINE FIELD date ON news TYPE datetime ASSERT $value != NONE;
 DEFINE FIELD link ON news TYPE string ASSERT string::is::url($value);
 DEFINE FIELD note ON news TYPE string;
 DEFINE FIELD provider ON news TYPE string ASSERT $value != NONE PERMISSIONS NONE;
-DEFINE FIELD rating ON news TYPE option<int> ASSERT $value = NONE OR ($value > 0 AND $value < $MAX_RATING);
-DEFINE FIELD locked ON news TYPE bool DEFAULT false ASSERT ($value == false AND $before == true) OR $before == false;
+DEFINE FIELD rating ON news TYPE option<int> ASSERT $value = NONE OR ($value >= 0 AND $value =< $MAX_RATING);
+-- DEFINE FIELD locked ON news TYPE bool DEFAULT false ASSERT ($value == false AND $before == true) OR $before == false;
 DEFINE FIELD tags ON news TYPE option<array<string>>;
 DEFINE FIELD title ON news TYPE string;
 DEFINE FIELD used ON news TYPE bool DEFAULT false;

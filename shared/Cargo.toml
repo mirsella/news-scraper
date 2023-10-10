@@ -8,6 +8,7 @@ edition = "2021"
 [dependencies]
 ammonia = "3.3.0"
 anyhow = "1.0.75"
+async-openai = "0.14.3"
 chrono = "0.4.26"
 dotenvy = "0.15.7"
 envy = "0.4.2"

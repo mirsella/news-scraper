@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use shared::*;
+use shared::config::Config;
 
 #[test]
 fn test_load_config_default_path() {
