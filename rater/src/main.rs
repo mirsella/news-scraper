@@ -3,11 +3,10 @@ use std::{process::exit, time::Duration};
 use anyhow::{anyhow, Result};
 use async_openai::Client as ChatClient;
 use log::{error, trace};
-use shared::{Config, DbNews};
+use shared::{config::Config, db_news::DbNews};
 use surrealdb::{
-    engine::remote::ws::{Client as DbClient, Ws},
+    engine::remote::ws::Ws,
     opt::{auth::Root, RecordId},
-    sql::Thing,
     Surreal,
 };
 
@@ -31,21 +30,23 @@ async fn main() -> Result<()> {
 
     let mut last_id: Option<RecordId> = None;
     let res: Result<()> = loop {
-        let news = DbNews::get_nonrated(&db).await;
-        let news = match news {
-            None => {
+        let news = DbNews::new_nonrated(&db).await;
+        let mut news = match news {
+            Err(e) if e.to_string() == "no news found" => {
                 trace!("no news to process");
                 tokio::time::sleep(tokio::time::Duration::from_secs(60)).await;
                 continue;
             }
-            Some(news) => news,
+            Err(e) => break Err(e.context("failed to get news from db")),
+            Ok(news) => news,
         };
         if news.id == last_id {
             break Err(anyhow!("found two time the same unrated news"));
         }
-        let id = news.id.clone().unwrap();
-        if let Err(e) = lock_news(&db, &id).await {
+        let id = news.id.clone().expect("no id wtf");
+        if let Err(e) = news.lock(&db).await {
             error!("failed to lock news {id}: {e}");
+            continue;
         };
         trace!(
             "processing id {}, text size {}, {}",

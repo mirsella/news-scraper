@@ -3,7 +3,7 @@ mod sources;
 use anyhow::Result;
 use clap::Parser;
 use log::{error, info, trace};
-use shared::*;
+use shared::{config::Config, db_news::DbNews, *};
 use std::{
     process::exit,
     sync::{Arc, Mutex},

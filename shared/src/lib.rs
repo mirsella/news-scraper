@@ -1,8 +1,6 @@
-use anyhow::{anyhow, Result};
+pub mod config;
+pub mod db_news;
 use chrono::{DateTime, Utc};
-use serde::{Deserialize, Serialize};
-use std::{borrow::Cow, fmt, future::Future, path::PathBuf};
-use surrealdb::{engine::remote::ws::Client as DbClient, sql::Thing, Surreal};
 
 #[derive(Debug, Clone)]
 pub struct News {
@@ -23,100 +21,6 @@ impl Default for News {
             body: "DefaultBody".to_string(),
             link: "http://example.com".to_string(),
         }
-    }
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone, Default)]
-pub struct DbNews {
-    pub id: Option<surrealdb::opt::RecordId>,
-    pub html_body: Cow<'static, str>,
-    pub text_body: Cow<'static, str>,
-    pub caption: Cow<'static, str>,
-    pub date: surrealdb::sql::Datetime,
-    pub link: Cow<'static, str>,
-    pub note: Cow<'static, str>,
-    pub provider: Cow<'static, str>,
-    pub rating: Option<i64>,
-    pub tags: Option<Vec<Cow<'static, str>>>,
-    pub title: Cow<'static, str>,
-    pub used: bool,
-    pub locked: bool,
-}
-
-impl DbNews {
-    pub async fn unlock(&mut self, db: Surreal<DbClient>) -> Result<&Self> {
-        let id: Thing = self.id.clone().ok_or(anyhow!("no id"))?;
-        match db
-            .update::<Option<DbNews>>(("news", id))
-            .merge(serde_json::json!({"locked": false }))
-            .await
-        {
-            Ok(Some(new)) => {
-                *self = new;
-                Ok(self)
-            }
-            Err(e) => Err(anyhow!("{}", e)),
-            _ => Err(anyhow!("no news found")),
-        }
-    }
-    pub async fn lock(&mut self, db: Surreal<DbClient>) -> Result<&Self> {
-        let id: Thing = self.id.clone().ok_or(anyhow!("no id"))?;
-        match db
-            .update::<Option<DbNews>>(("news", id))
-            .merge(serde_json::json!({"locked": true }))
-            .await
-        {
-            Ok(Some(new)) => {
-                *self = new;
-                Ok(self)
-            }
-            Err(e) => Err(anyhow!("{}", e)),
-            _ => Err(anyhow!("no news found")),
-        }
-    }
-    pub async fn get_nonrated(db: Surreal<DbClient>) -> Result<DbNews> {
-        let news: Option<DbNews> = db
-            .query(
-                "select * from news where rating == none AND date > time::floor(time::now(), 1w) AND locked == false limit 1",
-            )
-            .await?
-            .take(0)?;
-        news.ok_or(anyhow!("no news found"))
-    }
-}
-
-#[derive(Deserialize, Clone)]
-pub struct Config {
-    pub db_user: String,
-    pub db_password: String,
-    pub openai_api_key: String,
-    pub article_parser_url: String,
-    pub surrealdb_host: String,
-    pub chrome_headless: Option<bool>,
-    pub chrome_concurrent: Option<usize>,
-    pub chrome_data_dir: Option<PathBuf>,
-}
-impl Config {
-    pub fn load(path: &str) -> Result<Config> {
-        dotenvy::from_filename(path)?;
-        let config: Config = envy::from_env()?;
-        Ok(config)
-    }
-}
-impl fmt::Debug for Config {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(
-            f,
-            "Config {{\n    db_user: {}\n    db_password: {}\n    openai_api_key: {}\n    article_parser_url: {}\n    surrealdb_url: {}\n    chrome_headless: {:?}\n    chrome_concurrent: {:?}\n    chrome_data_dir: {:?}\n}}",
-            "*".repeat(self.db_user.len()),
-            "*".repeat(self.db_password.len()),
-            "*".repeat(self.openai_api_key.len()),
-            self.article_parser_url,
-            self.surrealdb_host,
-            self.chrome_headless,
-            self.chrome_concurrent,
-            self.chrome_data_dir,
-        )
     }
 }
 
