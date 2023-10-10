@@ -39,12 +39,18 @@ async fn main() -> Result<()> {
     let openai =
         ChatClient::with_config(OpenAIConfig::default().with_api_key(&config.openai_api_key));
 
-    let mut last_id: Option<RecordId> = None;
+    // TODO: use semaphore to limit parallel rating
+    // let sem = Arc::new(tokio::sync::Semaphore::new(10))
+
+    let news: Option<Vec<DbNews>> = db
+        .query("select * from news where rating == none AND date > time::floor(time::now(), 1w)")
+        .await?
+        .take(0)?;
+
     let res: Result<()> = loop {
         if !running.load(Ordering::Relaxed) {
             break Ok(());
         }
-        let news = DbNews::new_nonrated(&db).await;
         let mut news = match news {
             Err(e) if e.to_string() == "no news found" => {
                 trace!("no news to process");
@@ -54,9 +60,6 @@ async fn main() -> Result<()> {
             Err(e) => break Err(e.context("failed to get news from db")),
             Ok(news) => news,
         };
-        if news.id == last_id {
-            break Err(anyhow!("found two time the same unrated news"));
-        }
         let id = news.id.clone().expect("no id wtf");
         trace!("processing {}, {}", id.id, news.link);
 
@@ -71,7 +74,6 @@ async fn main() -> Result<()> {
         if let Err(e) = news.save(&db).await {
             error!("save: {e}")
         }
-        last_id = news.id;
     };
     res
 }

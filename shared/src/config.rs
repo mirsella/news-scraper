@@ -13,6 +13,7 @@ pub struct Config {
     pub article_parser_url: String,
     pub surrealdb_host: String,
     pub rating_chat_prompt: String,
+    pub parallel_rating: usize,
     pub chrome_concurrent: Option<usize>,
     pub chrome_data_dir: Option<PathBuf>,
     pub chrome_headless: Option<bool>,

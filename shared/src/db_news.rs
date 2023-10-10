@@ -27,15 +27,15 @@ pub struct DbNews {
 }
 
 impl DbNews {
-    pub async fn new_nonrated(db: &Surreal<DbClient>) -> Result<DbNews> {
-        let news: Option<DbNews> = db
-            .query(
-                "select * from news where rating == none AND date > time::floor(time::now(), 1w) limit 1",
-            )
-            .await?
-            .take(0)?;
-        news.ok_or(anyhow!("no news found"))
-    }
+    // pub async fn new_nonrated(db: &Surreal<DbClient>) -> Result<DbNews> {
+    //     let news: Option<DbNews> = db
+    //         .query(
+    //             "select * from news where rating == none AND date > time::floor(time::now(), 1w) limit 1",
+    //         )
+    //         .await?
+    //         .take(0)?;
+    //     news.ok_or(anyhow!("no news found"))
+    // }
 
     pub async fn save(&self, db: &Surreal<DbClient>) -> Result<()> {
         let id = self.id.clone().unwrap();

@@ -3,6 +3,7 @@ db_user = "news"
 openai_api_key = KEYY
 article_parser_url = "http://localhost:8080"
 rating_chat_prompt = test
+parallel_rating = 10
 surrealdb_host = localhost:8000
 
 chrome_concurrent = 10
