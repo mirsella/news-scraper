@@ -11,6 +11,8 @@ fn test_load_config_default_path() {
     assert_eq!(config.article_parser_url, "http://localhost:8080");
     assert_eq!(config.surrealdb_host, "localhost:8000");
     assert_eq!(config.rating_chat_prompt, "test");
+    assert_eq!(config.telegram_token, "test");
+    assert_eq!(config.telegram_id, 2039854);
     assert_eq!(config.parallel_rating, 10);
     assert_eq!(config.chrome_headless, None);
     assert_eq!(config.chrome_concurrent, Some(10));

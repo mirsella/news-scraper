@@ -46,6 +46,8 @@ async fn main() -> Result<()> {
         config.chrome_headless = Some(value);
     }
 
+    let telegram = Telegram::new(config.telegram_token.clone(), config.telegram_id);
+
     let db = Surreal::new::<Ws>(&config.surrealdb_host).await?;
     db.signin(Root {
         username: &config.db_user,
@@ -56,7 +58,7 @@ async fn main() -> Result<()> {
 
     let seen_urls: Vec<String> = db.query("select link from news").await?.take((0, "link"))?;
     let seen_urls = Arc::new(Mutex::new(seen_urls));
-    let mut rx = newsfetcher::new(&config, cli.enable.unwrap_or_default(), seen_urls);
+    let mut rx = newsfetcher::new(&config, cli.enable.unwrap_or_default(), seen_urls, telegram);
     let mut counter = 0;
     while let Some(recved) = rx.recv().await {
         let news = match recved {

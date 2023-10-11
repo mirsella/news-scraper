@@ -1,6 +1,7 @@
 use anyhow::{Context, Result};
 use async_openai::{config::OpenAIConfig, Client as ChatClient};
 use log::{debug, error, info, trace};
+use shared::Telegram;
 use shared::{config::Config, db_news::DbNews};
 use std::process::exit;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -12,7 +13,14 @@ use tokio::task::JoinHandle;
 
 async fn retrieve_db_news(db: Arc<Surreal<WsClient>>) -> Result<Vec<DbNews>> {
     let db_news: Vec<DbNews> = db
-        .query("select * from news where rating == none AND date > time::floor(time::now(), 1w)")
+        .query(
+            "select * from news
+where rating == none
+AND tags == none
+AND date > time::floor(time::now(), 1w)
+AND used == false
+AND !string::contains(note, 'error rating')",
+        )
         .await?
         .take(0)?;
     Ok(db_news)
@@ -47,6 +55,8 @@ async fn main() -> Result<()> {
     let openai =
         ChatClient::with_config(OpenAIConfig::default().with_api_key(&config.openai_api_key));
     let openai = Arc::new(openai);
+
+    let telegram = Telegram::new(config.telegram_token.clone(), config.telegram_id);
 
     let sem = Arc::new(Semaphore::new(config.parallel_rating));
 
@@ -85,17 +95,20 @@ async fn main() -> Result<()> {
                 }
                 debug!("processing {}, {}", id.id, news.link);
                 let rating = match news.rate(&openai, &rating_chat_prompt).await {
-                    Ok(rating) => rating,
+                    Ok(rating) => Some(rating),
                     Err(e) => {
-                        error!("rating {id}: {e}");
-                        return Ok(());
+                        error!("rating {id}: '{e}'");
+                        news.rating = None;
+                        news.tags = None;
+                        news.note = format!("error rating failed: {e}").into();
+                        None
                     }
                 };
                 debug!("{id} rating: {rating:?}");
                 match news.save(&db).await.context("news.save") {
                     Ok(_) => Ok(()),
                     Err(e) => {
-                        error!("saving {id} with {rating:?}: {e}");
+                        error!("saving {id} with {rating:?}: '{e}'");
                         Err(e)
                     }
                 }
@@ -105,6 +118,9 @@ async fn main() -> Result<()> {
         for handle in handles {
             if let Err(e) = handle.await? {
                 error!("stopping because handle errored: {}", e);
+                if let Err(e) = telegram.send(format!("JoinError: {:?}", e)) {
+                    error!("TelegramError: {:?}", e);
+                }
                 return Err(e);
             };
         }

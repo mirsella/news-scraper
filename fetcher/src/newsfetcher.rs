@@ -8,7 +8,7 @@ use crate::sources::{GetNewsOpts, SOURCES};
 use futures::{stream::FuturesUnordered, StreamExt};
 use headless_chrome::{Browser, LaunchOptionsBuilder};
 use log::{error, trace};
-use shared::{config::Config, *};
+use shared::{config::Config, Telegram, *};
 use tokio::{
     sync::mpsc::{channel, Receiver},
     task::{spawn_blocking, JoinHandle},
@@ -34,6 +34,7 @@ pub fn new(
     config: &Config,
     enabled: Vec<String>,
     seen_urls: Arc<Mutex<Vec<String>>>,
+    telegram: Telegram,
 ) -> Receiver<anyhow::Result<News>> {
     let config: Config = config.to_owned();
     let (tx, rx) = channel(500);
@@ -61,6 +62,9 @@ pub fn new(
                 Ok(Err(e)) => tx.send(Err(e)).await.unwrap(),
                 Err(e) => {
                     error!("JoinError: {:?}", e);
+                    if let Err(e) = telegram.send(format!("JoinError: {:?}", e)) {
+                        error!("TelegramError: {:?}", e);
+                    }
                     continue;
                 }
                 _ => (),

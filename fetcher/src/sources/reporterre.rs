@@ -2,7 +2,6 @@ use super::{GetNewsOpts, News};
 use anyhow::{Context, Result};
 use headless_chrome::Tab;
 use log::{debug, trace};
-use shared::sanitize_html;
 use std::sync::Arc;
 
 const CATEGORIES: [&str; 8] = [

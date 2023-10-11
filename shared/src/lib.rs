@@ -1,6 +1,10 @@
 pub mod config;
 pub mod db_news;
+pub mod telegram;
 use chrono::{DateTime, Utc};
+pub use config::Config;
+pub use db_news::DbNews;
+pub use telegram::Telegram;
 
 #[derive(Debug, Clone)]
 pub struct News {

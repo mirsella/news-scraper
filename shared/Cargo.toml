@@ -19,3 +19,4 @@ serde = { version = "1.0.188", features = ["derive"] }
 serde_json = "1.0.107"
 surrealdb = "1.0.0"
 tiktoken-rs = { git = "https://github.com/mirsella/tiktoken-rs", rev = "9a1affa" }
+ureq = { version = "2.8.0", features = ["json"] }

@@ -68,7 +68,8 @@ impl DbNews {
             ChatCompletionRequestMessage {
                 role: Role::System,
                 content: Some(
-                    "your output will ONLY be in this format: rating;tags,tags,etc...".to_string(),
+                    "your response will ONLY be in this format: <rating>;tags,tags,etc..."
+                        .to_string(),
                 ),
                 ..Default::default()
             },

@@ -5,6 +5,9 @@ article_parser_url = "http://localhost:8080"
 rating_chat_prompt = test
 parallel_rating = 10
 surrealdb_host = localhost:8000
+telegram_token = test
+telegram_id = 2039854
+
 
 chrome_concurrent = 10
 chrome_data_dir = "/tmp/chrome"
