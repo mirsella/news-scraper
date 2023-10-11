@@ -37,16 +37,14 @@ impl DbNews {
     //     news.ok_or(anyhow!("no news found"))
     // }
 
-    pub async fn save(&self, db: &Surreal<DbClient>) -> Result<()> {
+    pub async fn save(&self, db: &Surreal<DbClient>) -> Result<DbNews> {
         let id = self.id.clone().unwrap();
-        println!("saving news with tags: {:?}", self.tags);
         let news = db
             .update::<Option<DbNews>>(("news", id))
             .content(self)
             .await?
             .ok_or(anyhow!("no news found"))?;
-        println!("saved news with tags: {:?}", news.tags);
-        Ok(())
+        Ok(news)
     }
     pub async fn rate(
         &mut self,

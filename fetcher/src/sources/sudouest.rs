@@ -29,8 +29,15 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
     let user_agent = user_agent.replace("HeadlessChrome", "Chrome");
     tab.set_user_agent(&user_agent, None, None)?;
     tab.navigate_to("https://www.sudouest.fr/")
-        .context("navigate_to")?;
-    tab.wait_until_navigated().context("wait_until_navigated")?;
+        .context("navigate_to")?
+        .wait_until_navigated()
+        .context("wait_until_navigated")?;
+
+    if let Ok(cookie) = tab.find_element("#didomi-notice-agree-button") {
+        trace!("clicking cookie");
+        cookie.click().context("clicking on cookie")?;
+        std::thread::sleep(std::time::Duration::from_secs(1));
+    }
 
     let links = get_articles_links(&tab).context("sudouest")?;
     for url in links {
@@ -39,6 +46,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
             continue;
         }
         opts.seen_urls.lock().unwrap().push(url.clone());
+
         let payload = match super::fetch_article(&url) {
             Ok(res) => Ok(News {
                 title: res.title,
@@ -49,7 +57,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
                 link: url,
             }),
             Err(err) => {
-                debug!("parse_article: {err}");
+                debug!("fetch_article: {err}");
                 continue;
             }
         };

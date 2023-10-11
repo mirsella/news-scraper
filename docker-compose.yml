@@ -9,6 +9,11 @@ services:
       dockerfile: docker/article-parser.dockerfile
     ports:
       - "8080:8080"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080"]
+      retries: 5
+      start_period: 20s
+      timeout: 10s
 
   fetcher:
     container_name: fetcher

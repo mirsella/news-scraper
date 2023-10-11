@@ -12,7 +12,13 @@ app.get("/fetch", async (req, res) => {
   try {
     const controller = new AbortController();
     setTimeout(() => controller.abort(), 5000);
-    const data = await extract(url, undefined, { signal: controller.signal });
+    const data = await extract(url, undefined, {
+      signal: controller.signal,
+      headers: {
+        "user-agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36",
+      },
+    });
     return res.json(data);
   } catch (err) {
     res.status(500);

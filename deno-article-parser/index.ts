@@ -1,5 +1,6 @@
-import { Hono, Context } from "https://deno.land/x/hono@v3.5.4/mod.ts";
-import { extract, extractFromHtml } from "npm:@extractus/article-extractor";
+import { serve } from "serve";
+import { Hono } from "hono";
+import { extract } from "article-extractor";
 
 const app = new Hono();
 
@@ -12,7 +13,13 @@ app.get("/fetch", async (c: Context) => {
     }
     const controller = new AbortController();
     setTimeout(() => controller.abort(), 5000);
-    const data = await extract(url, undefined, { signal: controller.signal });
+    const data = await extract(url, undefined, {
+      signal: controller.signal,
+      headers: {
+        "user-agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36",
+      },
+    });
     return c.json(data);
   } catch (err) {
     c.status(500);
@@ -25,9 +32,9 @@ app.post("/parse", async (c: Context) => {
   try {
     const body = await c.req.text();
     if (!body) {
-      console.log("body is required" + body);
+      console.log("no body provided" + body);
       c.status(400);
-      return c.json({ message: "html body is required" });
+      return c.json({ message: "no body provided" });
     }
 
     const data = await extractFromHtml(body);

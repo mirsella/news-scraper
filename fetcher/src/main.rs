@@ -45,7 +45,6 @@ async fn main() -> Result<()> {
     if let Some(value) = cli.headless {
         config.chrome_headless = Some(value);
     }
-    info!("config: {:?}", config);
 
     let db = Surreal::new::<Ws>(&config.surrealdb_host).await?;
     db.signin(Root {

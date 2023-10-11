@@ -1,11 +1,10 @@
-use anyhow::{anyhow, Context, Result};
+use anyhow::{Context, Result};
 use async_openai::{config::OpenAIConfig, Client as ChatClient};
 use log::{debug, error, info, trace};
 use shared::{config::Config, db_news::DbNews};
 use std::process::exit;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
-use std::time::Duration;
 use surrealdb::engine::remote::ws::Ws;
 use surrealdb::{engine::remote::ws::Client as WsClient, opt::auth::Root, Surreal};
 use tokio::sync::Semaphore;
@@ -21,7 +20,7 @@ async fn retrieve_db_news(db: Arc<Surreal<WsClient>>) -> Result<Vec<DbNews>> {
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    env_logger::init();
+    env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
 
     let running = Arc::new(AtomicBool::new(true));
     let r = running.clone();
@@ -109,5 +108,6 @@ async fn main() -> Result<()> {
                 return Err(e);
             };
         }
+        info!("done");
     }
 }

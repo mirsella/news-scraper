@@ -2,6 +2,7 @@ use super::{GetNewsOpts, News};
 use anyhow::{Context, Result};
 use headless_chrome::Tab;
 use log::{debug, trace};
+use shared::sanitize_html;
 use std::sync::Arc;
 
 const CATEGORIES: [&str; 8] = [
@@ -53,11 +54,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
             }
             opts.seen_urls.lock().unwrap().push(url.clone());
 
-            tab.navigate_to(&url)?;
-            tab.wait_until_navigated()
-                .context("article wait_until_navigated")?;
-            let res = super::parse_article(&tab.get_content()?);
-            let payload = match res {
+            let payload = match super::fetch_article(&url) {
                 Ok(res) => Ok(News {
                     title: res.title,
                     caption: res.description,
@@ -67,7 +64,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
                     link: url,
                 }),
                 Err(err) => {
-                    debug!("parse_article: {}", err);
+                    debug!("fetch_article: {}", err);
                     continue;
                 }
             };
