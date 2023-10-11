@@ -1,27 +1,22 @@
-use anyhow::{anyhow, Result};
+use anyhow::{anyhow, Context, Result};
 use async_openai::{config::OpenAIConfig, Client as ChatClient};
-use log::{error, info, trace};
+use log::{debug, error, info, trace};
 use shared::{config::Config, db_news::DbNews};
 use std::process::exit;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
+use std::time::Duration;
 use surrealdb::engine::remote::ws::Ws;
-use surrealdb::{
-    engine::remote::ws::Client as WsClient,
-    opt::{auth::Root, RecordId},
-    Surreal,
-};
+use surrealdb::{engine::remote::ws::Client as WsClient, opt::auth::Root, Surreal};
 use tokio::sync::Semaphore;
+use tokio::task::JoinHandle;
 
 async fn retrieve_db_news(db: Arc<Surreal<WsClient>>) -> Result<Vec<DbNews>> {
-    let db_news: Option<Vec<DbNews>> = db
+    let db_news: Vec<DbNews> = db
         .query("select * from news where rating == none AND date > time::floor(time::now(), 1w)")
         .await?
         .take(0)?;
-    match db_news {
-        Some(db_news) => Ok(db_news),
-        None => Err(anyhow!("no news found")),
-    }
+    Ok(db_news)
 }
 
 #[tokio::main]
@@ -37,7 +32,7 @@ async fn main() -> Result<()> {
     .expect("Error setting Ctrl-C handler");
 
     let config = Config::load(".env").unwrap_or_else(|e| {
-        error!("config: {:?}", e);
+        error!("config: {}", e);
         exit(1);
     });
 
@@ -57,43 +52,62 @@ async fn main() -> Result<()> {
     let sem = Arc::new(Semaphore::new(config.parallel_rating));
 
     loop {
-        let db_news = retrieve_db_news(db.clone()).await;
-        let db_news = match db_news {
-            Ok(news) => news,
-            Err(e) if e.to_string() == "no news found" => {
-                trace!("no news to process");
-                tokio::time::sleep(tokio::time::Duration::from_secs(60)).await;
-                continue;
-            }
-        }
-    }
-    for news in db_news {
         if !running.load(Ordering::Relaxed) {
             return Ok(());
         }
-        let mut news = match news {
+        let db_news = retrieve_db_news(db.clone()).await;
+        let db_news = match db_news {
+            Ok(news) => {
+                info!("got {} news to process", news.len());
+                news
+            }
             Err(e) if e.to_string() == "no news found" => {
                 trace!("no news to process");
                 tokio::time::sleep(tokio::time::Duration::from_secs(60)).await;
                 continue;
             }
             Err(e) => return Err(e.context("failed to get news from db")),
-            Ok(news) => news,
         };
-        let id = news.id.clone().expect("no id wtf");
-        trace!("processing {}, {}", id.id, news.link);
 
-        match news.rate(&openai, &config.rating_chat_prompt).await {
-            Ok(res) => {
-                info!("rating {} ({}): {:?}", id, news.link, res);
-            }
-            Err(e) => {
-                error!("rate: {:?}", e)
-            }
+        let rating_chat_prompt = Arc::new(config.rating_chat_prompt.clone());
+        let mut handles = Vec::with_capacity(db_news.len());
+
+        for mut news in db_news {
+            let id = news.id.clone().expect("no id wtf");
+            let sem = sem.clone();
+            let openai = openai.clone();
+            let db = db.clone();
+            let rating_chat_prompt = rating_chat_prompt.clone();
+            let running = running.clone();
+            let handle: JoinHandle<Result<()>> = tokio::spawn(async move {
+                let _permit = sem.acquire().await;
+                if !running.load(Ordering::Relaxed) {
+                    return Ok(());
+                }
+                debug!("processing {}, {}", id.id, news.link);
+                let rating = match news.rate(&openai, &rating_chat_prompt).await {
+                    Ok(rating) => rating,
+                    Err(e) => {
+                        error!("rating {id}: {e}");
+                        return Ok(());
+                    }
+                };
+                debug!("{id} rating: {rating:?}");
+                match news.save(&db).await.context("news.save") {
+                    Ok(_) => Ok(()),
+                    Err(e) => {
+                        error!("saving {id} with {rating:?}: {e}");
+                        Err(e)
+                    }
+                }
+            });
+            handles.push(handle);
         }
-        if let Err(e) = news.save(&db).await {
-            error!("save: {e}")
+        for handle in handles {
+            if let Err(e) = handle.await? {
+                error!("stopping because handle errored: {}", e);
+                return Err(e);
+            };
         }
     }
-    Ok(())
 }

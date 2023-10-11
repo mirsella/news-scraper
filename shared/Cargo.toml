@@ -18,3 +18,4 @@ regex = "1.9.6"
 serde = { version = "1.0.188", features = ["derive"] }
 serde_json = "1.0.107"
 surrealdb = "1.0.0"
+tiktoken-rs = { git = "https://github.com/mirsella/tiktoken-rs", rev = "9a1affa" }
