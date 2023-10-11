@@ -33,16 +33,16 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
         }
         opts.seen_urls.lock().unwrap().push(url.clone());
 
-        let mut res = super::fetch_article(&url);
-        if let Err(e) = res {
-            trace!("fetch_article {url}: {}", e);
-            tab.navigate_to(&url)
-                .context("ouest-france navigate_to url")?;
-            tab.wait_until_navigated()
-                .context("ouest-france wait_until_navigated parse")?;
-            let doc = tab.get_content().context("ouest-france get_content")?;
-            res = super::parse_article(&doc);
-        }
+        let res = super::fetch_article(&url);
+        // if let Err(e) = res {
+        //     trace!("fetch_article {url}: {}", e);
+        //     tab.navigate_to(&url)
+        //         .context("ouest-france navigate_to url")?;
+        //     tab.wait_until_navigated()
+        //         .context("ouest-france wait_until_navigated parse")?;
+        //     let doc = tab.get_content().context("ouest-france get_content")?;
+        //     res = super::parse_article(&doc);
+        // }
         let payload = match res {
             Ok(res) => Ok(News {
                 title: res.title,
@@ -53,7 +53,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
                 link: url,
             }),
             Err(err) => {
-                debug!("parse_article {url}: {err}");
+                debug!("fetch_article {url}: {err}");
                 continue;
             }
         };
