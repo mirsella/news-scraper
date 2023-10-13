@@ -2,17 +2,15 @@ use super::{GetNewsOpts, News};
 use anyhow::{Context, Result};
 use headless_chrome::Tab;
 use log::{debug, error, trace};
-use std::{sync::Arc, time::Instant};
+use std::sync::Arc;
 
 fn get_articles_links(tab: &Arc<Tab>) -> Result<Vec<String>> {
-    let time = Instant::now();
     let links: Vec<String> = tab
         .find_elements(".titre-lien")
         .expect(".titre-lien")
         .iter()
         .map(|el| el.get_attribute_value("href").unwrap().expect("no href ??"))
         .collect();
-    debug!("get_articles_links took: {:#?}", time.elapsed());
     Ok(links)
 }
 

@@ -1,6 +1,5 @@
-import { serve } from "serve";
-import { Hono } from "hono";
-import { extract } from "article-extractor";
+import { Context, Hono } from "hono";
+import { extract, extractFromHtml } from "article-extractor";
 
 const app = new Hono();
 
