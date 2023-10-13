@@ -32,6 +32,7 @@ services:
       RUST_LOG: "fetcher=trace"
 
   rater:
+    container_name: rater
     restart: on-failure:3
     build:
       context: .
