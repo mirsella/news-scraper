@@ -117,11 +117,11 @@ async fn main() -> Result<()> {
         }
         for handle in handles {
             if let Err(e) = handle.await? {
+                running.store(false, Ordering::Relaxed);
                 error!("stopping because handle errored: {}", e);
                 if let Err(e) = telegram.send(format!("JoinError: {:?}", e)) {
                     error!("TelegramError: {:?}", e);
                 }
-                return Err(e);
             };
         }
         info!("done");
