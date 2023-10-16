@@ -6,6 +6,8 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
+  telegram_token: ${{ secrets.telegram_token }}
+  telegram_id: ${{ secrets.telegram_id }}
 
 jobs:
   build_and_test:
