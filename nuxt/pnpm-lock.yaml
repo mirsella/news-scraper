@@ -4,6 +4,11 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+dependencies:
+  surrealdb.js:
+    specifier: ^0.9.1
+    version: 0.9.1
+
 devDependencies:
   '@nuxt/devtools':
     specifier: latest
@@ -1517,6 +1522,7 @@ packages:
     dependencies:
       is-glob: 4.0.3
       micromatch: 4.0.5
+      napi-wasm: 1.1.0
     dev: true
     bundledDependencies:
       - napi-wasm
@@ -4970,6 +4976,10 @@ packages:
     hasBin: true
     dev: true
 
+  /napi-wasm@1.1.0:
+    resolution: {integrity: sha512-lHwIAJbmLSjF9VDRm9GoVOy9AGp3aIvkjv+Kvz9h16QR3uSVYH78PNQUnT2U4X53mhlnV2M7wrhibQ3GHicDmg==}
+    dev: true
+
   /negotiator@0.6.3:
     resolution: {integrity: sha512-+EUsqGPLsM+j/zdChZjsnX51g4XrHFOIXwfnCVPGlQk/k5giakcKsuxCObBRu6DSm9opw/O6slWbJdghQM4bBg==}
     engines: {node: '>= 0.6'}
@@ -6768,6 +6778,16 @@ packages:
     engines: {node: '>= 0.4'}
     dev: true
 
+  /surrealdb.js@0.9.1:
+    resolution: {integrity: sha512-Lw7gds+u5966ng00/yOOkeW90VFj2tI5YNZ1cY7t9fyl9yEEcrFOkR5djqXwuJ1V3ORVORP5l+Hv2N6Sfgh5PQ==}
+    dependencies:
+      unws: 0.2.4(ws@8.14.2)
+      ws: 8.14.2
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
+    dev: false
+
   /svg-tags@1.0.0:
     resolution: {integrity: sha512-ovssysQTa+luh7A5Weu3Rta6FJlFBBbInjOh722LIt6klpU2/HtdUbszju/G4devcvk8PGt7FCLv5wftu3THUA==}
     dev: true
@@ -7197,6 +7217,15 @@ packages:
       - supports-color
     dev: true
 
+  /unws@0.2.4(ws@8.14.2):
+    resolution: {integrity: sha512-/N1ajiqrSp0A/26/LBg7r10fOcPtGXCqJRJ61sijUFoGZMr6ESWGYn7i0cwr7fR7eEECY5HsitqtjGHDZLAu2w==}
+    engines: {node: '>=16.14.0'}
+    peerDependencies:
+      ws: '*'
+    dependencies:
+      ws: 8.14.2
+    dev: false
+
   /update-browserslist-db@1.0.13(browserslist@4.22.1):
     resolution: {integrity: sha512-xebP81SNcPuNpPP3uzeW1NYXxI3rxyJzF3pD6sH4jE7o/IX+WtSpwnVU+qIsDPyk0d3hmFQ7mjqc6AtV604hbg==}
     hasBin: true
@@ -7612,7 +7641,6 @@ packages:
         optional: true
       utf-8-validate:
         optional: true
-    dev: true
 
   /xxhashjs@0.2.2:
     resolution: {integrity: sha512-AkTuIuVTET12tpsVIQo+ZU6f/qDmKuRUcjaqR+OIvm+aCBsZ95i7UVY5WJ9TMsSaZ0DA2WxoZ4acu0sPH+OKAw==}

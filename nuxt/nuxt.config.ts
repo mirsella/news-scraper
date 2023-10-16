@@ -2,4 +2,9 @@
 export default defineNuxtConfig({
   modules: ["@nuxt/ui"],
   devtools: { enabled: true },
+  // app: {
+  //   head: {
+  //     titleTemplate: "%s - News-scraper",
+  //   },
+  // },
 });

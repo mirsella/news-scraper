@@ -1,11 +1,9 @@
 <script setup lang="ts">
-const route = useRoute()
+const route = useRoute();
+const db_ready = ref(false);
+db_ready.value = (await $db.ready) || false;
 </script>
 
 <template>
-  <div>
-    <h1>Nuxt Routing set up successfully!</h1>
-    <p>Current route: {{ route.path }}</p>
-    <a href="https://nuxt.com/docs/getting-started/routing" target="_blank">Learn more about Nuxt Routing</a>
-  </div>
+  <div>db status: {{ db_ready }}</div>
 </template>
