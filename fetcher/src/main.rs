@@ -39,7 +39,7 @@ async fn main() -> Result<()> {
     }
 
     let mut config = Config::load(&cli.env_file).unwrap_or_else(|e| {
-        error!("{}: {}", cli.env_file, e);
+        error!("{}: {}: {}", cli.env_file, e, e.root_cause());
         exit(1);
     });
     if let Some(value) = cli.headless {
