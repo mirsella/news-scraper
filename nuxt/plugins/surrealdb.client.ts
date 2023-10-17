@@ -2,9 +2,15 @@ import { Surreal } from "surrealdb.js";
 
 export default defineNuxtPlugin({
   name: "surrealdb",
-  parallel: true,
-  async setup(NuxtApp) {
+  parallel: false,
+  setup(NuxtApp) {
     const db = new Surreal();
-    NuxtApp.provide("db", db);
+    const authenticated = ref(false);
+
+    return {
+      provide: {
+        db: db,
+      },
+    };
   },
 });
