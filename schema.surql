@@ -46,6 +46,7 @@ DEFINE INDEX rating ON news FIELDS rating;
 DEFINE TABLE user SCHEMAFULL PERMISSIONS FOR select, update, delete WHERE id = $auth.id, FOR create NONE;
 
 DEFINE FIELD created_date ON user TYPE datetime DEFAULT time::now() PERMISSIONS NONE;
+DEFINE FIELD activated ON user TYPE boolean DEFAULT false PERMISSIONS NONE;
 DEFINE FIELD name ON user TYPE string ASSERT $value != NONE;
 DEFINE FIELD password ON user TYPE string;
 
