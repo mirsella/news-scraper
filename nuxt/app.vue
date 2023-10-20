@@ -1,21 +1,19 @@
 <script setup lang="ts">
 const errors = useState<string[]>("errors", () => []);
-errors.value.push("Hello world!");
-errors.value.push("Hello arst!");
+const { $db, $dbhelper } = useNuxtApp();
 </script>
 
 <template>
-  <NuxtLayout>
-    <ul class="p-2 w-full">
-      <li v-for="error in errors" class="p-2">
-        <UAlert
-          icon="i-heroicons-x-circle-20-solid"
-          color="red"
-          title="Error"
-          :description="error"
-        />
-      </li>
-    </ul>
-    <NuxtPage />
-  </NuxtLayout>
+  <Header />
+  <ul class="p-2 pt-0 w-full" v-if="errors.length > 0">
+    <li v-for="error in errors" class="p-2">
+      <UAlert
+        icon="i-heroicons-x-circle-20-solid"
+        color="red"
+        title="Error"
+        :description="error"
+      />
+    </li>
+  </ul>
+  <NuxtPage />
 </template>

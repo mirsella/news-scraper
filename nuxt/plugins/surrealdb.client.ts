@@ -1,4 +1,5 @@
 import { Surreal } from "surrealdb.js";
+import { Events } from "vue";
 
 const db = new Surreal();
 const authenticated = ref(false);
@@ -6,10 +7,17 @@ const connected = ref(false);
 let surrealdb_url: string;
 
 async function connect() {
-  await db.connect(surrealdb_url, {
-    ns: "news",
-    db: "news",
-  });
+  connected.value = false;
+  try {
+    await db.connect(surrealdb_url, {
+      ns: "news",
+      db: "news",
+    });
+    connected.value = true;
+  } catch (error) {
+    const errors = useState("errors", () => []);
+    errors.value.push("Failed to connect to the database");
+  }
 }
 
 async function login(): Promise<Boolean> {
@@ -18,6 +26,7 @@ async function login(): Promise<Boolean> {
   const auth = await db.authenticate(jwt);
   if (auth) {
     authenticated.value = true;
+    console.log("Authenticated");
     return true;
   } else {
     authenticated.value = false;
