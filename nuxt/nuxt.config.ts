@@ -7,4 +7,9 @@ export default defineNuxtConfig({
   //     titleTemplate: "%s - News-scraper",
   //   },
   // },
+  runtimeConfig: {
+    public: {
+      surrealdb_url: process.env.surrealdb_url || "http://127.0.0.1:8000",
+    },
+  },
 });

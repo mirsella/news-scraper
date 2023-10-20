@@ -1,49 +1,44 @@
 import { Surreal } from "surrealdb.js";
 
-/*
-if no token is found, we need to show a login component
-*/
-
 const db = new Surreal();
 const authenticated = ref(false);
+const connected = ref(false);
+let surrealdb_url: string;
 
 async function connect() {
-  const surrealdb_url = process.env.surrealdb_url;
-  if (!surrealdb_url) {
-    throw new Error("surrealdb_url is not set");
-  }
-  return db.connect(surrealdb_url, {
+  await db.connect(surrealdb_url, {
     ns: "news",
     db: "news",
   });
 }
 
-async function login() {
+async function login(): Promise<Boolean> {
   const jwt = localStorage.getItem("jwt");
-  if (!jwt) {
-    // TODO: show login page
-    return;
-  }
-  const authenticated = await db.authenticate(jwt);
-  if (authenticated) {
-    // TODO: show succesfull login
+  if (!jwt) return false;
+  const auth = await db.authenticate(jwt);
+  if (auth) {
+    authenticated.value = true;
+    return true;
   } else {
-    // TODO: show login page "connection expired"
+    authenticated.value = false;
+    navigateTo("/login?expired");
+    return false;
   }
 }
 
-export default defineNuxtPlugin({
-  name: "surrealdb",
-  parallel: true,
-  async setup(NuxtApp) {
-    return {
-      provide: {
-        db: db,
-        dbhelper: {
-          authenticated,
-          login,
-        },
+export default defineNuxtPlugin(async (NuxtApp) => {
+  const config = useRuntimeConfig();
+  surrealdb_url = config.public.surrealdb_url;
+  connect();
+  login();
+  return {
+    provide: {
+      db: db,
+      dbhelper: {
+        authenticated,
+        connected,
+        login,
       },
-    };
-  },
+    },
+  };
 });

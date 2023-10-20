@@ -1,12 +1,12 @@
 <script setup lang="ts">
-const { $db, dbhelper } = useNuxtApp();
+const { $db } = useNuxtApp();
 definePageMeta({
-  layout: "logged-in",
+  layout: "default",
 });
 </script>
 
 <template>
   <div>
-    <h1>INDEX</h1>
+    <h1>LOGIN</h1>
   </div>
 </template>

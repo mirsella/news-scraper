@@ -22,7 +22,7 @@ DEFINE SCOPE user SESSION 12h SIGNUP (CREATE user CONTENT { name: $name, passwor
 
 -- see https://github.com/surrealdb/surrealdb/issues/2150
 -- DEFINE TABLE news SCHEMAFULL CHANGEFEED 1w;
-DEFINE TABLE news SCHEMALESS CHANGEFEED 1w;
+DEFINE TABLE news SCHEMALESS CHANGEFEED 1w PERMISSIONS FOR select, update WHERE $auth.activated == true;
 
 DEFINE FIELD html_body ON news TYPE string;
 DEFINE FIELD text_body ON news TYPE string;
