@@ -5,12 +5,12 @@ edition = "2021"
 
 [dependencies]
 surrealdb = "1.0.0"
-tokio = { version = "1.30", features = ["rt-multi-thread", "macros", "sync"] }
+tokio = { version = "1.33", features = ["rt-multi-thread", "macros", "sync"] }
 shared = { path = "../shared" }
 log = "0.4.20"
 env_logger = "0.10.0"
 anyhow = "1.0.75"
 serde_json = "1.0.107"
-regex = "1.9.5"
+regex = "1.10.2"
 async-openai = "0.14.3"
 ctrlc = "3.4.1"
