@@ -9,7 +9,7 @@ const { $db, $dbhelper } = useNuxtApp();
         connected: {{ $dbhelper.connected }} | auth:
         {{ $dbhelper.authenticated }}
       </div>
-      <div class="self-end" v-if="$dbhelper.authenticated === true">
+      <div class="self-end" v-if="$dbhelper.authenticated.value === true">
         <UButton>logout</UButton>
       </div>
     </div>

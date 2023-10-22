@@ -15,8 +15,8 @@ function signup() {
 </script>
 
 <template>
-  <div class="p-2 w-full">
-    <UCard v-if="$dbhelper.connected === true">
+  <div class="p-2 w-full" v-if="$dbhelper.connected.value === true">
+    <UCard>
       <template #header>You need to login to access this page</template>
       <UInput class="mb-2" size="xl" placeholder="Username" v-model="user" />
       <UInput
@@ -31,7 +31,9 @@ function signup() {
           <UButton id="signin" size="xl" :loading="isLoading" @click="signin"
             >Sign in</UButton
           >
-          <UButton id="signup" size="xl" :loading="isLoading" @click="signup">Sign up</UButton>
+          <UButton id="signup" size="xl" :loading="isLoading" @click="signup"
+            >Sign up</UButton
+          >
         </div>
       </template>
     </UCard>
