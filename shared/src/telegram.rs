@@ -35,9 +35,9 @@ mod tests {
             eprintln!("Error loading .env file: {}", e);
         }
 
-        let token = env::var("TELEGRAM_TOKEN").expect("telegram_token not set in env");
+        let token = env::var("TELEGRAM_TOKEN").expect("TELEGRAM_TOKEN not set in env");
         let id = env::var("TELEGRAM_ID")
-            .expect("telegram_id not set in env")
+            .expect("TELEGRAM_ID not set in env")
             .parse::<i64>()
             .unwrap();
 
