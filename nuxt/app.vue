@@ -1,6 +1,5 @@
 <script setup lang="ts">
 const errors = useState<string[]>("errors", () => []);
-const { $db, $dbhelper } = useNuxtApp();
 </script>
 
 <template>
@@ -16,4 +15,5 @@ const { $db, $dbhelper } = useNuxtApp();
     </li>
   </ul>
   <NuxtPage />
+  <UNotifications />
 </template>

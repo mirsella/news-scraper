@@ -4,12 +4,13 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   app: {
     head: {
-      titleTemplate: "%s - News-scraper",
+      titleTemplate: "%s News-scraper",
     },
   },
   runtimeConfig: {
     public: {
-      surrealdb_url: process.env.surrealdb_url || "http://127.0.0.1:8000",
+      // surrealdb_url: process.env.SURREALDB_URL || "http://127.0.0.1:8000",
+      surrealdb_url: undefined,
     },
   },
   ui: {
