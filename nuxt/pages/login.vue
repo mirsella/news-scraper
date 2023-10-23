@@ -15,9 +15,18 @@ function signup() {
 </script>
 
 <template>
-  <div class="p-2 w-full" v-if="$dbhelper.connected.value === true">
-    <UCard>
-      <template #header>You need to login to access this page</template>
+  <div class="p-4 flex justify-center">
+    <UCard
+      class="p-2 w-full md:w-1/2"
+      v-if="$dbhelper.connected.value === true"
+    >
+      <template #header>
+        {{
+          useRoute().query.expired === null
+            ? "your connection has expired. please login again"
+            : "You need to login to access this page"
+        }}
+      </template>
       <UInput class="mb-2" size="xl" placeholder="Username" v-model="user" />
       <UInput
         class="mb-2"

@@ -15,7 +15,7 @@ async function connect() {
     });
     connected.value = true;
   } catch (error) {
-    const errors = useState("errors", () => []);
+    const errors = useState<string[]>("errors", () => []);
     errors.value.push("Failed to connect to the database");
   }
 }
