@@ -31,10 +31,12 @@ mod tests {
 
     #[test]
     fn it_creates_from_env() {
-        dotenvy::dotenv().unwrap();
+        if let Err(e) = dotenvy::dotenv() {
+            eprintln!("Error loading .env file: {}", e);
+        }
 
-        let token = env::var("telegram_token").expect("telegram_token not set in env");
-        let id = env::var("telegram_id")
+        let token = env::var("TELEGRAM_TOKEN").expect("telegram_token not set in env");
+        let id = env::var("TELEGRAM_ID")
             .expect("telegram_id not set in env")
             .parse::<i64>()
             .unwrap();
