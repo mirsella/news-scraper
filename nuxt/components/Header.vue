@@ -1,9 +1,12 @@
 <script setup lang="ts">
 const { $db, $dbhelper } = useNuxtApp();
-setInterval(async () => {
-  // console.log($db.status, await $db.ready);
-  if ($db.status !== 0) $dbhelper.connected.value = false;
-}, 1000);
+
+async function signout() {
+  $db.invalidate();
+  $dbhelper.authenticated.value = false;
+  window.localStorage.removeItem("jwt");
+  navigateTo("/login");
+}
 </script>
 <template>
   <div>
@@ -46,16 +49,19 @@ setInterval(async () => {
         </ClientOnly>
       </div>
       <div class="self-end">
-        <UButton
-          v-if="$dbhelper?.authenticated.value"
-          class="text-sm md:text-xl -h-2"
-          color="red"
-        >
-          signout<UIcon
-            name="i-heroicons-arrow-small-right-20-solid"
-            class="h-4 w-4 md:h-5 md:w-5"
-          />
-        </UButton>
+        <ClientOnly>
+          <UButton
+            v-if="$dbhelper?.authenticated.value"
+            class="text-sm md:text-xl -h-2"
+            color="red"
+            @click="signout"
+          >
+            signout<UIcon
+              name="i-heroicons-arrow-small-right-20-solid"
+              class="h-4 w-4 md:h-5 md:w-5"
+            />
+          </UButton>
+        </ClientOnly>
       </div>
     </div>
     <slot />

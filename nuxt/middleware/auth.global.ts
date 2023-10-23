@@ -5,5 +5,4 @@ export default defineNuxtRouteMiddleware((to, from) => {
     console.log("No JWT found, redirecting to login");
     return navigateTo("/login");
   }
-  console.log("JWT found, continuing");
 });

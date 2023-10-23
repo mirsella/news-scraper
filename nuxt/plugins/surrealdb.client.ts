@@ -4,6 +4,7 @@ const db = new Surreal();
 const authenticated = ref(false);
 const connected = ref(false);
 
+let alreadyNotified = false;
 async function connect() {
   connected.value = false;
   const config = useRuntimeConfig();
@@ -16,9 +17,20 @@ async function connect() {
       db: "news",
     });
     connected.value = true;
+    alreadyNotified = false;
   } catch (error) {
-    const errors = useState<string[]>("errors", () => []);
-    errors.value.push("Failed to connect to the database");
+    const message = "Failed to connect to the database";
+    if (alreadyNotified) return;
+    alreadyNotified = true;
+    useToast().add({
+      title: "connection error",
+      description: message,
+      timeout: 10000,
+    });
+    // const errors = useState<string[]>("errors", () => []);
+    // if (!errors.value.some((e) => e == message)) {
+    //   errors.value.push(message);
+    // }
   }
 }
 
@@ -37,13 +49,26 @@ async function login(): Promise<Boolean> {
   }
 }
 
-export default defineNuxtPlugin(async (NuxtApp) => {
+export default defineNuxtPlugin(async () => {
   connect();
   login();
-  NuxtApp.provide("db", db);
-  NuxtApp.provide("dbhelper", {
-    authenticated,
-    connected,
-    login,
-  });
+  return {
+    provide: {
+      db: db,
+      dbhelper: {
+        authenticated,
+        connected,
+        login,
+        connect,
+      },
+    },
+  };
 });
+
+setInterval(async () => {
+  if (db.status !== 0) {
+    connected.value = false;
+    authenticated.value = false;
+    connect();
+  }
+}, 1000);
