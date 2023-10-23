@@ -21,7 +21,7 @@ DEFINE SCOPE user SESSION 12h SIGNUP (CREATE user CONTENT { name: $name, passwor
 -- ------------------------------
 
 -- see https://github.com/surrealdb/surrealdb/issues/2150
--- DEFINE TABLE news SCHEMAFULL CHANGEFEED 1w;
+-- DEFINE TABLE news SCHEMAFULL CHANGEFEED 1w PERMISSIONS FOR select, update WHERE $auth.activated == true;
 DEFINE TABLE news SCHEMALESS CHANGEFEED 1w PERMISSIONS FOR select, update WHERE $auth.activated == true;
 
 DEFINE FIELD html_body ON news TYPE string;
@@ -46,7 +46,7 @@ DEFINE INDEX rating ON news FIELDS rating;
 DEFINE TABLE user SCHEMAFULL PERMISSIONS FOR select, update, delete WHERE id = $auth.id, FOR create NONE;
 
 DEFINE FIELD created_date ON user TYPE datetime DEFAULT time::now() PERMISSIONS NONE;
-DEFINE FIELD activated ON user TYPE boolean DEFAULT false PERMISSIONS NONE;
+DEFINE FIELD activated ON user TYPE bool DEFAULT false PERMISSIONS NONE;
 DEFINE FIELD name ON user TYPE string ASSERT $value != NONE;
 DEFINE FIELD password ON user TYPE string;
 
