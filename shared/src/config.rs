@@ -1,5 +1,5 @@
 use core::fmt;
-use std::{env, path::PathBuf};
+use std::path::PathBuf;
 
 use anyhow::{Context, Result};
 use serde::Deserialize;
@@ -23,9 +23,6 @@ pub struct Config {
 impl Config {
     pub fn load(path: &str) -> Result<Config> {
         dotenvy::from_filename_override(path).context("dotenvy")?;
-        // if env::var("openai_api_key").is_ok() && env::var("OPENAI_API_KEY").is_ok() {
-        //     env::remove_var("OPENAI_API_KEY");
-        // }
         let config: Config = envy::from_env().context("envy")?;
         Ok(config)
     }
