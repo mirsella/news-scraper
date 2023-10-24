@@ -15,7 +15,7 @@ DEFINE PARAM $MAX_RATING VALUE 100;
 -- ------------------------------
 
 DEFINE SCOPE user SESSION 12h
-SIGNUP (IF string::len($name) < 1 || string::len($password) < 1 THEN ("test") ELSE (CREATE user CONTENT { name: $name, password: crypto::argon2::generate($password) }) END)
+SIGNUP (IF string::len($name) < 1 || string::len($password) < 1 THEN RETURN "invalid input" ELSE (CREATE user CONTENT { name: $name, password: $password }) END)
 SIGNIN (SELECT * FROM user WHERE name = $name AND crypto::argon2::compare(password, $password));
 
 -- ------------------------------
@@ -47,9 +47,9 @@ DEFINE INDEX rating ON news FIELDS rating;
 
 DEFINE TABLE user SCHEMAFULL PERMISSIONS FOR select, update, delete WHERE id = $auth.id, FOR create NONE;
 
-DEFINE FIELD created_date ON user TYPE datetime DEFAULT time::now() PERMISSIONS NONE;
-DEFINE FIELD activated ON user TYPE bool DEFAULT false PERMISSIONS NONE;
+DEFINE FIELD created_date ON user TYPE datetime DEFAULT time::now() PERMISSIONS FOR update NONE;
+DEFINE FIELD activated ON user TYPE bool DEFAULT false PERMISSIONS FOR select WHERE true, FOR update NONE;
 DEFINE FIELD name ON user TYPE string ASSERT string::len($value) > 0;
-DEFINE FIELD password ON user TYPE string;
+DEFINE FIELD password ON user TYPE string VALUE $before OR crypto::argon2::generate($value) ASSERT string::len($value) > 0;
 
 DEFINE INDEX name ON user FIELDS name UNIQUE;
