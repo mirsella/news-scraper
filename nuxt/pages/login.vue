@@ -21,17 +21,15 @@ async function signin() {
       name: user.value,
       password: password.value,
     });
-    if (!jwt) throw new Error("Invalid credentials");
+    if (!jwt) throw new Error("didn't get a jwt");
     window.localStorage.setItem("jwt", jwt);
     $dbhelper.authenticated.value = true;
     navigateTo("/");
   } catch (error: any) {
-    console.log(error);
     toast.add({
       color: "red",
-      title: "sign in failed",
-      // description: error.toString(),
-      description: "Invalid credentials",
+      title: "sign in failed. probably wrong credentials",
+      description: error.toString(),
     });
   }
   isLoading.value = false;
@@ -53,17 +51,11 @@ async function signup() {
       id: "signup_success",
       title: "Success, You have been signed up",
     });
-    toast.add({
-      id: "activation_notice",
-      color: "red",
-      title: "your account needs to be activated",
-      description: "please contact the administrator to have access.",
-      timeout: 0,
-    });
+    $dbhelper.update_activated();
   } catch (error: any) {
     toast.add({
       color: "red",
-      title: "The sign up failed",
+      title: "The sign up failed. name probably already taken",
       description: error.toString(),
     });
   }

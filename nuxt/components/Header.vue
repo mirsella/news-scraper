@@ -12,7 +12,7 @@ async function signout() {
   <div>
     <div class="inline-flex w-full py-2 md:py-4 px-4 h-auto">
       <h1 class="text-2xl self-start hidden sm:block">news-scraper</h1>
-      <div class="flex-grow self-center text-center h-7">
+      <div class="flex-grow self-center text-center h-10">
         <ClientOnly>
           <UBadge
             class="text-sm md:text-xl mx-1"
@@ -48,11 +48,11 @@ async function signout() {
           </UBadge>
         </ClientOnly>
       </div>
-      <div class="self-end">
+      <div class="self-end h-10">
         <ClientOnly>
           <UButton
             v-if="$dbhelper?.authenticated.value"
-            class="text-sm md:text-xl -h-2"
+            class="text-sm md:text-xl py-1"
             color="red"
             @click="signout"
           >

@@ -14,17 +14,34 @@ DEFINE PARAM $MAX_RATING VALUE 100;
 -- SCOPES
 -- ------------------------------
 
-DEFINE SCOPE user SESSION 12h
-SIGNUP (IF string::len($name) < 1 || string::len($password) < 1 THEN RETURN "invalid input" ELSE (CREATE user CONTENT { name: $name, password: $password }) END)
-SIGNIN (SELECT * FROM user WHERE name = $name AND crypto::argon2::compare(password, $password));
+DEFINE SCOPE user SESSION 1w
+  SIGNUP {
+    IF string::len($name) < 1 {
+      throw "invalid name";
+    };
+    IF string::len($password) < 1 {
+      throw "invalid password";
+    };
+    return CREATE user CONTENT { name: $name, password: $password };
+  }
+  SIGNIN {
+    let $user = SELECT * FROM ONLY user WHERE name = $name;
+    IF !$user {
+      throw "user not found";
+    };
+    IF !crypto::argon2::compare($user.password, $password) {
+      throw "invalid password";
+    };
+    return $user;
+  };
 
 -- ------------------------------
 -- TABLE: news
 -- ------------------------------
 
 -- see https://github.com/surrealdb/surrealdb/issues/2150
--- DEFINE TABLE news SCHEMAFULL CHANGEFEED 1w PERMISSIONS FOR select, update WHERE $auth.activated == true;
-DEFINE TABLE news SCHEMALESS CHANGEFEED 1w PERMISSIONS FOR select, update WHERE $auth.activated == true;
+-- DEFINE TABLE news SCHEMAFULL PERMISSIONS FOR select, update WHERE $auth.activated == true;
+DEFINE TABLE news SCHEMALESS PERMISSIONS FOR select, update WHERE $auth.activated == true;
 
 DEFINE FIELD html_body ON news TYPE string;
 DEFINE FIELD text_body ON news TYPE string;
