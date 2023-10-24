@@ -2,10 +2,12 @@
 const { $db, dbhelper } = useNuxtApp();
 import type { News } from "~/utils/news";
 const queryStatus = ref("");
+const queryLoading = ref(true);
 
 const news = useState<News[]>("news", () => []);
 (async () => {
-  queryStatus.value = "loading news";
+  queryStatus.value = "";
+  queryLoading.value = true;
   const t1 = performance.now();
   const result = await $db?.query<[News[]]>(
     "select * omit text_body, html_body from news",
@@ -19,13 +21,13 @@ const news = useState<News[]>("news", () => []);
     });
     return;
   }
-  console.log(result);
   news.value = result[0]?.result ?? [];
   const t2 = performance.now();
   const dbtime = (result[0]?.time).replace(/\.[0-9]*/, "") || "unknown";
   queryStatus.value = `loaded ${news.value.length} news in ${
     t2 - t1
   }ms (db: ${dbtime})`;
+  queryLoading.value = false;
 })();
 function updateurl() {
   navigateTo(Math.random().toString());
@@ -39,10 +41,6 @@ function removeurl() {
   <div>
     <NewsModal />
     <h1 class="text-lg font-bold w-full text-center">{{ queryStatus }}</h1>
-    <div>
-      <UButton @click="updateurl">update url</UButton>
-      <UButton @click="removeurl">remove url</UButton>
-    </div>
-    <div>here will be the table</div>
+    <NewsTable :loading="queryLoading" />
   </div>
 </template>
