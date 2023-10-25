@@ -1,5 +1,8 @@
 export default defineNuxtRouteMiddleware((to, from) => {
-  if (!process.client || to.path === "/login") return;
+  return;
+  if (to.path === "/login") return;
+  if (from.path === to.path) return;
+  if (process.server) return;
   const jwt = localStorage.getItem("jwt");
   if (!jwt) {
     console.log("No JWT found, redirecting to login");

@@ -1,11 +1,14 @@
 export type News = {
-  id: number;
+  id: string;
+  title: string;
   caption: string;
   date: string;
+  link: string;
+  provider: string;
+  note: string;
+  rating?: number;
+  tags?: string[];
   html_body?: string;
   text_body?: string;
-  link: string;
-  note: string;
-  title: string;
   used: boolean;
 };
