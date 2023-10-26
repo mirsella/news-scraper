@@ -38,6 +38,16 @@ const columns = [
     key: "used",
     sortable: true,
   },
+  {
+    label: "Link",
+    key: "link",
+    sortable: true,
+  },
+  {
+    label: "Provider",
+    key: "provider",
+    sortable: true,
+  },
 ];
 const toast = useToast();
 toast.add({
@@ -70,6 +80,7 @@ const FilteredNews = computed(() =>
     return (
       (n.title.toLowerCase().includes(search.value.toLowerCase()) ||
         n.caption.toLowerCase().includes(search.value.toLowerCase()) ||
+        n.provider.toLowerCase().includes(search.value.toLowerCase()) ||
         n.note.toLowerCase().includes(search.value.toLowerCase())) &&
       (!onlyNonused.value || !n.used)
     );
@@ -83,7 +94,7 @@ const PaginedNews = computed(() =>
 );
 
 const columnsChoice = columns.map((c) => c.key);
-const selectedColumns = ref<string[]>(columns.map((c) => c.key));
+const selectedColumns = ref<string[]>(["title", "rating", "note", "link"]);
 if (process.client) {
   let localstorageColumns = window.localStorage.getItem("selectedColumns");
   let newsperpage = window.localStorage.getItem("NewsPerPage");
