@@ -97,25 +97,18 @@ const columnsChoice = columns.map((c) => c.key);
 const selectedColumns = ref<string[]>(["title", "rating", "note", "link"]);
 if (process.client) {
   let localstorageColumns = window.localStorage.getItem("selectedColumns");
-  let newsperpage = window.localStorage.getItem("NewsPerPage");
-  if (localstorageColumns) {
+  if (localstorageColumns)
     selectedColumns.value = JSON.parse(localstorageColumns);
-    // setTimeout(() => {
-    //   selectedColumns.value = JSON.parse(localstorageColumns);
-    // }, 1000);
-  }
-  if (newsperpage) {
-    pageCount.value = parseInt(newsperpage);
-    // setTimeout(() => {
-    //   pageCount.value = JSON.parse(newsperpage);
-    // }, 1000);
-  }
-  watch(selectedColumns, (v) => {
-    window?.localStorage.setItem("selectedColumns", JSON.stringify(v));
-  });
-  watch(pageCount, (v) => {
-    window?.localStorage.setItem("NewsPerPage", pageCount.value.toString());
-  });
+
+  let newsperpage = window.localStorage.getItem("NewsPerPage");
+  if (newsperpage) pageCount.value = parseInt(newsperpage);
+
+  watch(selectedColumns, (v) =>
+    window.localStorage.setItem("selectedColumns", JSON.stringify(v)),
+  );
+  watch(pageCount, (v) =>
+    window.localStorage.setItem("NewsPerPage", pageCount.value.toString()),
+  );
 }
 
 const FilteredColumns = computed(() => {
@@ -213,6 +206,12 @@ async function updateUsed(row: News) {
         >
           <template #used-data="{ row }">
             <UToggle v-model="row.used" @click="updateUsed(row)" />
+          </template>
+          <template #tags-data="{ row }">
+            <span>{{ row.tags?.join(", ") }}</span>
+          </template>
+          <template #rating-data="{ row }">
+            <span>{{ row.rating || "" }}</span>
           </template>
         </UTable>
       </ClientOnly>

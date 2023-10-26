@@ -5,7 +5,7 @@ const authenticated = ref(false);
 const connected = ref(false);
 const activated = ref(false);
 
-let alreadyNotified = false;
+let alreadyFailed = false;
 async function connect() {
   connected.value = false;
   const config = useRuntimeConfig();
@@ -18,11 +18,11 @@ async function connect() {
       db: "news",
     });
     connected.value = true;
-    alreadyNotified = false;
+    alreadyFailed = false;
   } catch (error) {
     const message = "Failed to connect to the database";
-    if (alreadyNotified) return;
-    alreadyNotified = true;
+    if (alreadyFailed) return;
+    alreadyFailed = true;
     useToast().add({
       title: "connection error",
       description: message,
@@ -79,7 +79,14 @@ async function update_activated() {
 export default defineNuxtPlugin(async () => {
   (async () => {
     await connect();
-    await login();
+    setInterval(async () => {
+      if (db.status !== 0 && alreadyFailed === true) {
+        connected.value = false;
+        authenticated.value = false;
+        connect();
+      }
+    }, 100);
+    if (connected.value) await login();
   })();
   return {
     provide: {
@@ -95,11 +102,3 @@ export default defineNuxtPlugin(async () => {
     },
   };
 });
-
-setInterval(async () => {
-  if (db.status !== 0) {
-    connected.value = false;
-    authenticated.value = false;
-    connect();
-  }
-}, 100);

@@ -36,10 +36,6 @@ const news = useState<News[]>("news", () => []);
   <div>
     <NewsModal />
     <h1 class="text-lg font-bold w-full text-center">{{ queryStatus }}</h1>
-    <NewsTable
-      :loading="queryLoading"
-      class="m-2"
-      v-if="$dbhelper && $dbhelper.authenticated.value"
-    />
+    <NewsTable :loading="queryLoading" class="m-2" />
   </div>
 </template>
