@@ -77,8 +77,10 @@ async function update_activated() {
 }
 
 export default defineNuxtPlugin(async () => {
-  connect();
-  login();
+  (async () => {
+    await connect();
+    await login();
+  })();
   return {
     provide: {
       db: db,
@@ -100,4 +102,4 @@ setInterval(async () => {
     authenticated.value = false;
     connect();
   }
-}, 1000);
+}, 100);

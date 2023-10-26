@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const { $db, dbhelper } = useNuxtApp();
+const { $db, $dbhelper } = useNuxtApp();
 import type { News } from "~/utils/news";
 const queryStatus = ref("");
 const queryLoading = ref(true);
@@ -36,6 +36,10 @@ const news = useState<News[]>("news", () => []);
   <div>
     <NewsModal />
     <h1 class="text-lg font-bold w-full text-center">{{ queryStatus }}</h1>
-    <NewsTable :loading="queryLoading" class="m-2" />
+    <NewsTable
+      :loading="queryLoading"
+      class="m-2"
+      v-if="$dbhelper && $dbhelper.authenticated.value"
+    />
   </div>
 </template>

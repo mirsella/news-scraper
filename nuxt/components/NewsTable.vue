@@ -41,6 +41,7 @@ const columns = [
 ];
 const toast = useToast();
 toast.add({
+  id: "tips-sortcolumns",
   title: "Tips",
   description:
     "The columns sort options only apply to the current page. you can adjust how many news are shown per page.",
@@ -49,6 +50,7 @@ toast.add({
   timeout: 7000,
 });
 toast.add({
+  id: "tips-newsperpage",
   title: "Tips",
   description:
     "The more News per Page you have, the less responsive the page is.",
@@ -60,7 +62,7 @@ defineProps<{ loading: boolean }>();
 const news = useState<News[]>("news", () => []);
 
 const page = ref(1);
-const pageCount = ref(1000);
+const pageCount = ref(500);
 const search = ref("");
 const onlyNonused = ref(false);
 const FilteredNews = computed(() =>
@@ -80,21 +82,58 @@ const PaginedNews = computed(() =>
   ),
 );
 
-const selectedColumns = ref(columns);
-// let localstorageColumns = window?.localStorage.getItem("selectedColumns");
-// if (localstorageColumns)
-//   selectedColumns.value = JSON.parse(localstorageColumns);
-// watch(selectedColumns, (v) => {
-//   window?.localStorage.setItem("selectedColumns", JSON.stringify(v));
-// });
+const columnsChoice = columns.map((c) => c.key);
+const selectedColumns = ref<string[]>(columns.map((c) => c.key));
+if (process.client) {
+  let localstorageColumns = window.localStorage.getItem("selectedColumns");
+  let newsperpage = window.localStorage.getItem("NewsPerPage");
+  if (localstorageColumns) {
+    selectedColumns.value = JSON.parse(localstorageColumns);
+    // setTimeout(() => {
+    //   selectedColumns.value = JSON.parse(localstorageColumns);
+    // }, 1000);
+  }
+  if (newsperpage) {
+    pageCount.value = parseInt(newsperpage);
+    // setTimeout(() => {
+    //   pageCount.value = JSON.parse(newsperpage);
+    // }, 1000);
+  }
+  watch(selectedColumns, (v) => {
+    window?.localStorage.setItem("selectedColumns", JSON.stringify(v));
+  });
+  watch(pageCount, (v) => {
+    window?.localStorage.setItem("NewsPerPage", pageCount.value.toString());
+  });
+}
 
-const FilteredColumns = computed(() =>
-  columns.filter((c) => selectedColumns.value.includes(c)),
-);
+const FilteredColumns = computed(() => {
+  if (selectedColumns.value.length === 0)
+    selectedColumns.value = columns.map((c) => c.key);
+  return columns.filter((c) =>
+    selectedColumns.value.find((sc) => sc === c.key),
+  );
+});
 
-async function updateUsed(news: News) {
-  // need to inverse the value it has not been updated yet
-  const res = await $db.merge<News>(news.id, { used: !news.used });
+async function updateUsed(row: News) {
+  // need to inverse the value because the UI has not updated it yet
+  const used = !row.used;
+  const res = await $db.merge<News>(row.id, { used });
+  if (!res[0]) {
+    setTimeout(async () => {
+      row.used = true;
+      let n = news.value.find((n) => n.id === row.id) || ({} as any);
+      n.used = false;
+    }, 100);
+    useToast().add({
+      title: "Error",
+      description:
+        "Something went wrong while updating the News. maybe try to reconnect and refresh the page.",
+      icon: "i-carbon-error",
+      color: "red",
+      timeout: 0,
+    });
+  }
 }
 </script>
 
@@ -121,7 +160,11 @@ async function updateUsed(news: News) {
           <UCheckbox v-model="onlyNonused" label="Non-used only" />
         </UBadge>
 
-        <USelectMenu v-model="selectedColumns" :options="columns" multiple>
+        <USelectMenu
+          v-model="selectedColumns"
+          :options="columnsChoice"
+          multiple
+        >
           <UButton icon="i-heroicons-view-columns" color="gray" size="lg">
             Columns
           </UButton>
@@ -149,18 +192,19 @@ async function updateUsed(news: News) {
           </div>
         </UBadge>
       </div>
-
-      <UTable
-        :loading="loading"
-        :rows="PaginedNews"
-        :columns="FilteredColumns"
-        class="w-full"
-        :ui="{ td: { base: 'max-w-[0] truncate' } }"
-      >
-        <template #used-data="{ row }">
-          <UToggle v-model="row.used" @click="updateUsed(row)" />
-        </template>
-      </UTable>
+      <ClientOnly>
+        <UTable
+          :loading="loading"
+          :rows="PaginedNews"
+          :columns="FilteredColumns"
+          class="w-full"
+          :ui="{ td: { base: 'max-w-[0] truncate' } }"
+        >
+          <template #used-data="{ row }">
+            <UToggle v-model="row.used" @click="updateUsed(row)" />
+          </template>
+        </UTable>
+      </ClientOnly>
     </UCard>
   </div>
 </template>
