@@ -1,8 +1,10 @@
 <script setup lang="ts">
 const { $db, $dbhelper } = useNuxtApp();
-if ($dbhelper?.authenticated.value === true) {
-  navigateTo("/");
-}
+onMounted(() => {
+  if ($dbhelper?.authenticated.value === true) {
+    navigateTo("/");
+  }
+});
 const user = ref("");
 const password = ref("");
 const isLoading = ref(false);

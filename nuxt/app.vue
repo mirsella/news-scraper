@@ -1,8 +1,7 @@
 <script setup lang="ts">
 if (process.client) {
   const jwt = window?.localStorage.getItem("jwt");
-  if (jwt) navigateTo("/");
-  else navigateTo("/login");
+  if (!jwt) navigateTo("/login");
 }
 </script>
 

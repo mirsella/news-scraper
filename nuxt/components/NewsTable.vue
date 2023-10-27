@@ -3,6 +3,9 @@ import type { News } from "~/utils/news";
 const { $db } = useNuxtApp();
 const columns = [
   {
+    key: "hiddenid",
+  },
+  {
     label: "Title",
     key: "title",
     sortable: true,
@@ -79,14 +82,17 @@ const props = defineProps<{ loading: boolean }>();
 watch(
   () => props.loading,
   async (loading) => {
-    console.log("showing tips");
     if (loading === false) showTips();
   },
 );
 const news = useState<News[]>("news", () => []);
 
 const page = ref(1);
-const pageCount = ref(500);
+const pageCountModel = ref("500");
+const pageCount = computed({
+  get: () => parseInt(pageCountModel.value),
+  set: (value) => (pageCountModel.value = value.toString()),
+});
 const search = ref("");
 const onlyNonused = ref(false);
 const FilteredNews = computed(() =>
@@ -106,16 +112,27 @@ const PaginedNews = computed(() =>
     page.value * pageCount.value,
   ),
 );
-
-// watch(PaginedNews, async (PaginedNews) => {
-//   const els = document.getElementsByTagName("tr");
-//   for (let el of els) {
-//     console.log("adding event listener");
-//     el.addEventListener("click", (event) => {
-//       console.log("clicked", event);
-//     });
-//   }
-// });
+if (process.client) {
+  watch(
+    PaginedNews,
+    (PaginedNews) => {
+      setTimeout(async () => {
+        const els = document.querySelectorAll("tbody > tr");
+        console.log("registering click events", els.length);
+        for (let el of els) {
+          el.addEventListener("click", (event) => {
+            const parent = el;
+            if (event.target?.localName === "td") {
+              const id = parent.children[0].textContent?.split(":")[1];
+              if (id) navigateTo({ query: { id } });
+            }
+          });
+        }
+      }, 100);
+    },
+    { immediate: true },
+  );
+}
 
 const columnsChoice = columns.map((c) => c.key);
 const selectedColumns = ref<string[]>(["title", "rating", "note", "link"]);
@@ -138,8 +155,9 @@ if (process.client) {
 const FilteredColumns = computed(() => {
   if (selectedColumns.value.length === 0)
     selectedColumns.value = columns.map((c) => c.key);
-  return columns.filter((c) =>
-    selectedColumns.value.find((sc) => sc === c.key),
+  return columns.filter(
+    (c) =>
+      selectedColumns.value.find((sc) => sc === c.key) || c.key === "hiddenid",
   );
 });
 
@@ -229,24 +247,31 @@ async function updateUsed(row: News) {
           :columns="FilteredColumns"
           class="w-full"
           :ui="{
-            td: { base: 'max-w-[0] truncate !p-2' },
+            td: { base: 'max-w-[0] !p-2' },
           }"
         >
+          <template #hiddenid-data="{ row }">
+            {{ row.id }}
+          </template>
           <template #used-data="{ row }">
             <UToggle v-model="row.used" @click="updateUsed(row)" />
           </template>
           <template #tags-data="{ row }">
-            <div class="h-10 whitespace-normal truncate">
-              {{ row.tags?.join(", ") }}
-            </div>
+            <UTooltip :text="row.tags?.join(', ')">
+              <div class="h-10 whitespace-normal truncate max-w-full">
+                {{ row.tags?.join(", ") }}
+              </div>
+            </UTooltip>
           </template>
           <template #rating-data="{ row }">
-            <div>{{ row.rating || "" }}</div>
+            <div class="w-max-full w-min">
+              {{ row.rating || "" }}
+            </div>
           </template>
           <template #title-data="{ row }">
             <UTooltip
               :text="row.title"
-              class="w-full whitespace-normal h-10 truncate"
+              class="whitespace-normal truncate h-10 max-w-full"
             >
               <div>
                 {{ row.title }}
@@ -255,22 +280,27 @@ async function updateUsed(row: News) {
           </template>
           <template #caption-data="{ row }">
             <UTooltip :text="row.caption">
-              <div>{{ row.caption }}</div>
+              <div class="whitespace-normal truncate h-10 max-w-full">
+                {{ row.caption }}
+              </div>
             </UTooltip>
           </template>
           <template #link-data="{ row }">
             <UTooltip :text="row.link">
-              <a :href="row.link" target="_blank" rel="noopener noreferrer">{{
-                row.link
-              }}</a>
+              <a
+                :href="row.link"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="whitespace-normal truncate max-h-10 max-w-full"
+                >{{ row.link }}</a
+              >
             </UTooltip>
           </template>
           <template #note-data="{ row }">
-            <UTooltip
-              :text="row.note"
-              class="w-full h-10 whitespace-normal truncate"
-            >
-              <div>{{ row.note }}</div>
+            <UTooltip :text="row.note">
+              <div class="whitespace-normal truncate h-10 max-w-full">
+                {{ row.note }}
+              </div>
             </UTooltip>
           </template>
           <template #id-data="{ row }">
@@ -279,11 +309,10 @@ async function updateUsed(row: News) {
             </UTooltip>
           </template>
           <template #date-data="{ row }">
-            <UTooltip
-              :text="new Date(row.date).toLocaleString('fr-FR')"
-              class="w-full truncate whitespace-normal"
-            >
-              <div>{{ new Date(row.date).toLocaleString("fr-FR") }}</div>
+            <UTooltip :text="new Date(row.date).toLocaleString('fr-FR')">
+              <div class="max-w-full whitespace-normal text-ellipsis w-min">
+                {{ new Date(row.date).toLocaleString("fr-FR") }}
+              </div>
             </UTooltip>
           </template>
         </UTable>
@@ -291,3 +320,13 @@ async function updateUsed(row: News) {
     </UCard>
   </div>
 </template>
+
+<style>
+/* hide the first column, which is the id of the row to handle the click */
+th.text-left:nth-child(1) {
+  display: none;
+}
+tbody.divide-y > tr > td:nth-child(1) {
+  display: none;
+}
+</style>
