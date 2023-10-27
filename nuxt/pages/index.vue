@@ -78,10 +78,13 @@ const n = computed<News>(() => {
 <template>
   <div>
     <ClientOnly>
-      <!-- <UModal v-model="isOpen" :transition="false"> -->
-      <!--   <span>test</span> -->
-      <!--   <NewsCard :news="n" /> -->
-      <!-- </UModal> -->
+      <UModal
+        v-model="isOpen"
+        :transition="false"
+        :ui="{ width: 'md:max-w-[70%]' }"
+      >
+        <NewsCard :news="n" />
+      </UModal>
     </ClientOnly>
     <ClientOnly>
       <h1 class="text-lg font-bold w-full text-center">{{ queryStatus }}</h1>

@@ -309,9 +309,9 @@ async function updateUsed(row: News) {
             </UTooltip>
           </template>
           <template #date-data="{ row }">
-            <UTooltip :text="new Date(row.date).toLocaleString('fr-FR')">
+            <UTooltip :text="new Date(row.date).toLocaleString()">
               <div class="max-w-full whitespace-normal text-ellipsis w-min">
-                {{ new Date(row.date).toLocaleString("fr-FR") }}
+                {{ new Date(row.date).toLocaleString() }}
               </div>
             </UTooltip>
           </template>
