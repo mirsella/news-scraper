@@ -62,8 +62,8 @@ pub fn new(
                 Ok(Err(e)) => tx.send(Err(e)).await.unwrap(),
                 Err(e) => {
                     error!("JoinError: {:?}", e);
-                    if let Err(e) = telegram.send(format!("JoinError: {:?}", e)) {
-                        error!("TelegramError: {:?}", e);
+                    if let Err(e) = telegram.send(format!("JoinError: {}", e)) {
+                        error!("TelegramError: {}", e);
                     }
                     continue;
                 }

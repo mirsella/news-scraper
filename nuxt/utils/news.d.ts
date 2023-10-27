@@ -2,7 +2,7 @@ export type News = {
   id: string;
   title: string;
   caption: string;
-  date: string;
+  date: Date;
   link: string;
   provider: string;
   note: string;

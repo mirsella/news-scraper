@@ -35,7 +35,7 @@ pub struct ApiResponse {
 pub fn fetch_article(url: &str) -> Result<ApiResponse, anyhow::Error> {
     let endpoint = format!(
         "{}/fetch?url={}",
-        std::env::var("article_parser_url").expect("ARTICLE_PARSER_URL not set"),
+        std::env::var("ARTICLE_PARSER_URL").expect("ARTICLE_PARSER_URL not set"),
         url
     );
     let response = ureq::get(&endpoint).timeout(Duration::from_secs(6)).call();
@@ -54,7 +54,7 @@ pub fn fetch_article(url: &str) -> Result<ApiResponse, anyhow::Error> {
 pub fn parse_article(str: &str) -> Result<ApiResponse, anyhow::Error> {
     let endpoint = format!(
         "{}/parse",
-        std::env::var("article_parser_url").expect("ARTICLE_PARSER_URL not set")
+        std::env::var("ARTICLE_PARSER_URL").expect("ARTICLE_PARSER_URL not set")
     );
     let response = ureq::post(&endpoint)
         .timeout(Duration::from_secs(5))

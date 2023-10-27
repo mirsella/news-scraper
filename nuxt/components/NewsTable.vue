@@ -48,27 +48,41 @@ const columns = [
     key: "provider",
     sortable: true,
   },
+  {
+    label: "Id",
+    key: "id",
+    sortable: true,
+  },
 ];
 const toast = useToast();
-toast.add({
-  id: "tips-sortcolumns",
-  title: "Tips",
-  description:
-    "The columns sort options only apply to the current page. you can adjust how many news are shown per page.",
-  icon: "i-carbon-information",
-  color: "green",
-  timeout: 7000,
-});
-toast.add({
-  id: "tips-newsperpage",
-  title: "Tips",
-  description:
-    "The more News per Page you have, the less responsive the page is.",
-  icon: "i-carbon-information",
-  color: "green",
-  timeout: 7000,
-});
-defineProps<{ loading: boolean }>();
+function showTips() {
+  toast.add({
+    id: "tips-sortcolumns",
+    title: "Tips",
+    description:
+      "The columns sort options only apply to the current page. you can adjust how many news are shown per page.",
+    icon: "i-carbon-information",
+    color: "green",
+    timeout: 7000,
+  });
+  toast.add({
+    id: "tips-newsperpage",
+    title: "Tips",
+    description:
+      "The more News per Page you have, the less responsive the page is.",
+    icon: "i-carbon-information",
+    color: "green",
+    timeout: 7000,
+  });
+}
+const props = defineProps<{ loading: boolean }>();
+watch(
+  () => props.loading,
+  async (loading) => {
+    console.log("showing tips");
+    if (loading === false) showTips();
+  },
+);
 const news = useState<News[]>("news", () => []);
 
 const page = ref(1);
@@ -93,6 +107,16 @@ const PaginedNews = computed(() =>
   ),
 );
 
+// watch(PaginedNews, async (PaginedNews) => {
+//   const els = document.getElementsByTagName("tr");
+//   for (let el of els) {
+//     console.log("adding event listener");
+//     el.addEventListener("click", (event) => {
+//       console.log("clicked", event);
+//     });
+//   }
+// });
+
 const columnsChoice = columns.map((c) => c.key);
 const selectedColumns = ref<string[]>(["title", "rating", "note", "link"]);
 if (process.client) {
@@ -103,11 +127,11 @@ if (process.client) {
   let newsperpage = window.localStorage.getItem("NewsPerPage");
   if (newsperpage) pageCount.value = parseInt(newsperpage);
 
-  watch(selectedColumns, (v) =>
+  watch(selectedColumns, async (v) =>
     window.localStorage.setItem("selectedColumns", JSON.stringify(v)),
   );
-  watch(pageCount, (v) =>
-    window.localStorage.setItem("NewsPerPage", pageCount.value.toString()),
+  watch(pageCount, async (v) =>
+    window.localStorage.setItem("NewsPerPage", v.toString()),
   );
 }
 
@@ -188,11 +212,13 @@ async function updateUsed(row: News) {
                 </span>
               </template>
             </UInput>
-            <UPagination
-              v-model="page"
-              :page-count="pageCount"
-              :total="FilteredNews.length"
-            />
+            <ClientOnly>
+              <UPagination
+                v-model="page"
+                :page-count="pageCount"
+                :total="FilteredNews.length"
+              />
+            </ClientOnly>
           </div>
         </UBadge>
       </div>
@@ -202,16 +228,63 @@ async function updateUsed(row: News) {
           :rows="PaginedNews"
           :columns="FilteredColumns"
           class="w-full"
-          :ui="{ td: { base: 'max-w-[0] truncate' } }"
+          :ui="{
+            td: { base: 'max-w-[0] truncate !p-2' },
+          }"
         >
           <template #used-data="{ row }">
             <UToggle v-model="row.used" @click="updateUsed(row)" />
           </template>
           <template #tags-data="{ row }">
-            <span>{{ row.tags?.join(", ") }}</span>
+            <div class="h-10 whitespace-normal truncate">
+              {{ row.tags?.join(", ") }}
+            </div>
           </template>
           <template #rating-data="{ row }">
-            <span>{{ row.rating || "" }}</span>
+            <div>{{ row.rating || "" }}</div>
+          </template>
+          <template #title-data="{ row }">
+            <UTooltip
+              :text="row.title"
+              class="w-full whitespace-normal h-10 truncate"
+            >
+              <div>
+                {{ row.title }}
+              </div>
+            </UTooltip>
+          </template>
+          <template #caption-data="{ row }">
+            <UTooltip :text="row.caption">
+              <div>{{ row.caption }}</div>
+            </UTooltip>
+          </template>
+          <template #link-data="{ row }">
+            <UTooltip :text="row.link">
+              <a :href="row.link" target="_blank" rel="noopener noreferrer">{{
+                row.link
+              }}</a>
+            </UTooltip>
+          </template>
+          <template #note-data="{ row }">
+            <UTooltip
+              :text="row.note"
+              class="w-full h-10 whitespace-normal truncate"
+            >
+              <div>{{ row.note }}</div>
+            </UTooltip>
+          </template>
+          <template #id-data="{ row }">
+            <UTooltip :text="row.id">
+              <div>{{ row.id.split(":")[1] }}</div>
+            </UTooltip>
+          </template>
+          <template #date-data="{ row }">
+            <UTooltip
+              :text="new Date(row.date).toLocaleString('fr-FR')"
+              class="w-full truncate whitespace-normal"
+            >
+              <div>{{ new Date(row.date).toLocaleString("fr-FR") }}</div>
+            </UTooltip>
           </template>
         </UTable>
       </ClientOnly>

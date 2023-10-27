@@ -26,9 +26,9 @@ services:
       - article-parser
       - surrealdb
     environment:
-      article_parser_url: "http://article-parser:8080"
-      surrealdb_host: "surrealdb:8000"
-      chrome_headless: "true"
+      ARTICLE_PARSER_URL: "http://article-parser:8080"
+      SURREALDB_HOST: "surrealdb:8000"
+      CHROME_HEADLESS: "true"
       RUST_LOG: "fetcher=trace"
 
   rater:
@@ -54,14 +54,14 @@ services:
     entrypoint:
       - /surreal
       - start
+      - --allow-funcs
       - --user
-      - $db_user
+      - $DB_USER
       - --pass
-      - $db_password
+      - $DB_PASSWORD
       - --auth
       - --log
       - trace
-      - --deny-all
       - file:/db
     volumes:
       - ./db:/db
