@@ -2,6 +2,7 @@
 import type { News } from "~/utils/news";
 const { $db, $dbhelper } = useNuxtApp();
 
+const BadgeCss = "m-1 min-h-8";
 const props = defineProps<{
   news: News;
 }>();
@@ -12,8 +13,9 @@ onMounted(async () => {
       let ret: any = await $db.query(
         `select text_body, html_body from ${props.news.id}`,
       );
-      props.news.text_body = ret[0].text_body;
-      props.news.html_body = ret[0].html_body;
+      console.log("return from querying body", ret);
+      props.news.text_body = ret[0].result[0].text_body;
+      props.news.html_body = ret[0].result[0].html_body;
     } catch (error: any) {
       useToast().add({
         title: "Error querying news",
@@ -23,26 +25,19 @@ onMounted(async () => {
     }
   }
 });
-const BadgeCss = "m-1 min-h-8";
-// FIX: infinite loop bc of the liveQuery
-watch(
-  () => props.news,
-  async (news: News) => {
-    if (!news || Object.keys(news).length === 0) return;
-    await $db?.wait();
-    try {
-      console.log("saving news", news);
-      await $db?.merge<News>(news.id, news);
-    } catch (error: any) {
-      useToast().add({
-        title: "Error saving news",
-        description: error.toString(),
-        timeout: 0,
-      });
-    }
-  },
-  { deep: true },
-);
+
+async function updateNews() {
+  await $db?.wait();
+  try {
+    const res = await $db?.merge<News>(props.news.id, props.news);
+  } catch (error: any) {
+    useToast().add({
+      title: "Error saving news",
+      description: error.toString(),
+      timeout: 0,
+    });
+  }
+}
 </script>
 
 <template>
@@ -54,7 +49,10 @@ watch(
             variant="none"
             v-model.number="news.rating"
             placeholder="rating"
+            @vue:updated="updateNews"
             type="number"
+            max="100"
+            min="0"
             color="primary"
             class="w-[6.5rem]"
             :ui="{ trailing: { padding: { sm: 'pe-12' } } }"
