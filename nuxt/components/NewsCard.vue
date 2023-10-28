@@ -5,12 +5,33 @@ const { $db, $dbhelper } = useNuxtApp();
 const props = defineProps<{
   news: News;
 }>();
+onMounted(async () => {
+  await $db?.wait();
+  if (!props.news.text_body || !props.news.html_body) {
+    try {
+      let ret: any = await $db.query(
+        `select text_body, html_body from ${props.news.id}`,
+      );
+      props.news.text_body = ret[0].text_body;
+      props.news.html_body = ret[0].html_body;
+    } catch (error: any) {
+      useToast().add({
+        title: "Error querying news",
+        description: error.toString(),
+        timeout: 0,
+      });
+    }
+  }
+});
 const BadgeCss = "m-1 min-h-8";
+// FIX: infinite loop bc of the liveQuery
 watch(
   () => props.news,
   async (news: News) => {
+    if (!news || Object.keys(news).length === 0) return;
     await $db?.wait();
     try {
+      console.log("saving news", news);
       await $db?.merge<News>(news.id, news);
     } catch (error: any) {
       useToast().add({
@@ -31,7 +52,7 @@ watch(
         <UBadge :class="BadgeCss">
           <UInput
             variant="none"
-            v-model="news.rating"
+            v-model.number="news.rating"
             placeholder="rating"
             type="number"
             color="primary"

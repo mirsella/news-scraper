@@ -88,11 +88,7 @@ watch(
 const news = useState<News[]>("news", () => []);
 
 const page = ref(1);
-const pageCountModel = ref("500");
-const pageCount = computed({
-  get: () => parseInt(pageCountModel.value),
-  set: (value) => (pageCountModel.value = value.toString()),
-});
+const pageCount = ref(500);
 const search = ref("");
 const onlyNonused = ref(false);
 const FilteredNews = computed(() =>
@@ -219,7 +215,7 @@ async function updateUsed(row: News) {
         <UBadge color="gray">
           <div class="flex flex-wrap gap-2">
             <UInput
-              v-model="pageCount"
+              v-model.number="pageCount"
               type="number"
               class="w-44"
               :ui="{ trailing: { padding: { sm: 'pe-24' } } }"
