@@ -81,7 +81,7 @@ const n = computed<News>(() => {
       <UModal
         v-model="isOpen"
         :transition="false"
-        :ui="{ width: 'md:max-w-[70%]' }"
+        :ui="{ width: 'md:max-w-[80%]' }"
       >
         <NewsCard :news="n" />
       </UModal>
