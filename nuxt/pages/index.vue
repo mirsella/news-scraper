@@ -69,10 +69,17 @@ const isOpen = computed<boolean>({
   },
 });
 const n = computed<News>(() => {
-  return (
-    news.value.find((n) => n.id === "news:" + route?.query.id) || ({} as any)
-  );
+  return news.value.find((n) => n.id === route?.query.id) || ({} as any);
 });
+const clipboardIcon = ref("i-heroicons-clipboard-document");
+async function copyDedicatedLink() {
+  const url = `${location.origin}/${route?.query.id}`;
+  await navigator.clipboard.writeText(url);
+  clipboardIcon.value = "i-heroicons-clipboard-document-check";
+  setTimeout(() => {
+    clipboardIcon.value = "i-heroicons-clipboard-document";
+  }, 1000);
+}
 </script>
 
 <template>
@@ -83,6 +90,22 @@ const n = computed<News>(() => {
         :transition="false"
         :ui="{ width: 'md:max-w-[80%]' }"
       >
+        <div class="flex justify-center">
+          <UTooltip text="Open in a dedicated page">
+            <UButton
+              class="w-8 m-1 transition hover:scale-110"
+              icon="i-carbon-export"
+              @click="navigateTo('/' + $route.query.id)"
+            />
+          </UTooltip>
+          <UTooltip text="Copy dedicated link to clipboard">
+            <UButton
+              class="w-8 m-1 transition hover:scale-110"
+              :icon="clipboardIcon"
+              @click="copyDedicatedLink"
+            />
+          </UTooltip>
+        </div>
         <NewsCard :news="n" />
       </UModal>
     </ClientOnly>

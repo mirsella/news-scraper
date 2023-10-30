@@ -119,7 +119,7 @@ if (process.client) {
           el.addEventListener("click", (event) => {
             const parent = el;
             if (event.target?.localName === "td") {
-              const id = parent.children[0].textContent?.split(":")[1];
+              const id = parent.children[0].textContent;
               if (id) navigateTo({ query: { id } });
             }
           });
@@ -130,7 +130,9 @@ if (process.client) {
   );
 }
 
-const columnsChoice = columns.map((c) => c.key);
+const columnsChoice = columns
+  .filter((c) => c.key != "hiddenid")
+  .map((c) => c.key);
 const selectedColumns = ref<string[]>(["title", "rating", "note", "link"]);
 if (process.client) {
   let localstorageColumns = window.localStorage.getItem("selectedColumns");

@@ -11,7 +11,15 @@ async function signout() {
 <template>
   <div>
     <div class="inline-flex w-full pt-1 md:py-4 px-4 h-auto">
-      <h1 class="text-2xl self-start hidden sm:block">news-scraper</h1>
+      <h1
+        class="text-2xl self-start cursor-pointer transition hover:scale-110"
+        @click="navigateTo('/')"
+      >
+        <span class="hidden sm:block"> news-scraper </span>
+        <span class="sm:hidden mt-2">
+          <UIcon name="i-heroicons-home" />
+        </span>
+      </h1>
       <div class="flex-grow self-center text-center">
         <ClientOnly>
           <UBadge
@@ -52,7 +60,7 @@ async function signout() {
         <ClientOnly>
           <UButton
             v-if="$dbhelper?.authenticated.value"
-            class="text-sm md:text-xl py-1"
+            class="text-sm md:text-xl py-1 transition hover:scale-110"
             color="red"
             @click="signout"
           >
