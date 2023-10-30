@@ -29,32 +29,37 @@ watch(
       }
     }
   },
+  { deep: true, immediate: true },
 );
 
+let news: Ref<News> = ref({} as News);
 let updatedNews = false;
 watch(
   () => props.news,
-  () => {
-    updatedNews = true;
-    news.value = props.news;
+  async () => {
+    console.log("in watch, setting updatedNews to true");
+    // updatedNews = true;
+    Object.assign(news.value, props.news);
   },
   { deep: true },
 );
-const news = ref<News>(props.news);
 
 async function updateNews(field?: keyof News) {
+  console.log("in updatenews news", news);
+  if (!news || Object.keys(news).length === 0 || !field) return;
   if (!news.value.rating || news.value.rating < 0 || news.value.rating > 100) {
     news.value.rating = 0;
   }
+  console.log("in updatenews updatedNews", updatedNews);
   if (updatedNews) {
     updatedNews = false;
     return;
   }
-  if (!props.news || Object.keys(props.news).length === 0) return;
   try {
     await $db?.wait();
-    const update = field ? { [field]: props.news[field] } : props.news;
-    await $db?.merge<News>(props.news.id, update);
+    const update: Partial<News> = field ? { [field]: news.value[field] } : news;
+    console.log(`merging ${news.value.id} with `, update);
+    await $db?.merge<News>(news.value.id, update);
   } catch (error: any) {
     useToast().add({
       title: "Error saving news",
@@ -68,6 +73,8 @@ async function updateNews(field?: keyof News) {
 <template>
   <UCard>
     <template #header>
+      {{ props.news.rating }}
+      {{ news.rating }}
       <div class="flex flex-wrap">
         <UBadge class="m-1">
           <UInput
