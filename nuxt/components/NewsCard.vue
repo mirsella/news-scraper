@@ -5,6 +5,8 @@ const { $db, $dbhelper } = useNuxtApp();
 let props = defineProps<{
   news: News;
 }>();
+
+let justloadedText = false;
 watch(
   () => props.news,
   async () => {
@@ -20,6 +22,7 @@ watch(
         );
         props.news.text_body = ret[0].result.text_body;
         props.news.html_body = ret[0].result.html_body;
+        justloadedText = true;
       } catch (error: any) {
         useToast().add({
           title: "Error querying news",
@@ -33,32 +36,26 @@ watch(
 );
 
 let news: Ref<News> = ref({} as News);
-let updatedNews = false;
 watch(
   () => props.news,
   async () => {
-    console.log("in watch, setting updatedNews to true");
-    // updatedNews = true;
     Object.assign(news.value, props.news);
   },
-  { deep: true },
+  { deep: true, immediate: true },
 );
 
 async function updateNews(field?: keyof News) {
-  console.log("in updatenews news", news);
   if (!news || Object.keys(news).length === 0 || !field) return;
+  if (justloadedText) {
+    justloadedText = false;
+    return;
+  }
   if (!news.value.rating || news.value.rating < 0 || news.value.rating > 100) {
     news.value.rating = 0;
-  }
-  console.log("in updatenews updatedNews", updatedNews);
-  if (updatedNews) {
-    updatedNews = false;
-    return;
   }
   try {
     await $db?.wait();
     const update: Partial<News> = field ? { [field]: news.value[field] } : news;
-    console.log(`merging ${news.value.id} with `, update);
     await $db?.merge<News>(news.value.id, update);
   } catch (error: any) {
     useToast().add({

@@ -37,7 +37,6 @@ onMounted(async () => {
 
   try {
     const liveQueryUuid = await $db?.live("news", ({ action, result }) => {
-      console.log("live query", action, result);
       switch (action) {
         case "CREATE":
           news.value.unshift(result as News);
