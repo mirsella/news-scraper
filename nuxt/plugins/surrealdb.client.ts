@@ -86,7 +86,10 @@ export default defineNuxtPlugin(async () => {
         connect();
       }
     }, 100);
-    if (connected.value) await login();
+    if (connected.value) {
+      const ret = await login();
+      if (ret) navigateTo("/");
+    }
   })();
   return {
     provide: {

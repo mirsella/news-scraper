@@ -1,10 +1,5 @@
 <script setup lang="ts">
 const { $db, $dbhelper } = useNuxtApp();
-onMounted(() => {
-  if ($dbhelper?.authenticated.value === true) {
-    navigateTo("/");
-  }
-});
 const user = ref("");
 const password = ref("");
 const isLoading = ref(false);
@@ -25,8 +20,9 @@ async function signin() {
     });
     if (!jwt) throw new Error("didn't get a jwt");
     window.localStorage.setItem("jwt", jwt);
+    $dbhelper.update_activated();
     $dbhelper.authenticated.value = true;
-    navigateTo("/");
+    await navigateTo("/");
   } catch (error: any) {
     toast.add({
       color: "red",

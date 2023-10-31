@@ -6,6 +6,9 @@ const queryLoading = ref(true);
 
 const news = useState<News[]>("news", () => []);
 onMounted(async () => {
+  while (!$dbhelper.authenticated.value || !$dbhelper.activated.value) {
+    await new Promise((resolve) => setTimeout(resolve, 10));
+  }
   (async () => {
     queryStatus.value = "";
     queryLoading.value = true;
@@ -36,6 +39,7 @@ onMounted(async () => {
   })();
 
   try {
+    await $db.wait();
     const liveQueryUuid = await $db?.live("news", ({ action, result }) => {
       switch (action) {
         case "CREATE":
