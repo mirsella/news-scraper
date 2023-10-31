@@ -22,7 +22,7 @@ pub struct Config {
 }
 impl Config {
     pub fn load(path: &str) -> Result<Config> {
-        dotenvy::from_filename_override(path).context("dotenvy")?;
+        dotenvy::from_filename(path).context("dotenvy")?;
         let config: Config = envy::from_env().context("envy")?;
         Ok(config)
     }

@@ -42,7 +42,7 @@ services:
       - surrealdb
     environment:
       RUST_LOG: "rater=trace"
-      surrealdb_host: "surrealdb:8000"
+      SURREALDB_HOST: "surrealdb:8000"
 
   surrealdb:
     container_name: surrealdb

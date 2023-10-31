@@ -55,7 +55,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
         let links = get_articles_links(&tab).context("francetvinfo")?;
         trace!("found {} links on {category}", links.len());
         for link in links {
-            let url = format!("https://www.francetvinfo.fr/{}/", link);
+            let url = format!("https://www.francetvinfo.fr{}", link);
             if opts.seen_urls.lock().unwrap().contains(&url) {
                 trace!("already seen {url}");
                 continue;

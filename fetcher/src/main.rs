@@ -48,6 +48,7 @@ async fn main() -> Result<()> {
 
     let telegram = Telegram::new(config.telegram_token.clone(), config.telegram_id);
 
+    info!("surrealdb_host: {}", config.surrealdb_host);
     let db = Surreal::new::<Ws>(&config.surrealdb_host).await?;
     db.signin(Root {
         username: &config.db_user,
