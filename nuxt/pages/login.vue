@@ -30,7 +30,8 @@ async function signin() {
   } catch (error: any) {
     toast.add({
       color: "red",
-      title: "sign in failed. probably wrong credentials",
+      title:
+        "sign in failed. probably wrong credentials or account doesn't exist",
       description: error.toString(),
     });
   }
