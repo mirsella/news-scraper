@@ -3,10 +3,12 @@ import type { News } from "~/utils/news.d.ts";
 const { $db } = useNuxtApp();
 const newsstate = useState<News[]>("news", () => []);
 const route = useRoute();
-let news =
-  newsstate.value.find((e: News) => e.id === route.params.id) || ({} as News);
 
-if (process.client) {
+const news = computed(() => {
+  return newsstate.value.find((n) => n.id === route.params.id);
+});
+
+onMounted(async () => {
   if (!newsstate.value.length) {
     await $db.wait();
     try {
@@ -17,7 +19,7 @@ if (process.client) {
         },
       );
       if (!res[0].result) throw new Error("No news found");
-      newsstate.value.push(res[0].result);
+      newsstate.value.unshift(res[0].result);
     } catch (error) {
       useToast().add({
         title: "Error querying news",
@@ -26,12 +28,16 @@ if (process.client) {
       });
     }
   }
-  news =
-    newsstate.value.find((e: News) => e.id === route.params.id) || ({} as News);
-}
+});
 </script>
 <template>
   <div class="m-4">
-    <NewsCard v-if="Object.keys(news).length > 0" :news="news" />
+    <ClientOnly>
+      <NewsCard v-if="news?.id" :news="news" />
+      <div v-else class="text-center text-4xl w-full">
+        no news found for this id.
+        <UButton label="go home." size="xl" class @click="navigateTo('/')" />
+      </div>
+    </ClientOnly>
   </div>
 </template>

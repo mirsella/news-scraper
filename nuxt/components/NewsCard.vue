@@ -19,8 +19,6 @@ watch(
             id: props.news.id,
           },
         );
-        props.news.text_body = ret[0].result.text_body;
-        props.news.html_body = ret[0].result.html_body;
         news.value.text_body = ret[0].result.text_body;
         news.value.html_body = ret[0].result.html_body;
       } catch (error: any) {
@@ -40,7 +38,7 @@ let lastUpdate = new Date();
 watch(
   () => props.news,
   async () => {
-    // only update the text if it has been more than 2 seconds to not overwrite text while writing
+    // only update if the last update was more than 2 seconds ago, to not overwrite user data
     if (new Date().getTime() - lastUpdate.getTime() > 2000 || !news.value.id) {
       Object.assign(news.value, props.news);
     }
@@ -49,13 +47,14 @@ watch(
 );
 
 async function updateNews(field?: keyof News) {
-  if (!news || Object.keys(news).length === 0 || !field) return;
+  if (!news.value.id || !field) return;
   if (!news.value.rating || news.value.rating < 0 || news.value.rating > 100) {
     news.value.rating = 0;
   }
   lastUpdate = new Date();
+  // wait for the v-model to update...
+  await new Promise((resolve) => setTimeout(resolve, 10));
   try {
-    await $db?.wait();
     const update: Partial<News> = field
       ? { [field]: news.value[field] }
       : news.value;
@@ -113,7 +112,7 @@ async function updateNews(field?: keyof News) {
             {{ news.link }}
           </a>
         </UBadge>
-        <UBadge class="m-1" v-if="news.tags?.length > 0">
+        <UBadge class="m-1" v-if="news.tags?.length">
           tags: {{ news.tags?.join(", ") }}
         </UBadge>
         <UBadge class="m-1" v-else> no tags</UBadge>
