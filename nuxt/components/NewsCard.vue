@@ -6,7 +6,6 @@ let props = defineProps<{
   news: News;
 }>();
 
-let justloadedText = false;
 watch(
   () => props.news,
   async () => {
@@ -22,7 +21,8 @@ watch(
         );
         props.news.text_body = ret[0].result.text_body;
         props.news.html_body = ret[0].result.html_body;
-        justloadedText = true;
+        news.value.text_body = ret[0].result.text_body;
+        news.value.html_body = ret[0].result.html_body;
       } catch (error: any) {
         useToast().add({
           title: "Error querying news",
@@ -36,26 +36,29 @@ watch(
 );
 
 let news: Ref<News> = ref({} as News);
+let lastUpdate = new Date();
 watch(
   () => props.news,
   async () => {
-    Object.assign(news.value, props.news);
+    // only update the text if it has been more than 2 seconds to not overwrite text while writing
+    if (new Date().getTime() - lastUpdate.getTime() > 2000 || !news.value.id) {
+      Object.assign(news.value, props.news);
+    }
   },
   { deep: true, immediate: true },
 );
 
 async function updateNews(field?: keyof News) {
   if (!news || Object.keys(news).length === 0 || !field) return;
-  if (justloadedText) {
-    justloadedText = false;
-    return;
-  }
   if (!news.value.rating || news.value.rating < 0 || news.value.rating > 100) {
     news.value.rating = 0;
   }
+  lastUpdate = new Date();
   try {
     await $db?.wait();
-    const update: Partial<News> = field ? { [field]: news.value[field] } : news;
+    const update: Partial<News> = field
+      ? { [field]: news.value[field] }
+      : news.value;
     await $db?.merge<News>(news.value.id, update);
   } catch (error: any) {
     useToast().add({
@@ -78,7 +81,7 @@ async function updateNews(field?: keyof News) {
             variant="none"
             v-model.number="news.rating"
             placeholder="0"
-            @vue:updated="updateNews('rating')"
+            @input="updateNews('rating')"
             type="number"
             max="100"
             min="0"
@@ -100,8 +103,8 @@ async function updateNews(field?: keyof News) {
           <span class="mr-2">has been used</span>
           <UToggle
             color="emerald"
+            @click="updateNews('used')"
             v-model="news.used"
-            @vue:updated="updateNews('used')"
             class="ring"
           />
         </UBadge>
@@ -110,19 +113,36 @@ async function updateNews(field?: keyof News) {
             {{ news.link }}
           </a>
         </UBadge>
-        <UBadge class="m-1"> tags: {{ news.tags?.join(", ") }} </UBadge>
+        <UBadge class="m-1" v-if="news.tags?.length > 0">
+          tags: {{ news.tags?.join(", ") }}
+        </UBadge>
+        <UBadge class="m-1" v-else> no tags</UBadge>
       </div>
     </template>
     <div>
-      <UTooltip text="Title" class="w-full">
+      <UTooltip text="Notes" class="w-full">
         <UTextarea
           class="w-full"
+          color="primary"
+          size="xl"
+          autoresize
+          placeholder="Notes..."
+          v-model="news.note"
+          :rows="1"
+          @input="updateNews('note')"
+        >
+        </UTextarea>
+      </UTooltip>
+      <UTooltip text="Title" class="w-full">
+        <UTextarea
+          class="mt-2 w-full"
+          size="xl"
           color="primary"
           autoresize
           placeholder="Title..."
           v-model="news.title"
           :rows="1"
-          @vue:updated="updateNews('title')"
+          @input="updateNews('title')"
         >
         </UTextarea>
       </UTooltip>
@@ -132,9 +152,10 @@ async function updateNews(field?: keyof News) {
           color="primary"
           autoresize
           placeholder="Caption..."
+          size="xl"
           v-model="news.caption"
           :rows="1"
-          @vue:updated="updateNews('caption')"
+          @input="updateNews('caption')"
         ></UTextarea>
       </UTooltip>
       <UTooltip text="Clean Text" class="w-full">
@@ -145,12 +166,13 @@ async function updateNews(field?: keyof News) {
           v-model="news.text_body"
           color="primary"
           :rows="1"
-          @vue:updated="updateNews('text_body')"
+          size="xl"
+          @input="updateNews('text_body')"
         >
         </UTextarea>
       </UTooltip>
       <div class="w-full" v-show="news.html_body?.length || 0">
-        <h1 class="w-full text-center font-bold">original text:</h1>
+        <h1 class="w-full text-xl text-center font-bold">original text:</h1>
         <span v-html="news.html_body"></span>
       </div>
     </div>

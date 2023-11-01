@@ -31,7 +31,6 @@ if (process.client) {
 }
 </script>
 <template>
-  {{ news }}
   <div class="m-4">
     <NewsCard v-if="Object.keys(news).length > 0" :news="news" />
   </div>
