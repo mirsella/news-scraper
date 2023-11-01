@@ -48,4 +48,4 @@ app.post("/parse", async (c: Context) => {
   }
 });
 
-Deno.serve({ port: 8080 }, app.fetch);
+Deno.serve({ port: Deno.env.get("PORT") || 8081 }, app.fetch);

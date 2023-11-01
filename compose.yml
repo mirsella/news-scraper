@@ -1,6 +1,20 @@
 version: "3.8"
 
 services:
+  nuxt:
+    restart: always
+    container_name: nuxt
+    build:
+      context: .
+      dockerfile: docker/nuxt.dockerfile
+    ports:
+      - "8080:3000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      retries: 3
+      start_period: 5s
+      timeout: 5s
+
   article-parser:
     restart: always
     container_name: article-parser
@@ -8,12 +22,14 @@ services:
       context: .
       dockerfile: docker/article-parser.dockerfile
     ports:
-      - "8080:8080"
+      - "8081:8081"
+    environment:
+      PORT: 8081
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080"]
-      retries: 5
-      start_period: 20s
-      timeout: 10s
+      test: ["CMD", "curl", "http://localhost:8081"]
+      retries: 3
+      start_period: 10s
+      timeout: 5s
 
   fetcher:
     container_name: fetcher
@@ -26,7 +42,7 @@ services:
       - article-parser
       - surrealdb
     environment:
-      ARTICLE_PARSER_URL: "http://article-parser:8080"
+      ARTICLE_PARSER_URL: "http://article-parser:8081"
       SURREALDB_HOST: "surrealdb:8000"
       CHROME_HEADLESS: "true"
       RUST_LOG: "fetcher=trace"
@@ -69,6 +85,6 @@ services:
       - 8000:8000
     healthcheck:
       test: ["CMD", "/surreal", "isready"]
-      retries: 5
-      start_period: 20s
+      retries: 3
+      start_period: 10s
       timeout: 10s
