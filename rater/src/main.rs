@@ -19,7 +19,8 @@ where rating == none
 AND tags == none
 AND date > time::floor(time::now(), 1w)
 AND used == false
-AND !string::contains(note, 'error rating')",
+AND !string::contains(note, 'error rating')
+ORDER BY date DESC",
         )
         .await?
         .take(0)?;

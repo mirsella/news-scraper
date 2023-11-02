@@ -303,7 +303,11 @@ async function updateUsed(row: News) {
           </template>
           <template #id-data="{ row }">
             <UTooltip :text="row.id">
-              <div>{{ row.id.split(":")[1] }}</div>
+              <div
+                class="max-w-full whitespace-normal text-ellipsis break-all max-h-10"
+              >
+                {{ row.id.split(":")[1] }}
+              </div>
             </UTooltip>
           </template>
           <template #date-data="{ row }">
