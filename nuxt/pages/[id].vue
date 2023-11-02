@@ -18,7 +18,7 @@ onMounted(async () => {
           id: route.params.id,
         },
       );
-      console.log("getting news on [id]", res);
+      if (!res[0].rating) res[0].rating = -1;
       newsstate.value.unshift(res[0]);
     } catch (error) {
       useToast().add({
@@ -31,6 +31,8 @@ onMounted(async () => {
 
   try {
     const liveQueryUuid = await $db?.live("news", ({ action, result }) => {
+      if (!result) return;
+      if (!result.rating) result.rating = -1;
       switch (action) {
         case "UPDATE":
           const index = newsstate.value.findIndex((n) => n.id === result.id);

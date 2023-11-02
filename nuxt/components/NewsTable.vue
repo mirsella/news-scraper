@@ -179,53 +179,10 @@ async function updateUsed(row: News) {
     });
   }
 }
-const sort = ref<{ column: string | null; direction: "asc" | "desc" | "" }>({
-  column: null,
-  direction: "asc",
-});
-watch(
-  sort,
-  async () => {
-    // news.value.reverse();
-    news.value.sort((a, b) => (a.rating ?? -1) - (b.rating ?? -1));
-  },
-  { deep: true },
-);
-async function sortNewsByRating() {
-  props.loading = true;
-  let column = sort.value.column;
-  let direction = sort.value.direction;
-  if (!column) {
-    column = "rating";
-    direction = "asc";
-  } else if (direction === "asc") {
-    direction = "desc";
-  } else {
-    direction = "asc";
-    column = null;
-  }
-  if (column === null) {
-    console.log("sort date");
-    news.value.sort(
-      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
-    );
-  } else if (direction === "asc") {
-    console.log("sort asc");
-    news.value.sort((a, b) => (a.rating ?? -1) - (b.rating ?? -1));
-  } else {
-    console.log("sort desc");
-    news.value.sort((a, b) => (b.rating ?? -1) - (a.rating ?? -1));
-  }
-  sort.value.column = column;
-  sort.value.direction = direction;
-  props.loading = false;
-}
 </script>
 
 <template>
   <div>
-    {{ paginedNews[0]?.rating ?? "none" }}
-    {{ sort }}
     <UCard
       class="w-full"
       :ui="{
@@ -286,17 +243,11 @@ async function sortNewsByRating() {
           :loading="loading"
           :rows="paginedNews"
           :columns="filteredColumns"
-          v-model:sort="sort"
           class="w-full"
           :ui="{
             td: { base: 'max-w-[0] !p-2' },
           }"
         >
-          <template #rating-header>
-            <UButton @click="sortNewsByRating()">
-              rating sort {{ sort.column === "rating" ? sort.direction : "" }}
-            </UButton>
-          </template>
           <template #hiddenid-data="{ row }">
             {{ row.id }}
           </template>

@@ -41,6 +41,9 @@ watch(
     // only update if the last update was more than 2 seconds ago, to not overwrite user data
     if (new Date().getTime() - lastUpdate.getTime() > 2000 || !news.value.id) {
       Object.assign(news.value, props.news);
+      if (news.value.rating === -1) {
+        news.value.rating = undefined;
+      }
     }
   },
   { deep: true, immediate: true },

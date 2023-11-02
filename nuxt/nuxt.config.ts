@@ -15,4 +15,5 @@ export default defineNuxtConfig({
   ui: {
     icons: ["carbon", "heroicons"],
   },
+  ssr: false,
 });
