@@ -10,4 +10,4 @@ RUN apk add --no-cache curl
 RUN npm i -g pnpm
 RUN pnpm i && pnpm build
 
-CMD ["node", ".output/server/index.mjs"]
+CMD ["pnpm", "nuxt", "start"]

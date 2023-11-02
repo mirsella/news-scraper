@@ -18,6 +18,6 @@
   },
   "dependencies": {
     "@iconify-json/carbon": "^1.1.21",
-    "surrealdb.js": "^0.9.1"
+    "surrealdb.js": "^0.11.0"
   }
 }

@@ -12,9 +12,9 @@ async function signin() {
   const toast = useToast();
   try {
     const jwt = await $db.signin({
-      NS: "news",
-      DB: "news",
-      SC: "user",
+      namespace: "news",
+      database: "news",
+      scope: "user",
       name: user.value,
       password: password.value,
     });
@@ -38,9 +38,9 @@ async function signup() {
   const toast = useToast();
   try {
     let token = await $db.signup({
-      NS: "news",
-      DB: "news",
-      SC: "user",
+      namespace: "news",
+      database: "news",
+      scope: "user",
       name: user.value,
       password: password.value,
     });

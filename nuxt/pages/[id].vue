@@ -5,7 +5,7 @@ const newsstate = useState<News[]>("news", () => []);
 const route = useRoute();
 
 const news = computed(() => {
-  return newsstate.value.find((n) => n.id === route.params.id);
+  return newsstate.value.find((n) => n.id === route.params.id) || ({} as News);
 });
 
 onMounted(async () => {
@@ -18,8 +18,8 @@ onMounted(async () => {
           id: route.params.id,
         },
       );
-      if (!res[0].result) throw new Error("No news found");
-      newsstate.value.unshift(res[0].result);
+      console.log("getting news on [id]", res);
+      newsstate.value.unshift(res[0]);
     } catch (error) {
       useToast().add({
         title: "Error querying news",
@@ -27,6 +27,31 @@ onMounted(async () => {
         timeout: 0,
       });
     }
+  }
+
+  try {
+    const liveQueryUuid = await $db?.live("news", ({ action, result }) => {
+      switch (action) {
+        case "UPDATE":
+          const index = newsstate.value.findIndex((n) => n.id === result.id);
+          if (index !== -1) newsstate.value[index] = result as News;
+          break;
+        case "DELETE":
+          useToast().add({
+            title: "the news you are watching has been deleted.",
+            color: "red",
+            timeout: 0,
+          });
+          break;
+      }
+    });
+  } catch (e: any) {
+    useToast().add({
+      title: "Error starting live query",
+      description: e.toString(),
+      color: "red",
+      timeout: 0,
+    });
   }
 });
 </script>

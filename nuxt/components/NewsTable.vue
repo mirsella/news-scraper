@@ -78,7 +78,7 @@ function showTips() {
     timeout: 7000,
   });
 }
-const props = defineProps<{ loading: boolean }>();
+let props = defineProps<{ loading: boolean }>();
 watch(
   () => props.loading,
   async (loading) => {
@@ -88,10 +88,10 @@ watch(
 const news = useState<News[]>("news", () => []);
 
 const page = ref(1);
-const pageCount = ref(500);
+const pageCount = ref(100);
 const search = ref("");
 const onlyNonused = ref(false);
-const FilteredNews = computed(() =>
+const filteredNews = computed(() =>
   news.value.filter((n) => {
     return (
       (n.title.toLowerCase().includes(search.value.toLowerCase()) ||
@@ -102,16 +102,16 @@ const FilteredNews = computed(() =>
     );
   }),
 );
-const PaginedNews = computed(() =>
-  FilteredNews.value.slice(
+const paginedNews = computed(() =>
+  filteredNews.value.slice(
     (page.value - 1) * pageCount.value,
     page.value * pageCount.value,
   ),
 );
 if (process.client) {
   watch(
-    PaginedNews,
-    (PaginedNews) => {
+    paginedNews,
+    (paginedNews) => {
       setTimeout(async () => {
         const els = document.querySelectorAll("tbody > tr");
         console.log("registering click events", els.length);
@@ -150,7 +150,7 @@ if (process.client) {
   );
 }
 
-const FilteredColumns = computed(() => {
+const filteredColumns = computed(() => {
   if (selectedColumns.value.length === 0)
     selectedColumns.value = columns.map((c) => c.key);
   return columns.filter(
@@ -179,10 +179,53 @@ async function updateUsed(row: News) {
     });
   }
 }
+const sort = ref<{ column: string | null; direction: "asc" | "desc" | "" }>({
+  column: null,
+  direction: "asc",
+});
+watch(
+  sort,
+  async () => {
+    // news.value.reverse();
+    news.value.sort((a, b) => (a.rating ?? -1) - (b.rating ?? -1));
+  },
+  { deep: true },
+);
+async function sortNewsByRating() {
+  props.loading = true;
+  let column = sort.value.column;
+  let direction = sort.value.direction;
+  if (!column) {
+    column = "rating";
+    direction = "asc";
+  } else if (direction === "asc") {
+    direction = "desc";
+  } else {
+    direction = "asc";
+    column = null;
+  }
+  if (column === null) {
+    console.log("sort date");
+    news.value.sort(
+      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+    );
+  } else if (direction === "asc") {
+    console.log("sort asc");
+    news.value.sort((a, b) => (a.rating ?? -1) - (b.rating ?? -1));
+  } else {
+    console.log("sort desc");
+    news.value.sort((a, b) => (b.rating ?? -1) - (a.rating ?? -1));
+  }
+  sort.value.column = column;
+  sort.value.direction = direction;
+  props.loading = false;
+}
 </script>
 
 <template>
   <div>
+    {{ paginedNews[0]?.rating ?? "none" }}
+    {{ sort }}
     <UCard
       class="w-full"
       :ui="{
@@ -232,7 +275,7 @@ async function updateUsed(row: News) {
               <UPagination
                 v-model="page"
                 :page-count="pageCount"
-                :total="FilteredNews.length"
+                :total="filteredNews.length"
               />
             </ClientOnly>
           </div>
@@ -241,13 +284,19 @@ async function updateUsed(row: News) {
       <ClientOnly>
         <UTable
           :loading="loading"
-          :rows="PaginedNews"
-          :columns="FilteredColumns"
+          :rows="paginedNews"
+          :columns="filteredColumns"
+          v-model:sort="sort"
           class="w-full"
           :ui="{
             td: { base: 'max-w-[0] !p-2' },
           }"
         >
+          <template #rating-header>
+            <UButton @click="sortNewsByRating()">
+              rating sort {{ sort.column === "rating" ? sort.direction : "" }}
+            </UButton>
+          </template>
           <template #hiddenid-data="{ row }">
             {{ row.id }}
           </template>
@@ -263,7 +312,7 @@ async function updateUsed(row: News) {
           </template>
           <template #rating-data="{ row }">
             <div class="w-max-full w-min">
-              {{ row.rating || "" }}
+              {{ row.rating != -1 ? row.rating : "" }}
             </div>
           </template>
           <template #title-data="{ row }">
@@ -284,7 +333,7 @@ async function updateUsed(row: News) {
             </UTooltip>
           </template>
           <template #link-data="{ row }">
-            <UTooltip :text="row.link">
+            <UTooltip :text="row.link" class="max-w-full">
               <a
                 :href="row.link"
                 target="_blank"

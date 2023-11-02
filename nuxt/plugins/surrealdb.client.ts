@@ -14,8 +14,8 @@ async function connect() {
     window.location.protocol + "//" + window.location.hostname + ":8000";
   try {
     await db.connect(db_url, {
-      ns: "news",
-      db: "news",
+      namespace: "news",
+      database: "news",
     });
     connected.value = true;
     alreadyFailed = false;
@@ -80,10 +80,10 @@ export default defineNuxtPlugin(async () => {
   (async () => {
     await connect();
     setInterval(async () => {
-      if (db.status !== 0 && alreadyFailed === true) {
+      if (db.status !== 0) {
         connected.value = false;
         authenticated.value = false;
-        connect();
+        await connect();
       }
     }, 100);
     if (connected.value) {

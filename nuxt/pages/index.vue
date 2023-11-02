@@ -2,7 +2,7 @@
 const { $db, $dbhelper } = useNuxtApp();
 import type { News } from "~/utils/news";
 const queryStatus = ref("");
-const queryLoading = ref(true);
+let queryLoading = ref(true);
 
 const news = useState<News[]>("news", () => []);
 onMounted(async () => {
@@ -12,20 +12,20 @@ onMounted(async () => {
   (async () => {
     queryStatus.value = "";
     queryLoading.value = true;
-    await $db?.ready;
+    await $db.ready;
     try {
       const t1 = performance.now();
-      const result = await $db?.query<[News[]]>(
+      let result = await $db.query<[News[]]>(
         "select * omit text_body, html_body from news order by date desc",
       );
-      if (!result || !result.length || result[0]?.status !== "OK") {
-        throw new Error(result.toString());
-      }
-      news.value = result[0]?.result ?? [];
+      if (!result[0].length) throw new Error("no news found");
+      // result[0].forEach((n) => {
+      //   if (!n.rating) n.rating = -1;
+      // });
+      news.value = result[0] ?? [];
       const t2 = performance.now();
-      const dbtime = (result[0]?.time).replace(/\.[0-9]*/, "") || "unknown";
       const totaltime = (t2 - t1).toFixed(0);
-      queryStatus.value = `loaded ${news.value.length} news in ${totaltime}ms (db: ${dbtime})`;
+      queryStatus.value = `loaded ${news.value.length} news in ${totaltime}ms.`;
       queryLoading.value = false;
     } catch (e: any) {
       if (process.server) return;
@@ -37,6 +37,34 @@ onMounted(async () => {
       });
     }
   })();
+
+  try {
+    await $db.wait();
+    const liveQueryUuid = await $db?.live("news", ({ action, result }) => {
+      if (!result) return;
+      // if (!result.rating) result.rating = -1;
+      switch (action) {
+        case "CREATE":
+          news.value.unshift(result as News);
+          break;
+        case "UPDATE":
+          const index = news.value.findIndex((n) => n.id === result.id);
+          if (index !== -1) news.value[index] = result as News;
+          break;
+        case "DELETE":
+          const index2 = news.value.findIndex((n) => n.id === result.id);
+          if (index2 !== -1) news.value.splice(index2, 1);
+          break;
+      }
+    });
+  } catch (e: any) {
+    useToast().add({
+      title: "Error starting live query",
+      description: e.toString(),
+      color: "red",
+      timeout: 0,
+    });
+  }
 });
 
 const route = useRoute();

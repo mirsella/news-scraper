@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { News } from "~/utils/news";
-const { $db, $dbhelper } = useNuxtApp();
+const { $db } = useNuxtApp();
 
 let props = defineProps<{
   news: News;
@@ -13,14 +13,14 @@ watch(
     await $db?.wait();
     if (!props.news.text_body || !props.news.html_body) {
       try {
-        let ret: any = await $db.query(
+        let ret: any = await $db.query<[string, string]>(
           "select text_body, html_body from only $id",
           {
             id: props.news.id,
           },
         );
-        news.value.text_body = ret[0].result.text_body;
-        news.value.html_body = ret[0].result.html_body;
+        news.value.text_body = ret[0].text_body;
+        news.value.html_body = ret[0].html_body;
       } catch (error: any) {
         useToast().add({
           title: "Error querying news",
@@ -34,7 +34,7 @@ watch(
 );
 
 let news: Ref<News> = ref({} as News);
-let lastUpdate = new Date();
+let lastUpdate = new Date(0);
 watch(
   () => props.news,
   async () => {
@@ -72,8 +72,6 @@ async function updateNews(field?: keyof News) {
 <template>
   <UCard>
     <template #header>
-      {{ props.news.rating }}
-      {{ news.rating }}
       <div class="flex flex-wrap">
         <UBadge class="m-1">
           <UInput
