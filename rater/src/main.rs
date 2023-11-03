@@ -118,8 +118,8 @@ async fn main() -> Result<()> {
         for handle in handles {
             if let Err(e) = handle.await? {
                 running.store(false, Ordering::Relaxed);
-                error!("stopping because handle errored: {}", e);
-                if let Err(e) = telegram.send(format!("rater: thread: {}", e)) {
+                error!("stopping because handle errored: {}", e.to_string());
+                if let Err(e) = telegram.send(format!("rater: thread error: {}", e)) {
                     error!("TelegramError: {}", e);
                 }
             };

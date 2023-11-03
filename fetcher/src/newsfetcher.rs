@@ -61,8 +61,8 @@ pub fn new(
             match result {
                 Ok(Err(e)) => tx.send(Err(e)).await.unwrap(),
                 Err(e) => {
-                    error!("JoinError: {:?}", e);
-                    if let Err(e) = telegram.send(format!("fetcher: JoinError: {}", e)) {
+                    error!("thread paniced: {:?}", e.to_string());
+                    if let Err(e) = telegram.send(format!("fetcher: tread paniced: {}", e)) {
                         error!("TelegramError: {}", e);
                     }
                     continue;

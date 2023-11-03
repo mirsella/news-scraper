@@ -9,11 +9,22 @@ let alreadyFailed = false;
 async function connect() {
   connected.value = false;
   const config = useRuntimeConfig();
-  const db_url: string =
-    config.public.surrealdb_url ||
-    window.location.protocol + "//" + window.location.hostname + ":8000";
+
+  const urls = [
+    window.location.protocol + "//" + window.location.hostname + ":8000",
+    config.public.surrealdb_lan_url,
+    config.public.surrealdb_url,
+  ];
+
   try {
-    await db.connect(db_url, {
+    console.log("testing urls", urls);
+    const fetchPromises = urls.map((url) =>
+      fetch(url, { method: "HEAD" }).then(() => url),
+    );
+
+    const url = await Promise.race(fetchPromises);
+    console.log("fastest url is", url);
+    await db.connect(url, {
       namespace: "news",
       database: "news",
     });

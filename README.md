@@ -11,3 +11,5 @@ tunnels:
     labels:
       - edge=lmp
 ```
+
+localtunnel can also be used, but visiting the site requires to enter the client ip
