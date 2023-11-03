@@ -19,7 +19,7 @@ async function connect() {
   try {
     console.log("testing urls", urls);
     const fetchPromises = urls.map((url) =>
-      fetch(url, { method: "HEAD" }).then(() => url),
+      fetch(url, { method: "HEAD", redirect: "manual" }).then(() => url),
     );
 
     const url = await Promise.race(fetchPromises);
