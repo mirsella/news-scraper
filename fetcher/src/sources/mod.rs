@@ -49,10 +49,7 @@ pub fn fetch_article(url: &str) -> Result<ApiResponse, anyhow::Error> {
             return Err(anyhow!("{}", e));
         }
     };
-    let text = response.into_string()?;
-    info!("response text: {:#?}", &text);
-    // let json_result: ApiResponse = response.into_json()?;
-    let json_result: ApiResponse = serde_json::from_str(&text)?;
+    let json_result: ApiResponse = response.into_json()?;
     Ok(json_result)
 }
 pub fn parse_article(str: &str) -> Result<ApiResponse, anyhow::Error> {
