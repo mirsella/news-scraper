@@ -10,7 +10,7 @@ onMounted(async () => {
     await new Promise((resolve) => setTimeout(resolve, 10));
   }
   (async () => {
-    queryStatus.value = "";
+    queryStatus.value = "loading news...";
     queryLoading.value = true;
     await $db.ready;
     try {
@@ -116,7 +116,10 @@ async function copyDedicatedLink() {
       </UModal>
     </ClientOnly>
     <ClientOnly>
-      <h1 class="text-lg font-bold w-full text-center">{{ queryStatus }}</h1>
+      <UButton :text="queryStatus" loading v-if="queryLoading" />
+      <h1 v-else class="text-lg font-bold w-full text-center">
+        {{ queryStatus }}
+      </h1>
     </ClientOnly>
     <NewsTable :loading="queryLoading" class="mx-4" />
   </div>

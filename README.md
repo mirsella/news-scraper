@@ -12,4 +12,6 @@ tunnels:
       - edge=lmp
 ```
 
-localtunnel can also be used, but visiting the site requires to enter the client ip
+localtunnel can also be used, but visiting the site requires to enter the client ip the first time
+
+need to look into cloudflared
