@@ -1,7 +1,7 @@
 use anyhow::{anyhow, Context, Result};
 use async_openai::{
     config::OpenAIConfig,
-    types::{ChatCompletionRequestMessage, CreateChatCompletionRequestArgs, Role},
+    types::{ChatCompletionRequestMessage, CreateChatCompletionRequestArgs, FinishReason, Role},
     Client as ChatClient,
 };
 use std::borrow::Cow;
@@ -119,9 +119,8 @@ impl DbNews {
             })
             .collect();
         // if response was truncated, remove the last unfinished tag
-        match &choice.finish_reason {
-            Some(reason) if reason == "length" => _ = tags.pop(),
-            _ => (),
+        if let Some(FinishReason::Length) = &choice.finish_reason {
+            _ = tags.pop()
         };
         self.rating = Some(rating);
         self.tags = Some(tags.clone());
