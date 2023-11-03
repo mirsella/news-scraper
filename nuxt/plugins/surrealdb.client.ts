@@ -10,10 +10,9 @@ async function connect() {
   connected.value = false;
   const config = useRuntimeConfig();
 
-  const urls = [
+  let urls = [
     window.location.protocol + "//" + window.location.hostname + ":8000",
-    config.public.surrealdb_lan_url,
-    config.public.surrealdb_url,
+    ...config.public.surrealdb_urls,
   ];
 
   try {
