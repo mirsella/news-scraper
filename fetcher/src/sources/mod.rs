@@ -4,6 +4,7 @@ use std::{
 };
 
 use anyhow::anyhow;
+use log::info;
 use serde::{Deserialize, Serialize};
 use shared::News;
 
@@ -48,7 +49,10 @@ pub fn fetch_article(url: &str) -> Result<ApiResponse, anyhow::Error> {
             return Err(anyhow!("{}", e));
         }
     };
-    let json_result: ApiResponse = response.into_json()?;
+    let text = response.into_string()?;
+    info!("response text: {:#?}", &text);
+    // let json_result: ApiResponse = response.into_json()?;
+    let json_result: ApiResponse = serde_json::from_str(&text)?;
     Ok(json_result)
 }
 pub fn parse_article(str: &str) -> Result<ApiResponse, anyhow::Error> {

@@ -4,7 +4,7 @@ use async_openai::{
     types::{ChatCompletionRequestMessage, CreateChatCompletionRequestArgs, FinishReason, Role},
     Client as ChatClient,
 };
-use std::borrow::Cow;
+use std::{borrow::Cow, sync::Arc};
 
 use serde::{Deserialize, Serialize};
 use surrealdb::{engine::remote::ws::Client as DbClient, Surreal};
@@ -48,7 +48,7 @@ impl DbNews {
     }
     pub async fn rate(
         &mut self,
-        client: &ChatClient<OpenAIConfig>,
+        client: &Arc<ChatClient<OpenAIConfig>>,
         prompt: &str,
     ) -> Result<(u32, Vec<String>)> {
         let text = self.text_body.clone().to_string();
