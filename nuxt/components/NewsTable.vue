@@ -89,6 +89,13 @@ const news = useState<News[]>("news", () => []);
 
 const page = ref(1);
 const pageCount = ref(100);
+watch(pageCount, async () => {
+  if (pageCount.value > filteredNews.value.length) {
+    page.value = 1;
+  } else {
+    page.value = Math.ceil(filteredNews.value.length / pageCount.value);
+  }
+});
 const search = ref("");
 const onlyNonused = ref(false);
 const filteredNews = computed(() =>

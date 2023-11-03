@@ -68,6 +68,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
                     title: res.title,
                     caption: res.description,
                     provider: "francetvinfo".to_string(),
+                    tags: vec!["france".to_string()],
                     date: res.published.parse().unwrap_or_else(|_| chrono::Utc::now()),
                     body: res.content,
                     link: url,

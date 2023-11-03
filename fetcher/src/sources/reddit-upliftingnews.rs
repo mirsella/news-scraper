@@ -2,7 +2,7 @@ use super::{GetNewsOpts, News};
 use anyhow::{Context, Result};
 use chrono::Utc;
 use headless_chrome::{Element, Tab};
-use log::{debug, error, trace};
+use log::{debug, error, trace, warn};
 use std::{sync::Arc, thread, time::Duration};
 
 fn isvalidpost(el: &Element) -> bool {
@@ -61,6 +61,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
         if let Err(err) = res {
             debug!("fetch_article: {}", err);
             if tab.navigate_to(&url).is_err() {
+                warn!("counld navigate to {url}");
                 continue;
             };
             if tab
@@ -68,6 +69,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
                 .context("wait_until_navigated")
                 .is_err()
             {
+                warn!("counld load {url}");
                 continue;
             }
             std::thread::sleep(std::time::Duration::from_secs(1));
@@ -84,6 +86,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
                 date: res.published.parse().unwrap_or_else(|_| Utc::now()),
                 body: res.content,
                 link: url,
+                ..Default::default()
             }),
             Err(err) => {
                 debug!("parse_article: {}", err);

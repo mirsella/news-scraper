@@ -123,7 +123,10 @@ impl DbNews {
             _ = tags.pop()
         };
         self.rating = Some(rating);
-        self.tags = Some(tags.clone());
+        match &mut self.tags {
+            Some(t) => t.extend(tags.clone()),
+            None => self.tags = Some(tags.clone()),
+        }
         Ok((rating, tags))
     }
 }

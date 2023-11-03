@@ -42,6 +42,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
         opts.seen_urls.lock().unwrap().push(url.clone());
         let payload = match super::fetch_article(&url) {
             Ok(res) => Ok(News {
+                tags: vec!["france".to_string()],
                 title: res.title,
                 caption: res.description,
                 provider: "lavoixdunord".to_string(),

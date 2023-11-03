@@ -4,7 +4,6 @@ use std::{
 };
 
 use anyhow::anyhow;
-use log::info;
 use serde::{Deserialize, Serialize};
 use shared::News;
 

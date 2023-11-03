@@ -6,7 +6,7 @@ pub use config::Config;
 pub use db_news::DbNews;
 pub use telegram::Telegram;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct News {
     pub provider: String,
     pub date: DateTime<Utc>,
@@ -14,18 +14,7 @@ pub struct News {
     pub caption: String,
     pub body: String,
     pub link: String,
-}
-impl Default for News {
-    fn default() -> Self {
-        News {
-            provider: "DefaultProvider".to_string(),
-            date: Utc::now(), // use the current time as default
-            title: "DefaultTitle".to_string(),
-            caption: "DefaultCaption".to_string(),
-            body: "DefaultBody".to_string(),
-            link: "http://example.com".to_string(),
-        }
-    }
+    pub tags: Vec<String>,
 }
 
 pub fn sanitize_html(html: &str) -> String {

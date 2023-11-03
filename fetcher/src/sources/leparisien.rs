@@ -85,6 +85,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
             // }
             let payload = match res {
                 Ok(res) => Ok(News {
+                    tags: vec!["france".to_string()],
                     title: res.title,
                     caption: res.description,
                     provider: "leparisien".to_string(),

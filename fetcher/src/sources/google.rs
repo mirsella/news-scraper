@@ -78,6 +78,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
                     date: res.published.parse().unwrap_or_else(|_| chrono::Utc::now()),
                     body: res.content,
                     link: url,
+                    ..Default::default()
                 }),
                 Err(err) => {
                     debug!("parse_article: {}", err);

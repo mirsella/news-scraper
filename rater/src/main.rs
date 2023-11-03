@@ -16,7 +16,6 @@ async fn retrieve_db_news(db: Arc<Surreal<WsClient>>) -> Result<Vec<DbNews>> {
         .query(
             "select * from news
 where rating == none
-AND tags == none
 AND date > time::floor(time::now(), 1w)
 AND used == false
 AND !string::contains(note, 'error rating')
