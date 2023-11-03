@@ -39,7 +39,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
                 date: res.published.parse().unwrap_or_else(|_| chrono::Utc::now()),
                 body: res.content,
                 link: url,
-                ..Default::default()
+                tags: vec!["usa/world".to_string(), "goodnews".to_string()],
             }),
             Err(err) => {
                 debug!("fetch_article: {}", err);
