@@ -11,8 +11,8 @@ async function connect() {
   const config = useRuntimeConfig();
 
   let urls = [
+    ...(process.env.surrealdb_urls || []),
     window.location.protocol + "//" + window.location.hostname + ":8000",
-    ...config.public.surrealdb_urls,
   ];
 
   try {

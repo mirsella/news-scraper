@@ -66,14 +66,14 @@ async fn main() -> Result<()> {
         }
         let db_news = retrieve_db_news(db.clone()).await;
         let db_news = match db_news {
-            Ok(news) => {
-                info!("got {} news to process", news.len());
-                news
-            }
-            Err(e) if e.to_string() == "no news found" => {
+            Ok(news) if news.is_empty() => {
                 trace!("no news to process");
                 tokio::time::sleep(tokio::time::Duration::from_secs(60)).await;
                 continue;
+            }
+            Ok(news) => {
+                info!("got {} news to process", news.len());
+                news
             }
             Err(e) => return Err(e.context("failed to get news from db")),
         };
