@@ -1,6 +1,12 @@
 import { Surreal } from "surrealdb.js";
 
-const db = new Surreal();
+const db = new Surreal({
+  onClose() {
+    connected.value = false;
+    authenticated.value = false;
+    activated.value = false;
+  },
+});
 const authenticated = ref(false);
 const connected = ref(false);
 const activated = ref(false);
@@ -20,11 +26,16 @@ async function connect() {
   }
   try {
     console.log("testing urls", urls);
-    const fetchPromises = urls.map((url) =>
-      fetch(url, { method: "HEAD", redirect: "manual" }).then(() => url),
+    let fetchPromises = urls.map(
+      (url) =>
+        new Promise((resolve) => {
+          fetch(url, { method: "HEAD", redirect: "manual" })
+            .then(() => resolve(url))
+            .catch(() => null);
+        }),
     );
 
-    const url = await Promise.race(fetchPromises);
+    const url: any = (await Promise.race(fetchPromises)) || "";
     console.log("fastest url is", url);
     await db.connect(url, {
       namespace: "news",
@@ -93,13 +104,6 @@ async function update_activated() {
 export default defineNuxtPlugin(async () => {
   (async () => {
     await connect();
-    setInterval(async () => {
-      if (db.status !== 0) {
-        connected.value = false;
-        authenticated.value = false;
-        await connect();
-      }
-    }, 100);
     if (connected.value) {
       const ret = await login();
       if (ret) navigateTo("/");
