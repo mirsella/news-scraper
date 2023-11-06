@@ -1,9 +1,9 @@
-name: Mirroring to org
+name: Mirroring
 
 on: [push, delete]
 
 jobs:
-  to_gitlab:
+  to_github_org:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
