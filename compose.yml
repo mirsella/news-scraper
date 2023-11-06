@@ -11,7 +11,6 @@ services:
       dockerfile: docker/nuxt.dockerfile
     ports:
       - "8080:3000"
-    env_file: .env
     environment:
       NUXT_PUBLIC_SURREALDB_URLS: ${NUXT_PUBLIC_SURREALDB_URLS}
     healthcheck:
@@ -96,13 +95,14 @@ services:
 
   ngrok:
     image: ngrok/ngrok:latest
+    container_name: ngrok
     restart: unless-stopped
     command:
-      - "start"
-      - "--all"
-      - "--config"
-      - "/etc/ngrok.yml"
-    volumes:
-      - ./ngrok.yml:/etc/ngrok.yml
+      - "tunnel"
+      - "--label"
+      - "edge=${NGROK_EDGE}"
+      - "http://surrealdb:8000"
+    environment:
+      NGROK_AUTHTOKEN: ${NGROK_AUTHTOKEN}
     ports:
       - 4040:4040

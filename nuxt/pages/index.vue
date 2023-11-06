@@ -1,7 +1,7 @@
 <script setup lang="ts">
 const { $db, $dbhelper } = useNuxtApp();
 import type { News } from "~/utils/news";
-const queryStatus = ref("");
+const queryStatus = ref("waiting for the connection to the db...");
 let queryLoading = ref(true);
 
 const news = useState<News[]>("news", () => []);
@@ -116,9 +116,14 @@ async function copyDedicatedLink() {
       </UModal>
     </ClientOnly>
     <ClientOnly>
-      <UButton :text="queryStatus" loading v-if="queryLoading" />
-      <h1 v-else class="text-lg font-bold w-full text-center">
-        {{ queryStatus }}
+      <h1 class="text-lg font-bold w-full text-center">
+        <UButton
+          :label="queryStatus"
+          loading
+          v-if="queryLoading"
+          class="mb-2"
+        />
+        <span v-else> {{ queryStatus }} </span>
       </h1>
     </ClientOnly>
     <NewsTable :loading="queryLoading" class="mx-4" />
