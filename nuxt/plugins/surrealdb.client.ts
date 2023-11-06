@@ -9,12 +9,15 @@ let alreadyFailed = false;
 async function connect() {
   connected.value = false;
   const config = useRuntimeConfig();
-
-  let urls = [
-    ...(process.env.surrealdb_urls || []),
-    window.location.protocol + "//" + window.location.hostname + ":8000",
-  ];
-
+  let urls = config.public.surrealdb_urls.split(",");
+  if (!urls.length) {
+    useToast().add({
+      title: "misconfiguration",
+      description: "no surrealdb urls provided",
+      color: "red",
+      timeout: 0,
+    });
+  }
   try {
     console.log("testing urls", urls);
     const fetchPromises = urls.map((url) =>
@@ -36,7 +39,8 @@ async function connect() {
     useToast().add({
       title: "connection error",
       description: message,
-      timeout: 10000,
+      color: "red",
+      timeout: 0,
     });
   }
 }

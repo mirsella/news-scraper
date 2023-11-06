@@ -4,11 +4,16 @@ services:
   nuxt:
     restart: always
     container_name: nuxt
+    depends_on:
+      - surrealdb
     build:
       context: .
       dockerfile: docker/nuxt.dockerfile
     ports:
       - "8080:3000"
+    env_file: .env
+    environment:
+      NUXT_PUBLIC_SURREALDB_URLS: ${SURREALDB_URLS}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000"]
       retries: 3
@@ -88,3 +93,16 @@ services:
       retries: 3
       start_period: 10s
       timeout: 10s
+
+  ngrok:
+    image: ngrok/ngrok:latest
+    restart: unless-stopped
+    command:
+      - "start"
+      - "--all"
+      - "--config"
+      - "/etc/ngrok.yml"
+    volumes:
+      - ./ngrok.yml:/etc/ngrok.yml
+    ports:
+      - 4040:4040

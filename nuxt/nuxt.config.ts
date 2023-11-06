@@ -6,8 +6,13 @@ export default defineNuxtConfig({
       titleTemplate: "%s news-scraper",
     },
   },
+  runtimeConfig: {
+    public: {
+      surrealdb_urls: process.env.SURREALDB_URLS || "",
+    },
+  },
   ui: {
     icons: ["carbon", "heroicons"],
   },
-  ssr: false,
+  // ssr: false,
 });
