@@ -35,7 +35,7 @@ async function connect() {
         }),
     );
 
-    const url: any = (await Promise.race(fetchPromises)) || "";
+    const url: any = await Promise.race(fetchPromises);
     console.log("fastest url is", url);
     await db.connect(url, {
       namespace: "news",
