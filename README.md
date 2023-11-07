@@ -13,5 +13,6 @@ tunnels:
 ```
 
 localtunnel can also be used, but visiting the site requires to enter the client ip the first time
+lmp ip 141.255.129.243
 
 need to look into cloudflared
