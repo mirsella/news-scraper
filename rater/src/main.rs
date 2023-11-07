@@ -57,13 +57,15 @@ async fn main() -> Result<()> {
     let openai = Arc::new(openai);
 
     let telegram = Telegram::new(config.telegram_token.clone(), config.telegram_id);
-
     let sem = Arc::new(Semaphore::new(config.parallel_rating));
+    let rating_chat_prompt = Arc::new(config.rating_chat_prompt.clone());
 
     loop {
         if !running.load(Ordering::Relaxed) {
             return Ok(());
         }
+        let mut total_news = 0;
+        let mut news_done = 0;
         let db_news = retrieve_db_news(db.clone()).await;
         let db_news = match db_news {
             Ok(news) if news.is_empty() => {
@@ -72,13 +74,13 @@ async fn main() -> Result<()> {
                 continue;
             }
             Ok(news) => {
-                info!("got {} news to process", news.len());
+                total_news = news.len();
+                info!("got {} news to process", total_news);
                 news
             }
             Err(e) => return Err(e.context("failed to get news from db")),
         };
 
-        let rating_chat_prompt = Arc::new(config.rating_chat_prompt.clone());
         let mut handles = Vec::with_capacity(db_news.len());
 
         for mut news in db_news {
@@ -88,6 +90,8 @@ async fn main() -> Result<()> {
             let db = db.clone();
             let rating_chat_prompt = rating_chat_prompt.clone();
             let running = running.clone();
+            let total_news = total_news;
+            let news_done = news_done;
             let handle: JoinHandle<Result<()>> = tokio::spawn(async move {
                 let _permit = sem.acquire().await;
                 if !running.load(Ordering::Relaxed) {
@@ -104,7 +108,7 @@ async fn main() -> Result<()> {
                         None
                     }
                 };
-                debug!("{id} rating: {rating:?}");
+                info!("{id} rating: {rating:?}");
                 match news.save(&db).await.context("news.save") {
                     Ok(_) => Ok(()),
                     Err(e) => {
@@ -116,6 +120,7 @@ async fn main() -> Result<()> {
             handles.push(handle);
         }
         for handle in handles {
+            news_done += 1;
             if let Err(e) = handle.await? {
                 running.store(false, Ordering::Relaxed);
                 error!("stopping because handle errored: {}", e.to_string());
@@ -124,6 +129,6 @@ async fn main() -> Result<()> {
                 }
             };
         }
-        info!("done");
+        info!("done. {news_done}/{total_news} remaining.");
     }
 }
