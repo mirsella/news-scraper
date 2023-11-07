@@ -109,12 +109,9 @@ async fn main() -> Result<()> {
                         news.rating = None;
                         news.tags = None;
                         news.note = format!("error rating failed: {e}").into();
-                        return Err(e);
+                        None
                     }
                 };
-                if rating.is_none() {
-                    return Ok(());
-                }
                 info!("{id} rating: {rating:?}");
                 match news.save(&db).await.context("news.save") {
                     Ok(_) => Ok(()),
@@ -129,8 +126,9 @@ async fn main() -> Result<()> {
         for handle in handles {
             news_done += 1;
             if let Err(e) = handle.await? {
-                running.store(false, Ordering::Relaxed);
-                error!("stopping because handle errored: {}", e.to_string());
+                // running.store(false, Ordering::Relaxed);
+                // error!("stopping because handle errored: {}", e.to_string());
+                error!("handle errored: {}", e.to_string());
                 if let Err(e) = telegram.send(format!("rater: thread error: {}", e)) {
                     error!("TelegramError: {}", e);
                 }
