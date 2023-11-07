@@ -20,7 +20,7 @@ onMounted(async () => {
       );
       if (!result[0].length) throw new Error("no news found");
       result[0].forEach((n) => {
-        if (!n.rating) n.rating = -1;
+        if (n.rating === undefined) n.rating = -1;
       });
       news.value = result[0] ?? [];
       const t2 = performance.now();
@@ -42,7 +42,7 @@ onMounted(async () => {
     await $db.wait();
     const liveQueryUuid = await $db?.live("news", ({ action, result }) => {
       if (!result) return;
-      if (!result.rating) result.rating = -1;
+      if (result.rating === undefined) result.rating = -1;
       switch (action) {
         case "CREATE":
           news.value.unshift(result as News);

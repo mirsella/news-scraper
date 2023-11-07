@@ -51,12 +51,12 @@ watch(
 
 async function updateNews(field?: keyof News) {
   if (!news.value.id || !field) return;
-  if (!news.value.rating || news.value.rating < 0 || news.value.rating > 100) {
-    news.value.rating = 0;
-  }
   lastUpdate = new Date();
   // wait for the v-model to update...
   await new Promise((resolve) => setTimeout(resolve, 10));
+  if (!news.value.rating || news.value.rating < 0 || news.value.rating > 100) {
+    news.value.rating = 0;
+  }
   try {
     const update: Partial<News> = field
       ? { [field]: news.value[field] }
