@@ -70,7 +70,7 @@ async fn main() -> Result<()> {
         let db_news = match db_news {
             Ok(news) if news.is_empty() => {
                 trace!("no news to process");
-                tokio::time::sleep(tokio::time::Duration::from_secs(60)).await;
+                tokio::time::sleep(tokio::time::Duration::from_secs(1800)).await;
                 continue;
             }
             Ok(news) => {
