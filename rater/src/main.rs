@@ -64,7 +64,7 @@ async fn main() -> Result<()> {
         if !running.load(Ordering::Relaxed) {
             return Ok(());
         }
-        let mut total_news = 0;
+        let total_news;
         let mut news_done = 0;
         let db_news = retrieve_db_news(db.clone()).await;
         let db_news = match db_news {
@@ -90,8 +90,6 @@ async fn main() -> Result<()> {
             let db = db.clone();
             let rating_chat_prompt = rating_chat_prompt.clone();
             let running = running.clone();
-            let total_news = total_news;
-            let news_done = news_done;
             let handle: JoinHandle<Result<()>> = tokio::spawn(async move {
                 let _permit = sem.acquire().await;
                 if !running.load(Ordering::Relaxed) {
@@ -100,14 +98,23 @@ async fn main() -> Result<()> {
                 debug!("processing {}, {}", id.id, news.link);
                 let rating = match news.rate(&openai, &rating_chat_prompt).await {
                     Ok(rating) => Some(rating),
+                    Err(e) if e.to_string().contains("Bad gateway") => {
+                        error!("bad gateway: {:?}", e.to_string());
+                        news.rating = None;
+                        news.tags = None;
+                        None
+                    }
                     Err(e) => {
                         error!("rating {id}: '{e}'");
                         news.rating = None;
                         news.tags = None;
                         news.note = format!("error rating failed: {e}").into();
-                        None
+                        return Err(e);
                     }
                 };
+                if rating.is_none() {
+                    return Ok(());
+                }
                 info!("{id} rating: {rating:?}");
                 match news.save(&db).await.context("news.save") {
                     Ok(_) => Ok(()),
