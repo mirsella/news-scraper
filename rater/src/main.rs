@@ -98,17 +98,15 @@ async fn main() -> Result<()> {
                 debug!("processing {}, {}", id.id, news.link);
                 let rating = match news.rate(&openai, &rating_chat_prompt).await {
                     Ok(rating) => Some(rating),
-                    Err(e) if e.to_string().contains("Bad gateway") => {
+                    Err(e) if e.to_string().to_lowercase().contains("bad gateway") => {
                         error!("bad gateway: {:?}", e.to_string());
                         news.rating = None;
-                        news.tags = None;
                         None
                     }
                     Err(e) => {
                         error!("rating {id}: '{e}'");
-                        news.rating = None;
-                        news.tags = None;
-                        news.note = format!("error rating failed: {e}").into();
+                        news.rating = Some(0);
+                        news.note = format!("rating failed: {e}").into();
                         None
                     }
                 };
@@ -124,7 +122,6 @@ async fn main() -> Result<()> {
             handles.push(handle);
         }
         for handle in handles {
-            news_done += 1;
             if let Err(e) = handle.await? {
                 // running.store(false, Ordering::Relaxed);
                 // error!("stopping because handle errored: {}", e.to_string());
@@ -132,8 +129,10 @@ async fn main() -> Result<()> {
                 if let Err(e) = telegram.send(format!("rater: thread error: {}", e)) {
                     error!("TelegramError: {}", e);
                 }
-            };
+            } else {
+                news_done += 1;
+            }
         }
-        info!("done. {news_done}/{total_news} remaining.");
+        info!("done. {}/{total_news} remaining.", total_news - news_done);
     }
 }
