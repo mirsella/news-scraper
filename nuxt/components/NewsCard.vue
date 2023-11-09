@@ -113,10 +113,16 @@ async function updateNews(field?: keyof News) {
             {{ news.link }}
           </a>
         </UBadge>
-        <UBadge class="m-1" v-if="news.tags?.length">
-          tags: {{ news.tags?.join(", ") }}
+        <UBadge class="m-1">
+          <span v-if="news.tags?.length">tags:</span>
+          <span v-else>no tags</span>
+          <div>
+            <li v-for="tag of news.tags">
+              {{ tag }}
+            </li>
+          </div>
+          <UButton> add a tag (should open a popup TODO)</UButton>
         </UBadge>
-        <UBadge class="m-1" v-else> no tags</UBadge>
       </div>
     </template>
     <div>
