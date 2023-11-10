@@ -61,9 +61,9 @@ onMounted(async () => {
   <div class="m-4">
     <ClientOnly>
       <NewsCard v-if="news?.id" :news="news" />
-      <div v-else class="text-center text-4xl w-full">
+      <div v-else class="text-center text-xl w-full">
         no news found for this id.
-        <UButton label="go home." size="xl" class @click="navigateTo('/')" />
+        <UButton label="go home." size="lg" class @click="navigateTo('/')" />
       </div>
     </ClientOnly>
   </div>

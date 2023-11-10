@@ -33,6 +33,20 @@ watch(
   { deep: true, immediate: true },
 );
 
+const newtag = ref("");
+async function addTag() {
+  newtag.value = newtag.value.trim();
+  if (newtag.value && !news.value.tags?.includes(newtag.value)) {
+    news.value.tags
+      ? news.value.tags.push(newtag.value)
+      : (news.value.tags = [newtag.value]);
+    newtag.value = "";
+    updateNews("tags");
+  } else {
+    newtag.value = "";
+  }
+}
+
 let news: Ref<News> = ref({} as News);
 let lastUpdate = new Date(0);
 watch(
@@ -61,6 +75,7 @@ async function updateNews(field?: keyof News) {
     const update: Partial<News> = field
       ? { [field]: news.value[field] }
       : news.value;
+    console.log("update", update);
     await $db?.merge<News>(news.value.id, update);
   } catch (error: any) {
     useToast().add({
@@ -116,12 +131,44 @@ async function updateNews(field?: keyof News) {
         <UBadge class="m-1">
           <span v-if="news.tags?.length">tags:</span>
           <span v-else>no tags</span>
-          <div>
-            <li v-for="tag of news.tags">
-              {{ tag }}
-            </li>
+          <div class="flex flex-wrap">
+            <div
+              v-for="tag of news.tags"
+              class="m-[0.1rem] bg-green-500 rounded-lg px-1 group relative inline-block overflow-hidden"
+              @click="
+                news.tags = news.tags?.filter((t) => t !== tag);
+                updateNews('tags');
+              "
+            >
+              <p class="group-hover:blur-sm transition-all duration-200">
+                {{ tag }}
+              </p>
+              <div
+                class="opacity-0 group-hover:opacity-100 absolute top-0 left-0 text-center w-full transition-all duration-200"
+              >
+                <UIcon name="i-heroicons-trash" />
+              </div>
+            </div>
           </div>
-          <UButton> add a tag (should open a popup TODO)</UButton>
+          <UInput
+            @keyup.enter="addTag"
+            placeholder="add a tag"
+            :ui="{
+              padding: { sm: 'p-0 pl-1' },
+              trailing: { padding: { sm: 'pe-4' } },
+              icon: { trailing: { pointer: '', padding: { sm: 'pe-1' } } },
+            }"
+            class="w-[5.7rem] pl-1"
+            v-model="newtag"
+          >
+            <template #trailing>
+              <UIcon
+                class="bg-primary p-0 !z-50 cursor-pointer"
+                name="i-heroicons-plus"
+                @click="addTag"
+              />
+            </template>
+          </UInput>
         </UBadge>
       </div>
     </template>
