@@ -140,7 +140,7 @@ if (process.client) {
 const columnsChoice = columns
   .filter((c) => c.key != "hiddenid")
   .map((c) => c.key);
-const selectedColumns = ref<string[]>(["title", "rating", "note", "link"]);
+const selectedColumns = ref<string[]>(["title", "rating", "tags", "link"]);
 if (process.client) {
   let localstorageColumns = window.localStorage.getItem("selectedColumns");
   if (localstorageColumns)
