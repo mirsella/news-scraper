@@ -101,7 +101,7 @@ async function copyDedicatedLink() {
             <UButton
               class="w-8 m-1 transition hover:scale-110"
               icon="i-carbon-export"
-              @click="navigateTo('/' + $route.query.id)"
+              @click="navigateTo('/' + $route.query.id?.toString())"
             />
           </UTooltip>
           <UTooltip text="Copy dedicated link to clipboard">

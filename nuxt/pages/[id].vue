@@ -3,6 +3,7 @@ import type { News } from "~/utils/news.d.ts";
 const { $db, $dbhelper } = useNuxtApp();
 const newsstate = useState<News[]>("news", () => []);
 const route = useRoute();
+const notfound = ref(false);
 
 const news = computed(() => {
   return newsstate.value.find((n) => n.id === route.params.id) || ({} as News);
@@ -23,6 +24,7 @@ onMounted(async () => {
       if (!res[0].rating) res[0].rating = -1;
       newsstate.value.unshift(res[0]);
     } catch (error) {
+      notfound.value = true;
       useToast().add({
         title: "Error querying news",
         description: error as string,
@@ -62,9 +64,8 @@ onMounted(async () => {
 <template>
   <div class="m-4">
     <ClientOnly>
-      {{ news }}
-      <NewsCard v-if="news?.id" :news="news" />
-      <div v-else class="text-center text-xl w-full">
+      <NewsCard v-show="news?.id" :news="news" />
+      <div v-if="notfound" class="text-center text-xl w-full">
         no news found for this id.
         <UButton label="go home." size="lg" class @click="navigateTo('/')" />
       </div>
