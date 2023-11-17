@@ -101,8 +101,11 @@ async function copyDedicatedLink() {
             <UButton
               class="w-8 m-1 transition hover:scale-110"
               icon="i-carbon-export"
-              @click="navigateTo('/' + $route.query.id?.toString())"
+              @click="navigateTo('/' + n.id)"
             />
+            <!-- <a :href="'/' + $route.query.id"> -->
+            <!--   <UIcon name="i-carbon-export" /> -->
+            <!-- </a> -->
           </UTooltip>
           <UTooltip text="Copy dedicated link to clipboard">
             <UButton
