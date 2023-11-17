@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { News } from "~/utils/news.d.ts";
-const { $db } = useNuxtApp();
+const { $db, $dbhelper } = useNuxtApp();
 const newsstate = useState<News[]>("news", () => []);
 const route = useRoute();
 
@@ -10,7 +10,9 @@ const news = computed(() => {
 
 onMounted(async () => {
   if (!newsstate.value.length) {
-    await $db.wait();
+    while (!$dbhelper.authenticated.value || !$dbhelper.activated.value) {
+      await new Promise((resolve) => setTimeout(resolve, 10));
+    }
     try {
       const res = await $db.query<[News]>(
         "select * from only news where id = $id",
@@ -60,6 +62,7 @@ onMounted(async () => {
 <template>
   <div class="m-4">
     <ClientOnly>
+      {{ news }}
       <NewsCard v-if="news?.id" :news="news" />
       <div v-else class="text-center text-xl w-full">
         no news found for this id.
