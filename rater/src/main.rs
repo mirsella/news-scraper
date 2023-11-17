@@ -32,9 +32,15 @@ async fn main() -> Result<()> {
 
     let running = Arc::new(AtomicBool::new(true));
     let r = running.clone();
-    ctrlc::set_handler(move || {
-        info!("Ctrl-C received!");
-        r.store(false, Ordering::Relaxed);
+    ctrlc::set_handler(move || match r.load(Ordering::Relaxed) {
+        true => {
+            info!("Ctrl-C received!");
+            r.store(false, Ordering::Relaxed);
+        }
+        false => {
+            info!("Ctrl-C received again, exiting!");
+            exit(1);
+        }
     })
     .expect("Error setting Ctrl-C handler");
 
@@ -102,15 +108,21 @@ async fn main() -> Result<()> {
                     Ok(rating) => Some(rating),
                     Err(e) if e.to_string().to_lowercase().contains("bad gateway") => {
                         error!("bad gateway: {:?}", e.to_string());
-                        telegram.send("bad gateway !")?;
+                        telegram.send("rater: bad gateway !")?;
+                        news.rating = None;
+                        None
+                    }
+                    Err(e) if e.to_string().to_lowercase().contains("service unavailable") => {
+                        error!("service unavailable: {:?}", e.to_string());
+                        telegram.send("rater: service unavailable !")?;
                         news.rating = None;
                         None
                     }
                     Err(e) => {
-                        error!("rating {id}: '{e}'");
+                        error!("rating {id}: {e}");
                         news.rating = Some(0);
-                        news.note = format!("rating failed: {e}").into();
-                        telegram.send(format!("rater: rating failed: {e}, {e:?}"))?;
+                        news.note = format!("{}\nrating failed: {e}", news.note).into();
+                        telegram.send(format!("rater: {id} rating failed: {e}"))?;
                         None
                     }
                 };
@@ -119,7 +131,7 @@ async fn main() -> Result<()> {
                     Ok(_) => Ok(Some(news)),
                     Err(e) => {
                         error!("saving {id} with {rating:?}: '{e}'");
-                        telegram.send(format!("rater: rating failed: {e}, {e:?}"))?;
+                        telegram.send(format!("rater: saving {id} failed: {e}"))?;
                         Err(e)
                     }
                 }
@@ -127,16 +139,21 @@ async fn main() -> Result<()> {
             handles.push(handle);
         }
         for handle in handles {
-            if let Err(e) = handle.await? {
-                running.store(false, Ordering::Relaxed);
-                error!("handle errored, exitting: {}", e.to_string());
-                if let Err(e) = telegram.send(format!("rater: thread error: {}", e)) {
-                    error!("TelegramError: {}", e);
+            match handle.await? {
+                Err(e) => {
+                    running.store(false, Ordering::Relaxed);
+                    error!("handle errored, exitting: {}", e.to_string());
+                    if let Err(e) = telegram.send(format!("rater: thread error: {}", e)) {
+                        error!("TelegramError: {}", e);
+                    }
                 }
+                Ok(Some(news)) => {
+                    news_done += 1;
+                    info!("{} {news_done}/{total_news} done.", news.id.expect("no id"),)
+                }
+                _ => {}
             }
-            news_done += 1;
-            info!("{news_done}/{total_news} done.")
         }
-        info!("{total_news} done.");
+        info!("finished this batch {news_done}/{total_news}.")
     }
 }

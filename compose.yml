@@ -2,7 +2,7 @@ version: "3.8"
 
 services:
   nuxt:
-    restart: always
+    restart: unless-stopped
     container_name: nuxt
     depends_on:
       - surrealdb
@@ -20,7 +20,7 @@ services:
       timeout: 5s
 
   article-parser:
-    restart: always
+    restart: unless-stopped
     container_name: article-parser
     build:
       context: .
@@ -37,7 +37,7 @@ services:
 
   fetcher:
     container_name: fetcher
-    restart: on-failure:3
+    restart: unless-stopped
     build:
       context: .
       dockerfile: docker/cargo.dockerfile
@@ -53,7 +53,7 @@ services:
 
   rater:
     container_name: rater
-    restart: on-failure:3
+    restart: unless-stopped
     build:
       context: .
       dockerfile: docker/cargo.dockerfile

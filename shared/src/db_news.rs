@@ -44,7 +44,7 @@ impl DbNews {
         client: &ChatClient<OpenAIConfig>,
         prompt: &str,
     ) -> Result<(u32, Vec<String>)> {
-        let text = self.text_body.clone().to_string();
+        let text = format!("{}\n{}", &self.title, &self.text_body);
         let tokenizer = tiktoken_rs::p50k_base().unwrap();
         let tokens = tokenizer.encode_with_special_tokens(&text);
         let truncated_tokens = tokens.into_iter().take(500).collect::<Vec<usize>>();
@@ -60,7 +60,7 @@ impl DbNews {
             .into(),
             ChatCompletionRequestSystemMessage {
                 content: Some(
-                    "your response will ONLY be in this format: <rating>;tags,tags,etc...".into(),
+                    "your response will be in this format: <rating>;tags,tags,etc...".into(),
                 ),
                 ..Default::default()
             }
@@ -83,7 +83,8 @@ impl DbNews {
         let response = client
             .chat() // Get the API "group" (completions, images, etc.) from the client
             .create(request) // Make the API call in that "group"
-            .await?;
+            .await
+            .context("chat().create(request)")?;
         // println!("cost of tokens {:?}", response.usage.clone().unwrap());
         let choice = response
             .choices
@@ -96,7 +97,7 @@ impl DbNews {
             .ok_or(anyhow!("no content in response: {response:?}"))?;
         let split = content
             .split_once(';')
-            .ok_or(anyhow!("no rating in response. {content}"))?;
+            .ok_or(anyhow!("no rating in response: {content}"))?;
         let rating = split.0.parse::<u32>().context(content.clone())?;
         let mut tags: Vec<String> = split
             .1
