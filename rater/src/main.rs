@@ -11,7 +11,7 @@ use surrealdb::{engine::remote::ws::Client as WsClient, opt::auth::Root, Surreal
 use tokio::sync::Semaphore;
 use tokio::task::JoinHandle;
 
-async fn retrieve_db_news(db: Arc<Surreal<WsClient>>) -> Result<Vec<DbNews>> {
+async fn retrieve_db_news(db: &Surreal<WsClient>) -> Result<Vec<DbNews>> {
     let db_news: Vec<DbNews> = db
         .query(
             "select * from news
@@ -67,7 +67,7 @@ async fn main() -> Result<()> {
         }
         let total_news;
         let mut news_done = 0;
-        let db_news = retrieve_db_news(db.clone()).await;
+        let db_news = retrieve_db_news(&db).await;
         let db_news = match db_news {
             Ok(news) if news.is_empty() => {
                 trace!("no news to process");
