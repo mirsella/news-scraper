@@ -1,7 +1,10 @@
 use anyhow::{anyhow, Context, Result};
 use async_openai::{
     config::OpenAIConfig,
-    types::{ChatCompletionRequestMessage, CreateChatCompletionRequestArgs, FinishReason, Role},
+    types::{
+        ChatCompletionRequestSystemMessage, ChatCompletionRequestUserMessage,
+        CreateChatCompletionRequestArgs, FinishReason,
+    },
     Client as ChatClient,
 };
 use std::{borrow::Cow, sync::Arc};
@@ -60,24 +63,23 @@ impl DbNews {
         // remove the � from lost bytes
         let truncated_text = truncated_text.trim_end_matches('\u{FFFD}').to_string();
         let conv = vec![
-            ChatCompletionRequestMessage {
-                role: Role::System,
+            ChatCompletionRequestSystemMessage {
                 content: Some(prompt.into()),
                 ..Default::default()
-            },
-            ChatCompletionRequestMessage {
-                role: Role::System,
+            }
+            .into(),
+            ChatCompletionRequestSystemMessage {
                 content: Some(
-                    "your response will ONLY be in this format: <rating>;tags,tags,etc..."
-                        .to_string(),
+                    "your response will ONLY be in this format: <rating>;tags,tags,etc...".into(),
                 ),
                 ..Default::default()
-            },
-            ChatCompletionRequestMessage {
-                role: Role::User,
-                content: Some(truncated_text),
+            }
+            .into(),
+            ChatCompletionRequestUserMessage {
+                content: Some(truncated_text.into()),
                 ..Default::default()
-            },
+            }
+            .into(),
         ];
         let request = CreateChatCompletionRequestArgs::default()
             .model("gpt-3.5-turbo")
