@@ -70,7 +70,7 @@ async fn main() -> Result<()> {
         let db_news = match db_news {
             Ok(news) if news.is_empty() => {
                 trace!("no news to process");
-                tokio::time::sleep(tokio::time::Duration::from_secs(1800)).await;
+                tokio::time::sleep(tokio::time::Duration::from_secs(120)).await;
                 continue;
             }
             Ok(news) => {
@@ -129,7 +129,7 @@ async fn main() -> Result<()> {
                 }
             } else {
                 news_done += 1;
-                info!("{}/{total_news} done.", total_news - news_done)
+                info!("{news_done}/{total_news} done.")
             }
         }
         info!("{total_news} done.");

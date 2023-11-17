@@ -49,7 +49,7 @@ services:
       ARTICLE_PARSER_URL: "http://article-parser:8081"
       SURREALDB_HOST: "surrealdb:8000"
       CHROME_HEADLESS: "true"
-      RUST_LOG: "fetcher=trace"
+      RUST_LOG: "fetcher=debug"
 
   rater:
     container_name: rater
@@ -61,7 +61,7 @@ services:
     depends_on:
       - surrealdb
     environment:
-      RUST_LOG: "rater=trace"
+      RUST_LOG: "rater=debug"
       SURREALDB_HOST: "surrealdb:8000"
 
   surrealdb:
@@ -80,8 +80,6 @@ services:
       - --pass
       - $DB_PASSWORD
       - --auth
-      - --log
-      - trace
       - file:/db
     volumes:
       - ./db:/db
