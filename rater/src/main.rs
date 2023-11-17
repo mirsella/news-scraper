@@ -11,7 +11,7 @@ use surrealdb::{engine::remote::ws::Client as WsClient, opt::auth::Root, Surreal
 use tokio::sync::Semaphore;
 use tokio::task::JoinHandle;
 
-async fn retrieve_db_news(db: Arc<Surreal<WsClient>>) -> Result<Vec<DbNews>> {
+async fn retrieve_db_news(db: &Surreal<WsClient>) -> Result<Vec<DbNews>> {
     let db_news: Vec<DbNews> = db
         .query(
             "select * from news
@@ -57,6 +57,7 @@ async fn main() -> Result<()> {
     let openai = Arc::new(openai);
 
     let telegram = Telegram::new(config.telegram_token.clone(), config.telegram_id);
+    let telegram = Arc::new(telegram);
     let sem = Arc::new(Semaphore::new(config.parallel_rating));
     let rating_chat_prompt = Arc::new(config.rating_chat_prompt.clone());
 
@@ -66,7 +67,7 @@ async fn main() -> Result<()> {
         }
         let total_news;
         let mut news_done = 0;
-        let db_news = retrieve_db_news(db.clone()).await;
+        let db_news = retrieve_db_news(&db).await;
         let db_news = match db_news {
             Ok(news) if news.is_empty() => {
                 trace!("no news to process");
@@ -90,16 +91,18 @@ async fn main() -> Result<()> {
             let db = db.clone();
             let rating_chat_prompt = rating_chat_prompt.clone();
             let running = running.clone();
-            let handle: JoinHandle<Result<()>> = tokio::spawn(async move {
+            let telegram = telegram.clone();
+            let handle: JoinHandle<Result<Option<DbNews>>> = tokio::spawn(async move {
                 let _permit = sem.acquire().await;
                 if !running.load(Ordering::Relaxed) {
-                    return Ok(());
+                    return Ok(None);
                 }
                 debug!("processing {}, {}", id.id, news.link);
                 let rating = match news.rate(&openai, &rating_chat_prompt).await {
                     Ok(rating) => Some(rating),
                     Err(e) if e.to_string().to_lowercase().contains("bad gateway") => {
                         error!("bad gateway: {:?}", e.to_string());
+                        telegram.send("bad gateway !")?;
                         news.rating = None;
                         None
                     }
@@ -107,14 +110,16 @@ async fn main() -> Result<()> {
                         error!("rating {id}: '{e}'");
                         news.rating = Some(0);
                         news.note = format!("rating failed: {e}").into();
+                        telegram.send(format!("rater: rating failed: {e}, {e:?}"))?;
                         None
                     }
                 };
                 info!("{id} rating: {rating:?}");
                 match news.save(&db).await.context("news.save") {
-                    Ok(_) => Ok(()),
+                    Ok(_) => Ok(Some(news)),
                     Err(e) => {
                         error!("saving {id} with {rating:?}: '{e}'");
+                        telegram.send(format!("rater: rating failed: {e}, {e:?}"))?;
                         Err(e)
                     }
                 }
@@ -123,14 +128,14 @@ async fn main() -> Result<()> {
         }
         for handle in handles {
             if let Err(e) = handle.await? {
-                error!("handle errored: {}", e.to_string());
+                running.store(false, Ordering::Relaxed);
+                error!("handle errored, exitting: {}", e.to_string());
                 if let Err(e) = telegram.send(format!("rater: thread error: {}", e)) {
                     error!("TelegramError: {}", e);
                 }
-            } else {
-                news_done += 1;
-                info!("{news_done}/{total_news} done.")
             }
+            news_done += 1;
+            info!("{news_done}/{total_news} done.")
         }
         info!("{total_news} done.");
     }
