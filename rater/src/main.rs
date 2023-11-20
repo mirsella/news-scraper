@@ -121,8 +121,9 @@ async fn main() -> Result<()> {
                     Err(e) => {
                         error!("rating {id}: {e}");
                         news.rating = Some(0);
-                        news.note = format!("{}\nrating failed: {e}", news.note).into();
-                        telegram.send(format!("rater: {id} rating failed: {e}"))?;
+                        let newline = if news.note.is_empty() { "" } else { "\n" };
+                        news.note = format!("{}{newline}error rating: {e}", news.note).into();
+                        telegram.send(format!("rater: {id} {} rating failed: {e}", news.link))?;
                         None
                     }
                 };
