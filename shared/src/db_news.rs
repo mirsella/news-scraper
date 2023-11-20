@@ -105,7 +105,7 @@ impl DbNews {
             .trim_start_matches("rating: ")
             .trim_start_matches("Rating: ")
             .parse::<u32>()
-            .context(format!("split: {split:?}, {content}"))?;
+            .context(format!("split: {split:?}"))?;
         let mut tags: Vec<String> = split
             .1
             .split(',')

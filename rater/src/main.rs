@@ -108,21 +108,24 @@ async fn main() -> Result<()> {
                     Ok(rating) => Some(rating),
                     Err(e) if e.to_string().to_lowercase().contains("bad gateway") => {
                         error!("bad gateway: {:?}", e.to_string());
+                        dbg!(&e);
                         telegram.send("rater: bad gateway !")?;
                         news.rating = None;
                         None
                     }
                     Err(e) if e.to_string().to_lowercase().contains("service unavailable") => {
                         error!("service unavailable: {:?}", e.to_string());
+                        dbg!(&e);
                         telegram.send("rater: service unavailable !")?;
                         news.rating = None;
                         None
                     }
                     Err(e) => {
                         error!("rating {id}: {e}");
+                        dbg!(&e);
                         news.rating = Some(0);
                         let newline = if news.note.is_empty() { "" } else { "\n" };
-                        news.note = format!("{}{newline}error rating: '{e}'", news.note).into();
+                        news.note = format!("{}{newline}rating failed: '{e}'", news.note).into();
                         telegram.send(format!("rater: {id} {} rating failed: {e}", news.link))?;
                         None
                     }
