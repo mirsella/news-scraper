@@ -54,7 +54,9 @@ impl DbNews {
         let truncated_text = truncated_text.trim_end_matches('\u{FFFD}').to_string();
         let conv = vec![
             ChatCompletionRequestSystemMessage {
-                content: Some(format!("{prompt}. your response will only be in the following format `rating;tags,tags`")),
+                content: Some(format!(
+                    "{prompt}. your response will only be in the following format rating;tags,tags"
+                )),
                 ..Default::default()
             }
             .into(),
@@ -103,7 +105,7 @@ impl DbNews {
             .trim_start_matches("rating: ")
             .trim_start_matches("Rating: ")
             .parse::<u32>()
-            .context(format!("{split:?}"))?;
+            .context(format!("split: {split:?}, {content}"))?;
         let mut tags: Vec<String> = split
             .1
             .split(',')
