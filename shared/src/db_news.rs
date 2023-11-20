@@ -60,7 +60,7 @@ impl DbNews {
             .into(),
             ChatCompletionRequestSystemMessage {
                 content: Some(
-                    "your response will be in this format: <rating>;tags,tags,etc...".into(),
+                    "your response will be in the following format `rating;tags,tags`".into(),
                 ),
                 ..Default::default()
             }
@@ -97,8 +97,12 @@ impl DbNews {
             .ok_or(anyhow!("no content in response: {response:?}"))?;
         let split = content
             .split_once(';')
-            .ok_or(anyhow!("no rating in response: {content}"))?;
-        let rating = split.0.parse::<u32>().context(content.clone())?;
+            .ok_or(anyhow!("invalid response: {content}"))?;
+        let rating = split
+            .0
+            .trim_start_matches("rating: ")
+            .parse::<u32>()
+            .context(format!("{split:?}"))?;
         let mut tags: Vec<String> = split
             .1
             .split(',')

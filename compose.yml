@@ -37,7 +37,7 @@ services:
 
   fetcher:
     container_name: fetcher
-    restart: unless-stopped
+    restart: on-failure
     build:
       context: .
       dockerfile: docker/cargo.dockerfile
