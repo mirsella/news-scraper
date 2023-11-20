@@ -55,7 +55,7 @@ impl DbNews {
         let conv = vec![
             ChatCompletionRequestSystemMessage {
                 content: Some(format!(
-                    "{prompt}. your response will only be in the following format rating;tags,tags"
+                    "{prompt}. your response will only be in the following format `rating;tags,tags`"
                 )),
                 ..Default::default()
             }
