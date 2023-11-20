@@ -60,16 +60,12 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
         let mut res = super::fetch_article(&url);
         if let Err(err) = res {
             debug!("fetch_article: {}", err);
-            if tab.navigate_to(&url).is_err() {
-                warn!("counld navigate to {url}");
+            if let Err(e) = tab.navigate_to(&url) {
+                warn!("could not navigate to {url}: {e}");
                 continue;
             };
-            if tab
-                .wait_until_navigated()
-                .context("wait_until_navigated")
-                .is_err()
-            {
-                warn!("counld load {url}");
+            if let Err(e) = tab.wait_until_navigated().context("wait_until_navigated") {
+                warn!("could not load {url}: {e}");
                 continue;
             }
             std::thread::sleep(std::time::Duration::from_secs(1));
