@@ -109,14 +109,14 @@ async fn main() -> Result<()> {
                     Err(e) if e.to_string().to_lowercase().contains("bad gateway") => {
                         error!("bad gateway: {:?}", e.to_string());
                         dbg!(&e);
-                        telegram.send("rater: bad gateway !")?;
+                        // telegram.send("rater: bad gateway !")?;
                         news.rating = None;
                         None
                     }
                     Err(e) if e.to_string().to_lowercase().contains("service unavailable") => {
                         error!("service unavailable: {:?}", e.to_string());
                         dbg!(&e);
-                        telegram.send("rater: service unavailable !")?;
+                        // telegram.send("rater: service unavailable !")?;
                         news.rating = None;
                         None
                     }
