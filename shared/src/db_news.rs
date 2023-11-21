@@ -55,8 +55,7 @@ impl DbNews {
         let conv = vec![
             ChatCompletionRequestSystemMessage {
                 content: Some(
-                    "your response will be exactly in the following format `rating;tags,etc`"
-                        .into(),
+                    "you will answer in the following format `<rating>;tags,tags,etc...`".into(),
                 ),
                 ..Default::default()
             }
