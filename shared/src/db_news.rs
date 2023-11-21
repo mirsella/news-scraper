@@ -54,14 +54,14 @@ impl DbNews {
         let truncated_text = truncated_text.trim_end_matches('\u{FFFD}').to_string();
         let conv = vec![
             ChatCompletionRequestSystemMessage {
-                content: Some(
-                    "you will answer in the following format `<rating>;tags,tags,etc...`".into(),
-                ),
+                content: Some(prompt.into()),
                 ..Default::default()
             }
             .into(),
             ChatCompletionRequestSystemMessage {
-                content: Some(prompt.into()),
+                content: Some(
+                    "you will answer exactly in the following format `[0-100];[tags,...]`".into(),
+                ),
                 ..Default::default()
             }
             .into(),
