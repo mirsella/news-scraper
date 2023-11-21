@@ -94,17 +94,30 @@ watch(pageCount, async () => {
 });
 const search = ref("");
 const onlyNonused = ref(false);
-const filteredNews = computed(() =>
-  news.value.filter((n) => {
-    return (
-      (n.title.toLowerCase().includes(search.value.toLowerCase()) ||
+const mindate = ref("");
+const minrating = ref(0);
+const filteredNews = computed(() => {
+  if (minrating.value < 0) minrating.value = 0;
+  if (minrating.value > 100) minrating.value = 100;
+  let date = new Date(mindate.value);
+  let n = news.value;
+  console.log("before filter", n.length, mindate.value);
+  if (onlyNonused.value) n = n.filter((n) => !n.used);
+  if (mindate.value != "") n = n.filter((n) => new Date(n.date) >= date);
+  if (minrating.value != 0)
+    n = n.filter((n) => (n.rating || 0) >= minrating.value);
+  if (search.value) {
+    n = n.filter(
+      (n) =>
+        n.title.toLowerCase().includes(search.value.toLowerCase()) ||
         n.caption.toLowerCase().includes(search.value.toLowerCase()) ||
         n.provider.toLowerCase().includes(search.value.toLowerCase()) ||
-        n.note.toLowerCase().includes(search.value.toLowerCase())) &&
-      (!onlyNonused.value || !n.used)
+        n.note.toLowerCase().includes(search.value.toLowerCase()),
     );
-  }),
-);
+  }
+  console.log("after filter", n.length);
+  return n;
+});
 const paginedNews = computed(() =>
   filteredNews.value.slice(
     (page.value - 1) * pageCount.value,
@@ -196,12 +209,28 @@ async function updateUsed(row: News) {
       }"
     >
       <div class="flex flex-wrap gap-2 px-3 py-3">
-        <UInput
-          v-model="search"
-          icon="i-heroicons-magnifying-glass-20-solid"
-          placeholder="Search..."
-          size="lg"
-        />
+        <UTooltip text="search in title, caption, provider and note">
+          <UInput
+            v-model="search"
+            icon="i-heroicons-magnifying-glass-20-solid"
+            placeholder="Search..."
+            size="lg"
+          />
+        </UTooltip>
+
+        {{ mindate }}
+        <UTooltip text="don't show date prior to this">
+          <UInput v-model="mindate" type="date" size="lg" />
+        </UTooltip>
+
+        <UTooltip text="minimum rating">
+          <UInput
+            v-model.number="minrating"
+            placeholder="minimun rating"
+            type="number"
+            size="lg"
+          />
+        </UTooltip>
 
         <UBadge color="gray">
           <UCheckbox v-model="onlyNonused" label="Non-used only" />
