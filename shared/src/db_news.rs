@@ -84,8 +84,7 @@ impl DbNews {
         let response = client
             .chat() // Get the API "group" (completions, images, etc.) from the client
             .create(request) // Make the API call in that "group"
-            .await
-            .context("chat().create(request)")?;
+            .await?;
         // println!("cost of tokens {:?}", response.usage.clone().unwrap());
         let choice = response
             .choices
