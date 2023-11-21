@@ -60,7 +60,8 @@ impl DbNews {
             .into(),
             ChatCompletionRequestSystemMessage {
                 content: Some(
-                    "you will answer exactly in the following format `[0-100];[tags,...]`".into(),
+                    "you will answer exactly in the following format `rating;tags,tags,tags`"
+                        .into(),
                 ),
                 ..Default::default()
             }
