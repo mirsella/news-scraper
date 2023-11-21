@@ -1,7 +1,7 @@
 chrome_data
 data.surql
 history.txt
-screenshot*.png
+*.png
 .env
 db/
 db.bak/
