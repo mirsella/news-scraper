@@ -51,6 +51,9 @@ onMounted(async () => {
           break;
       }
     });
+    onUnmounted(async () => {
+      await $db?.kill(liveQueryUuid);
+    });
   } catch (e: any) {
     useToast().add({
       title: "Error starting live query",
@@ -64,11 +67,8 @@ onMounted(async () => {
 <template>
   <div class="m-4">
     <ClientOnly>
-      <NewsCard v-show="news?.id" :news="news" />
-      <div v-if="notfound" class="text-center text-xl w-full">
-        no news found for this id.
-        <UButton label="go home." size="lg" class @click="navigateTo('/')" />
-      </div>
+      <NewsCard v-if="news?.id" :news="news" />
+      <NotFound v-else />
     </ClientOnly>
   </div>
 </template>

@@ -57,6 +57,9 @@ onMounted(async () => {
           break;
       }
     });
+    onUnmounted(async () => {
+      await $db?.kill(liveQueryUuid);
+    });
   } catch (e: any) {
     useToast().add({
       title: "Error starting live query",
@@ -96,16 +99,13 @@ async function copyDedicatedLink() {
         :transition="false"
         :ui="{ width: 'md:max-w-[80%]' }"
       >
-        <div class="flex justify-center">
+        <div v-show="n.id" class="flex justify-center">
           <UTooltip text="Open in a dedicated page">
             <UButton
               class="w-8 m-1 transition hover:scale-110"
               icon="i-carbon-export"
               @click="navigateTo('/' + n.id)"
             />
-            <!-- <a :href="'/' + $route.query.id"> -->
-            <!--   <UIcon name="i-carbon-export" /> -->
-            <!-- </a> -->
           </UTooltip>
           <UTooltip text="Copy dedicated link to clipboard">
             <UButton
@@ -115,7 +115,8 @@ async function copyDedicatedLink() {
             />
           </UTooltip>
         </div>
-        <NewsCard :news="n" />
+        <NewsCard v-if="n.id" :news="n" />
+        <NotFound v-else class="m-4" />
       </UModal>
     </ClientOnly>
     <ClientOnly>

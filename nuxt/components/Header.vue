@@ -11,15 +11,15 @@ async function signout() {
 <template>
   <div>
     <div class="inline-flex w-full pt-1 md:py-4 px-4 h-auto">
-      <h1
+      <a
         class="text-2xl self-start cursor-pointer transition hover:scale-110"
-        @click="navigateTo('/')"
+        href="/"
       >
         <span class="hidden sm:block"> news-scraper </span>
         <span class="sm:hidden mt-2">
           <UIcon name="i-heroicons-home" />
         </span>
-      </h1>
+      </a>
       <div class="flex-grow self-center text-center">
         <ClientOnly>
           <UBadge

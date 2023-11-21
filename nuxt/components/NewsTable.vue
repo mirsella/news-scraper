@@ -218,7 +218,6 @@ async function updateUsed(row: News) {
           />
         </UTooltip>
 
-        {{ mindate }}
         <UTooltip text="don't show date prior to this">
           <UInput v-model="mindate" type="date" size="lg" />
         </UTooltip>
