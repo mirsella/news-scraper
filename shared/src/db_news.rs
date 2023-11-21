@@ -42,7 +42,7 @@ impl DbNews {
     pub async fn rate(
         &mut self,
         client: &ChatClient<OpenAIConfig>,
-        prompt: impl Into<String>,
+        prompt: &str,
     ) -> Result<(u32, Vec<String>)> {
         let text = format!("{}\n{}", &self.title, &self.text_body);
         let tokenizer = tiktoken_rs::p50k_base().unwrap();
@@ -53,16 +53,21 @@ impl DbNews {
         // remove the � from lost bytes
         let truncated_text = truncated_text.trim_end_matches('\u{FFFD}').to_string();
         let conv = vec![
+            // ChatCompletionRequestSystemMessage {
+            //     content: Some(prompt.into()),
+            //     ..Default::default()
+            // }
+            // .into(),
+            // ChatCompletionRequestSystemMessage {
+            //     content: Some(
+            //         "you will answer exactly in the following format `rating;tags,tags,tags`"
+            //             .into(),
+            //     ),
+            //     ..Default::default()
+            // }
+            // .into(),
             ChatCompletionRequestSystemMessage {
-                content: Some(prompt.into()),
-                ..Default::default()
-            }
-            .into(),
-            ChatCompletionRequestSystemMessage {
-                content: Some(
-                    "you will answer exactly in the following format `rating;tags,tags,tags`"
-                        .into(),
-                ),
+                content: Some(format!("{prompt}. you will answer exactly in the following format: `rating;tags,tags,etc...`")),
                 ..Default::default()
             }
             .into(),
