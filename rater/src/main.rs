@@ -103,7 +103,7 @@ async fn main() -> Result<()> {
                 if !running.load(Ordering::Relaxed) {
                     return Ok(None);
                 }
-                debug!("processing {}, {}", id.id, news.link);
+                trace!("processing {}, {}", id.id, news.link);
                 let rating = match news.rate(&openai, rating_chat_prompt.as_ref()).await {
                     Ok(rating) => Some(rating),
                     Err(e) if e.to_string().to_lowercase().contains("bad gateway") => {
