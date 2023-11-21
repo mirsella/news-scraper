@@ -24,7 +24,7 @@ pub fn init(
     let opts = GetNewsOpts {
         config: config.clone(),
         tx: tx.clone(),
-        seen_urls: seen_urls.clone(),
+        seen_urls,
     };
     for _ in 0..config.chrome_concurrent.unwrap_or(4) {
         while let Some(fetch) = sources.pop() {
@@ -42,7 +42,7 @@ pub fn init(
                 Ok(Err(e)) => tx.send(Err(e)).await.unwrap(),
                 Err(e) => {
                     error!("thread paniced: {:?}", e.to_string());
-                    if let Err(e) = telegram.send(format!("fetcher: tread paniced: {}", e)) {
+                    if let Err(e) = telegram.send(format!("fetcher: thread paniced: {:?}", e)) {
                         error!("TelegramError: {}", e);
                     }
                     continue;
