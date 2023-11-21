@@ -33,11 +33,11 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
         .wait_until_navigated()
         .context("wait_until_navigated")?;
 
-    // if let Ok(cookie) = tab.find_element("#didomi-notice-agree-button") {
-    //     cookie.click().context("clicking on cookie")?;
-    //     std::thread::sleep(std::time::Duration::from_secs(1));
-    //     trace!("clicked cookie");
-    // }
+    if let Ok(cookie) = tab.find_element("#didomi-notice-agree-button") {
+        cookie.click().context("clicking on cookie")?;
+        std::thread::sleep(std::time::Duration::from_secs(1));
+        trace!("clicked cookie");
+    }
 
     let links = get_articles_links(&tab).context("sudouest")?;
     for url in links {

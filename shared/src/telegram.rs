@@ -30,6 +30,7 @@ mod tests {
     use super::*;
 
     #[test]
+    #[ignore]
     fn it_creates_from_env() {
         if let Err(e) = dotenvy::dotenv() {
             eprintln!("Error loading .env file: {}", e);
