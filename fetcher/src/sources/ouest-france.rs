@@ -15,13 +15,28 @@ fn get_articles_links(tab: &Arc<Tab>) -> Result<Vec<String>> {
 }
 
 pub fn get_news(opts: GetNewsOpts) -> Result<()> {
-    let tab = opts.browser.new_tab()?;
-    let user_agent = opts.browser.get_version().unwrap().user_agent;
+    let browser = opts.new_browser(true);
+    let tab = browser.new_tab()?;
+    let user_agent = browser.get_version()?.user_agent;
     let user_agent = user_agent.replace("HeadlessChrome", "Chrome");
     tab.set_user_agent(&user_agent, None, None)?;
     tab.navigate_to("https://www.ouest-france.fr/actualite-en-continu/archives/")
         .context("navigate_to")?;
     tab.wait_until_navigated().context("wait_until_navigated")?;
+
+    if let Ok(cookie) = tab.find_element("#didomi-notice-agree-button") {
+        cookie.click().context("clicking on cookie")?;
+        std::thread::sleep(std::time::Duration::from_secs(1));
+        trace!("clicked cookie");
+    }
+
+    let png = tab.capture_screenshot(
+        headless_chrome::protocol::cdp::Page::CaptureScreenshotFormatOption::Png,
+        None,
+        None,
+        true,
+    )?;
+    std::fs::write("ouest-france.png", png)?;
 
     let links = get_articles_links(&tab).context("ouest-france")?;
     for url in links {

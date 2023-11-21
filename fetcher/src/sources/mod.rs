@@ -1,21 +1,44 @@
 use std::{
+    ffi::OsStr,
     sync::{Arc, Mutex},
     time::Duration,
 };
 
 use anyhow::anyhow;
+use headless_chrome::{Browser, LaunchOptionsBuilder};
 use serde::{Deserialize, Serialize};
 use shared::News;
 
 use tokio::sync::mpsc::Sender;
 automod::dir!("src/sources");
 
+#[derive(Debug, Clone)]
 pub struct GetNewsOpts {
-    pub browser: headless_chrome::Browser,
+    // pub browser: headless_chrome::Browser,
+    pub config: shared::Config,
     pub tx: Sender<anyhow::Result<News>>,
     pub seen_urls: Arc<Mutex<Vec<String>>>,
 }
-type GetNewsFn = fn(GetNewsOpts) -> anyhow::Result<()>;
+impl GetNewsOpts {
+    fn new_browser(&self, image_enabled: bool) -> headless_chrome::Browser {
+        let mut args = Vec::new();
+        if !image_enabled {
+            args.push(OsStr::new("--blink-settings=imagesEnabled=false"));
+        }
+        Browser::new(
+            LaunchOptionsBuilder::default()
+                .window_size(Some((1920, 1080)))
+                .headless(self.config.chrome_headless.unwrap_or(true))
+                .user_data_dir(self.config.chrome_data_dir.clone())
+                .args(args)
+                .idle_browser_timeout(Duration::from_secs(60))
+                .sandbox(false)
+                .build()
+                .unwrap(),
+        )
+        .unwrap()
+    }
+}
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct ApiResponse {
@@ -72,7 +95,7 @@ pub fn parse_article(str: &str) -> Result<ApiResponse, anyhow::Error> {
     Ok(json_result)
 }
 
-pub static SOURCES: [(&str, GetNewsFn); 13] = [
+pub static SOURCES: [(&str, fn(GetNewsOpts) -> anyhow::Result<()>); 13] = [
     ("francetvinfo", francetvinfo::get_news),
     ("google", google::get_news),
     ("leparisien", leparisien::get_news),

@@ -40,8 +40,8 @@ DEFINE SCOPE user SESSION 1w
 -- ------------------------------
 
 -- see https://github.com/surrealdb/surrealdb/issues/2150
--- DEFINE TABLE news SCHEMAFULL PERMISSIONS FOR select, update WHERE $auth.activated == true;
-DEFINE TABLE news SCHEMALESS PERMISSIONS FOR select, update WHERE $auth.activated == true;
+-- DEFINE TABLE news SCHEMAFULL PERMISSIONS FOR select, update WHERE $auth.activated == true CHANGFEED 1w;
+DEFINE TABLE news SCHEMALESS PERMISSIONS FOR select, update WHERE $auth.activated == true CHANGEFEED 1w;
 
 DEFINE FIELD html_body ON news TYPE string;
 DEFINE FIELD text_body ON news TYPE string;
