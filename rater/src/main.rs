@@ -104,7 +104,7 @@ async fn main() -> Result<()> {
                     return Ok(None);
                 }
                 debug!("processing {}, {}", id.id, news.link);
-                let rating = match news.rate(&openai, &rating_chat_prompt).await {
+                let rating = match news.rate(&openai, rating_chat_prompt.as_ref()).await {
                     Ok(rating) => Some(rating),
                     Err(e) if e.to_string().to_lowercase().contains("bad gateway") => {
                         error!("bad gateway: {:?}", e.to_string());
