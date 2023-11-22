@@ -67,7 +67,9 @@ impl DbNews {
             // }
             // .into(),
             ChatCompletionRequestSystemMessage {
-                content: Some(format!("{prompt}. you will answer exactly in the following format: `rating;tags,tags,etc...`")),
+                content: Some(format!(
+                    "{prompt}. you will only answer with the following format: `0;tag,tag,tag`."
+                )),
                 ..Default::default()
             }
             .into(),
