@@ -1,5 +1,6 @@
 use anyhow::{Context, Result};
 use async_openai::{config::OpenAIConfig, Client as ChatClient};
+use futures::future::select_all;
 use log::{error, info, trace};
 use shared::Telegram;
 use shared::{config::Config, db_news::DbNews};
@@ -142,8 +143,10 @@ async fn main() -> Result<()> {
             });
             handles.push(handle);
         }
-        for handle in handles {
-            match handle.await? {
+        while !handles.is_empty() {
+            let (handle, _index, remaining) = select_all(handles).await;
+            handles = remaining;
+            match handle? {
                 Err(e) => {
                     running.store(false, Ordering::Relaxed);
                     error!("handle errored, exitting: {}", e.to_string());
