@@ -1,6 +1,6 @@
 use anyhow::{Context, Result};
 use async_openai::{config::OpenAIConfig, Client as ChatClient};
-use log::{debug, error, info, trace};
+use log::{error, info, trace};
 use shared::Telegram;
 use shared::{config::Config, db_news::DbNews};
 use std::process::exit;

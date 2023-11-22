@@ -1,25 +1,39 @@
 use super::{GetNewsOpts, News};
 use anyhow::{Context, Result};
 use headless_chrome::Tab;
-use log::{debug, error, trace};
-use std::sync::Arc;
+use log::{debug, error, trace, warn};
+use std::{sync::Arc, time::Instant};
 
 fn get_articles_links(tab: &Arc<Tab>) -> Result<Vec<String>> {
-    let links: Vec<String> = tab
-        .find_elements(".article-wrapper > a")
-        .expect(".article-wrapper > a")
+    let time = Instant::now();
+    // let links: Vec<String> = tab
+    //     .find_elements(".article-wrapper > a")
+    //     .expect(".article-wrapper > a")
+    //     .iter()
+    //     .filter_map(|el| {
+    //         let mut link = el.get_attribute_value("href").unwrap().expect("no href ??");
+    //         if link.contains("youtube.com") {
+    //             return None;
+    //         }
+    //         if !link.starts_with("http") {
+    //             link.insert_str(0, "https://www.sudouest.fr");
+    //         }
+    //         Some(link)
+    //     })
+    //     .collect();
+    let result = tab
+        .evaluate(
+            "Array.from(document.querySelectorAll('.article-wrapper > a')).map(e => e.href)",
+            false,
+        )
+        .unwrap();
+    println!("evaluate took {:?}", time.elapsed());
+    let props = result.preview.unwrap().properties;
+    let links = props
         .iter()
-        .filter_map(|el| {
-            let mut link = el.get_attribute_value("href").unwrap().expect("no href ??");
-            if link.contains("youtube.com") {
-                return None;
-            }
-            if !link.starts_with("http") {
-                link.insert_str(0, "https://www.sudouest.fr");
-            }
-            Some(link)
-        })
-        .collect();
+        .map(|p| p.value.as_ref().unwrap().to_string())
+        .collect::<Vec<_>>();
+    println!("get_articles_links took {:?}", time.elapsed());
     Ok(links)
 }
 
@@ -41,14 +55,18 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
     }
 
     let links = get_articles_links(&tab).context("sudouest")?;
+    debug!("found {} links", links.len());
     for url in links {
         if opts.seen_urls.lock().unwrap().contains(&url) {
             trace!("already seen {url}");
             continue;
         }
-        opts.seen_urls.lock().unwrap().push(url.clone());
-
+        let cookiewall = "En acceptant les cookies, vous pourrez accéder aux contenus";
         let payload = match super::fetch_article(&url) {
+            Ok(res) if res.content.contains(cookiewall) => {
+                warn!("cookiewall on {url}");
+                continue;
+            }
             Ok(res) => Ok(News {
                 title: res.title,
                 caption: res.description,
@@ -56,13 +74,14 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
                 tags: vec!["france".to_string()],
                 date: res.published.parse().unwrap_or_else(|_| chrono::Utc::now()),
                 body: res.content,
-                link: url,
+                link: url.clone(),
             }),
             Err(err) => {
                 debug!("fetch_article: {err}");
                 continue;
             }
         };
+        opts.seen_urls.lock().unwrap().push(url);
         if let Err(e) = opts.tx.blocking_send(payload) {
             error!("blocking_send: {e}");
             break;

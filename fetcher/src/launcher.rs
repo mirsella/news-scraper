@@ -13,7 +13,7 @@ pub fn init(
     config: &Config,
     enabled: Vec<String>,
     seen_urls: Arc<Mutex<Vec<String>>>,
-    telegram: Telegram,
+    telegram: Arc<Telegram>,
 ) -> Receiver<anyhow::Result<News>> {
     let config: Config = config.to_owned();
     let (tx, rx) = channel(500);
