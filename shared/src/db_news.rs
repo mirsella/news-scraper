@@ -81,7 +81,7 @@ impl DbNews {
         ];
         let request = CreateChatCompletionRequestArgs::default()
             .model("gpt-3.5-turbo")
-            .max_tokens(30_u16)
+            .max_tokens(40_u16)
             .messages(conv)
             .n(1)
             .temperature(0_f32)
