@@ -53,28 +53,26 @@ impl DbNews {
         // remove the � from lost bytes
         let truncated_text = truncated_text.trim_end_matches('\u{FFFD}').to_string();
         let conv = vec![
-            // ChatCompletionRequestSystemMessage {
-            //     content: Some(prompt.into()),
-            //     ..Default::default()
-            // }
-            // .into(),
-            // ChatCompletionRequestSystemMessage {
-            //     content: Some(
-            //         "you will answer exactly in the following format `rating;tags,tags,tags`"
-            //             .into(),
-            //     ),
-            //     ..Default::default()
-            // }
-            // .into(),
             ChatCompletionRequestSystemMessage {
-                content: Some(format!(
-                    "{prompt}. you will only answer with the following format: `0;tag,tag,tag`."
-                )),
+                content: Some(prompt.into()),
+                ..Default::default()
+            }
+            .into(),
+            ChatCompletionRequestSystemMessage {
+                content: Some(
+                    "you will answer exactly with the following format `rating;tags,tags,tags`"
+                        .into(),
+                ),
                 ..Default::default()
             }
             .into(),
             ChatCompletionRequestUserMessage {
                 content: Some(truncated_text.into()),
+                ..Default::default()
+            }
+            .into(),
+            ChatCompletionRequestSystemMessage {
+                content: Some("rating: ".into()),
                 ..Default::default()
             }
             .into(),
