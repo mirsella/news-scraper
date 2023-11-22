@@ -7,6 +7,8 @@ use shared::{config::Config, db_news::DbNews};
 use std::process::exit;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
+use std::thread;
+use std::time::Duration;
 use surrealdb::engine::remote::ws::Ws;
 use surrealdb::{engine::remote::ws::Client as WsClient, opt::auth::Root, Surreal};
 use tokio::sync::Semaphore;
@@ -25,6 +27,17 @@ ORDER BY date DESC",
         .await?
         .take(0)?;
     Ok(db_news)
+}
+
+fn sleep_check(running: &AtomicBool, duration: Duration) {
+    let mut slept = Duration::from_secs(0);
+    while slept < duration {
+        if !running.load(Ordering::Relaxed) {
+            return;
+        }
+        thread::sleep(Duration::from_secs(1));
+        slept += Duration::from_secs(1);
+    }
 }
 
 #[tokio::main]
@@ -78,7 +91,7 @@ async fn main() -> Result<()> {
         let db_news = match db_news {
             Ok(news) if news.is_empty() => {
                 trace!("no news to process");
-                tokio::time::sleep(tokio::time::Duration::from_secs(120)).await;
+                sleep_check(&running, Duration::from_secs(60));
                 continue;
             }
             Ok(news) => {
