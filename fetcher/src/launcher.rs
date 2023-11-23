@@ -40,8 +40,9 @@ pub fn init(
         while let Some(result) = futures.next().await {
             match result {
                 Ok(Err(e)) => tx.send(Err(e)).await.unwrap(),
-                Err(e) => {
-                    error!("thread paniced: {:?}", e.to_string());
+                Err(e) if e.is_panic() => {
+                    let e = e.into_panic();
+                    error!("thread paniced: {:?}", e);
                     if let Err(e) = telegram.send(format!("fetcher: thread paniced: {:?}", e)) {
                         error!("TelegramError: {}", e);
                     }
