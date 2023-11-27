@@ -75,7 +75,7 @@ services:
       - SURREAL_CAPS_ALLOW_FUNC
       - SURREAL_USER=${DB_USER}
       - SURREAL_PASS=${DB_PASSWORD}
-      - SURREAL_AUTH
+      - SURREAL_AUTH=true
       - SURREAL_PATH=file:/db
     entrypoint: /surreal start
     volumes:
@@ -89,7 +89,6 @@ services:
       timeout: 10s
 
   surrealdb_ssl:
-    profiles: ["ssl"]
     container_name: surrealdb
     restart: unless-stopped
     image: surrealdb/surrealdb:1.0.0
@@ -100,7 +99,7 @@ services:
       - SURREAL_CAPS_ALLOW_FUNC
       - SURREAL_USER=${DB_USER}
       - SURREAL_PASS=${DB_PASSWORD}
-      - SURREAL_AUTH
+      - SURREAL_AUTH=true
       - SURREAL_PATH=file:/db
       - SURREAL_WEB_CRT=${SSL_CERT}
       - SURREAL_WEB_KEY=${SSL_KEY}
