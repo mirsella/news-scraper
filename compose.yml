@@ -19,6 +19,29 @@ services:
       start_period: 5s
       timeout: 5s
 
+  nuxt_ssl:
+    restart: unless-stopped
+    container_name: nuxt
+    depends_on:
+      - surrealdb
+    build:
+      context: .
+      dockerfile: docker/nuxt.dockerfile
+    ports:
+      - "8080:3000"
+    environment:
+      - NUXT_PUBLIC_SURREALDB_URLS=${NUXT_PUBLIC_SURREALDB_URLS}
+      - NITRO_SSL_CERT=/ssl/fullchain.pem
+      - NITRO_SSL_KEY=/ssl/privkey.pem
+    env_file: .env
+    volumes:
+      - ${SSL_DIR}:/ssl
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      retries: 3
+      start_period: 5s
+      timeout: 5s
+
   article-parser:
     restart: unless-stopped
     container_name: article-parser
