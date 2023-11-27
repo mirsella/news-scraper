@@ -101,11 +101,12 @@ services:
       - SURREAL_PASS=${DB_PASSWORD}
       - SURREAL_AUTH=true
       - SURREAL_PATH=file:/db
-      - SURREAL_WEB_CRT=${SSL_CERT}
-      - SURREAL_WEB_KEY=${SSL_KEY}
+      - SURREAL_WEB_CRT=/ssl/fullchain.pem
+      - SURREAL_WEB_KEY=/ssl/privkey.pem
     entrypoint: /surreal start
     volumes:
       - ./db:/db
+      - ${SSL_DIR}:/ssl
     ports:
       - 8000:8000
     healthcheck:
