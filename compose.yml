@@ -67,20 +67,44 @@ services:
   surrealdb:
     container_name: surrealdb
     restart: unless-stopped
-    image: surrealdb/surrealdb:1.0.0 # https://github.com/surrealdb/surrealdb/issues/2704
+    image: surrealdb/surrealdb:1.0.0
     env_file:
       - .env
     user: root
-    entrypoint:
-      - /surreal
-      - start
-      - --allow-funcs
-      - --user
-      - $DB_USER
-      - --pass
-      - $DB_PASSWORD
-      - --auth
-      - file:/db
+    environment:
+      - SURREAL_CAPS_ALLOW_FUNC
+      - SURREAL_USER=${DB_USER}
+      - SURREAL_PASS=${DB_PASSWORD}
+      - SURREAL_AUTH
+      - SURREAL_PATH=file:/db
+    entrypoint: /surreal start
+    volumes:
+      - ./db:/db
+    ports:
+      - 8000:8000
+    healthcheck:
+      test: ["CMD", "/surreal", "isready"]
+      retries: 3
+      start_period: 10s
+      timeout: 10s
+
+  surrealdb_ssl:
+    profiles: ["ssl"]
+    container_name: surrealdb
+    restart: unless-stopped
+    image: surrealdb/surrealdb:1.0.0
+    env_file:
+      - .env
+    user: root
+    environment:
+      - SURREAL_CAPS_ALLOW_FUNC
+      - SURREAL_USER=${DB_USER}
+      - SURREAL_PASS=${DB_PASSWORD}
+      - SURREAL_AUTH
+      - SURREAL_PATH=file:/db
+      - SURREAL_WEB_CRT=${SSL_CERT}
+      - SURREAL_WEB_KEY=${SSL_KEY}
+    entrypoint: /surreal start
     volumes:
       - ./db:/db
     ports:
