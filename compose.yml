@@ -31,11 +31,11 @@ services:
       - "8080:3000"
     environment:
       - NUXT_PUBLIC_SURREALDB_URLS=${NUXT_PUBLIC_SURREALDB_URLS}
-      - NITRO_SSL_CERT=/ssl/fullchain.pem
-      - NITRO_SSL_KEY=/ssl/privkey.pem
+      - NITRO_SSL_CERT=/letsencrypt/fullchain.pem
+      - NITRO_SSL_KEY=/letsencrypt/privkey.pem
     env_file: .env
     volumes:
-      - ${SSL_DIR}:/ssl
+      - ../letsencrypt:/letsencrypt
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000"]
       retries: 3
@@ -127,12 +127,12 @@ services:
       - SURREAL_PASS=${DB_PASSWORD}
       - SURREAL_AUTH=true
       - SURREAL_PATH=file:/db
-      - SURREAL_WEB_CRT=/ssl/fullchain.pem
-      - SURREAL_WEB_KEY=/ssl/privkey.pem
+      - SURREAL_WEB_CRT=/letsencrypt/fullchain.pem
+      - SURREAL_WEB_KEY=/letsencrypt/privkey.pem
     entrypoint: /surreal start
     volumes:
       - ./db:/db
-      - ${SSL_DIR}:/ssl
+      - ../letsencrypt:/letsencrypt
     ports:
       - 8000:8000
     healthcheck:
