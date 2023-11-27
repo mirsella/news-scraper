@@ -23,7 +23,7 @@ services:
     restart: unless-stopped
     container_name: nuxt
     depends_on:
-      - surrealdb
+      - surrealdb_ssl
     build:
       context: .
       dockerfile: docker/nuxt.dockerfile
@@ -67,7 +67,9 @@ services:
       target: fetcher
     depends_on:
       - article-parser
-      - surrealdb
+    # as we have 2 surrealdb services, we can't specify one OR the other in compose
+    # depends_on:
+    #   - surrealdb
     environment:
       ARTICLE_PARSER_URL: "http://article-parser:8081"
       SURREALDB_HOST: "surrealdb:8000"
@@ -81,8 +83,9 @@ services:
       context: .
       dockerfile: docker/cargo.dockerfile
       target: rater
-    depends_on:
-      - surrealdb
+    # as we have 2 surrealdb services, we can't specify one OR the other in compose
+    # depends_on:
+    #   - surrealdb
     environment:
       RUST_LOG: "rater=debug"
       SURREALDB_HOST: "surrealdb:8000"
