@@ -51,18 +51,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
             thread::sleep(std::time::Duration::from_secs(1));
         };
 
-        // let links = get_articles_links(&tab).context("leparisien")?;
-        let links = match get_articles_links(&tab) {
-            Ok(links) => links,
-            Err(e) => {
-                error!("get_articles_links: {e}");
-                // let pngdata =
-                //     tab.capture_screenshot(CaptureScreenshotFormatOption::Png, None, None, false)?;
-                // std::fs::write("/app/leparisien.png", pngdata)?;
-                // warn!("wrote leparisien.png");
-                continue;
-            }
-        };
+        let links = get_articles_links(&tab).context("leparisien")?;
         trace!("found {} links on {category}", links.len());
         for url in links {
             if opts.seen_urls.lock().unwrap().contains(&url) {
