@@ -8,7 +8,7 @@ use std::{
     process::exit,
     sync::{Arc, Mutex},
 };
-use surrealdb::{engine::remote::ws::Ws, opt::auth::Root, Surreal};
+use surrealdb::{engine::remote::ws::Wss, opt::auth::Root, Surreal};
 
 #[derive(Parser, Debug)]
 struct Cli {
@@ -49,7 +49,7 @@ async fn main() -> Result<()> {
     let telegram = Telegram::new(config.telegram_token.clone(), config.telegram_id);
     let telegram = Arc::new(telegram);
 
-    let db = Surreal::new::<Ws>(&config.surrealdb_host).await?;
+    let db = Surreal::new::<Wss>(&config.surrealdb_host).await?;
     db.signin(Root {
         username: &config.db_user,
         password: &config.db_password,

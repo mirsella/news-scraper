@@ -9,7 +9,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::thread;
 use std::time::Duration;
-use surrealdb::engine::remote::ws::Ws;
+use surrealdb::engine::remote::ws::Wss;
 use surrealdb::{engine::remote::ws::Client as WsClient, opt::auth::Root, Surreal};
 use tokio::sync::Semaphore;
 use tokio::task::JoinHandle;
@@ -63,7 +63,7 @@ async fn main() -> Result<()> {
         exit(1);
     });
 
-    let db = Surreal::new::<Ws>(&config.surrealdb_host).await?;
+    let db = Surreal::new::<Wss>(&config.surrealdb_host).await?;
     db.signin(Root {
         username: &config.db_user,
         password: &config.db_password,

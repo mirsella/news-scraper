@@ -1,4 +1,7 @@
-use std::sync::{Arc, Mutex};
+use std::{
+    error::Error,
+    sync::{Arc, Mutex},
+};
 
 use crate::sources::{GetNewsOpts, SOURCES};
 use futures::{stream::FuturesUnordered, StreamExt};
@@ -19,44 +22,49 @@ pub fn init(
     let (tx, rx) = channel(500);
 
     let mut futures: FuturesUnordered<JoinHandle<anyhow::Result<()>>> = FuturesUnordered::new();
-    let mut sources = SOURCES.to_vec();
+    let mut sources = SOURCES
+        .iter()
+        .filter(|s| enabled.contains(&s.0.to_string()))
+        .collect::<Vec<_>>();
 
     let opts = GetNewsOpts {
         config: config.clone(),
         tx: tx.clone(),
         seen_urls,
     };
-    for _ in 0..config.chrome_concurrent.unwrap_or(4) {
-        while let Some(fetch) = sources.pop() {
-            if enabled.contains(&fetch.0.to_string()) || enabled.is_empty() {
+    while futures.len() < config.chrome_concurrent.unwrap_or(4) {
+        match sources.pop() {
+            Some(fetch) => {
                 trace!("spawning {}", fetch.0);
                 let opts = opts.clone();
                 futures.push(spawn_blocking(move || fetch.1(opts)));
-                break;
             }
+            None => break,
         }
     }
     tokio::spawn(async move {
         while let Some(result) = futures.next().await {
             match result {
                 Ok(Err(e)) => tx.send(Err(e)).await.unwrap(),
-                Err(e) if e.is_panic() => {
-                    let e = e.into_panic();
-                    error!("thread paniced: {:?}", e);
-                    if let Err(e) = telegram.send(format!("fetcher: thread paniced: {:?}", e)) {
+                Err(e) => {
+                    let e = e.source();
+                    error!("thread panicked, source: {:?}", e);
+                    if let Err(e) =
+                        telegram.send(format!("fetcher: thread panicked, source: {:?}", e))
+                    {
                         error!("TelegramError: {}", e);
                     }
                     continue;
                 }
                 _ => (),
             };
-            while let Some(fetch) = sources.pop() {
-                if enabled.contains(&fetch.0.to_string()) || enabled.is_empty() {
+            match sources.pop() {
+                Some(fetch) => {
                     trace!("spawning {}", fetch.0);
                     let opts = opts.clone();
                     futures.push(spawn_blocking(move || fetch.1(opts)));
-                    break;
                 }
+                None => break,
             }
         }
     });
