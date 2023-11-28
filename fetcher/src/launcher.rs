@@ -14,7 +14,7 @@ use tokio::{
 
 pub fn init(
     config: &Config,
-    enabled: Vec<String>,
+    enabled: Option<Vec<String>>,
     seen_urls: Arc<Mutex<Vec<String>>>,
     telegram: Arc<Telegram>,
 ) -> Receiver<anyhow::Result<News>> {
@@ -22,10 +22,13 @@ pub fn init(
     let (tx, rx) = channel(500);
 
     let mut futures: FuturesUnordered<JoinHandle<anyhow::Result<()>>> = FuturesUnordered::new();
-    let mut sources = SOURCES
-        .iter()
-        .filter(|s| enabled.contains(&s.0.to_string()))
-        .collect::<Vec<_>>();
+    let mut sources: Vec<_> = match enabled {
+        Some(enabled) => SOURCES
+            .iter()
+            .filter(|s| enabled.contains(&s.0.to_string()))
+            .collect(),
+        None => SOURCES.iter().collect(),
+    };
 
     let opts = GetNewsOpts {
         config: config.clone(),
