@@ -65,10 +65,10 @@ pub fn fetch_article(url: &str) -> Result<ApiResponse, anyhow::Error> {
     let response = match response {
         Ok(response) => response,
         Err(ureq::Error::Status(code, res)) => {
-            return Err(anyhow!("{}: {:#?}", code, res.into_string()));
+            return Err(anyhow!("{code}: {:#?}", res));
         }
         Err(e) => {
-            return Err(anyhow!("{}", e));
+            return Err(anyhow!("{url}: {e}"));
         }
     };
     let json_result: ApiResponse = response.into_json()?;
@@ -85,7 +85,7 @@ pub fn parse_article(str: &str) -> Result<ApiResponse, anyhow::Error> {
     let response = match response {
         Ok(response) => response,
         Err(ureq::Error::Status(code, res)) => {
-            return Err(anyhow!("{}: {:#?}", code, res.into_string()));
+            return Err(anyhow!("{}: {:#?}", code, res));
         }
         Err(e) => {
             return Err(anyhow!("{}", e));

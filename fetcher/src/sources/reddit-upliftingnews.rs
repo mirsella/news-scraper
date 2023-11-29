@@ -5,7 +5,7 @@ use headless_chrome::{Element, Tab};
 use log::{debug, error, trace, warn};
 use std::{sync::Arc, thread, time::Duration};
 
-fn isvalidpost(el: &Element) -> bool {
+fn _isvalidpost(el: &Element) -> bool {
     // skip ads
     if el.find_element("shreddit-dynamic-ad-link").is_ok() {
         return false;
@@ -29,16 +29,12 @@ fn isvalidpost(el: &Element) -> bool {
 }
 
 fn get_articles_links(tab: &Arc<Tab>) -> Result<Vec<String>> {
-    let redditposts = tab.find_elements("shreddit-post")?;
-    let goodposts = redditposts.into_iter().filter(isvalidpost);
-    let links: Vec<String> = goodposts
-        .map(|el| {
-            el.get_attribute_value("content-href")
-                .unwrap()
-                .expect("reddig uplifingnews: get_attribute_value on content-href")
-        })
-        .collect();
-    Ok(links)
+    let redditposts = tab.find_elements("shreddit-post  .a")?;
+    let alllinks = redditposts
+        .iter()
+        .filter_map(|el| el.get_attribute_value("href").unwrap());
+    let links = alllinks.filter(|link| link.starts_with("https"));
+    Ok(links.collect())
 }
 
 pub fn get_news(opts: GetNewsOpts) -> Result<()> {
