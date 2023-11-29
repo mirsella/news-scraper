@@ -65,9 +65,9 @@ async fn main() -> Result<()> {
         let news = match recved {
             Ok(news) => news,
             Err(err) => {
-                error!("recv: {:?}", err);
-                if let Err(e) = telegram.send(format!("fetcher: recv: {err}")) {
-                    error!("telegram.send: {:?}", e);
+                error!("recv: {:#?}", err);
+                if let Err(e) = telegram.send(format!("fetcher: recv: {err:#?}")) {
+                    error!("telegram.send: {:#?}", e);
                 }
                 continue;
             }

@@ -5,10 +5,6 @@ use log::{debug, error, trace};
 use std::sync::Arc;
 
 fn get_articles_links(tab: &Arc<Tab>) -> Result<Vec<String>> {
-    for _ in 0..3 {
-        trace!("clicking on more");
-        tab.wait_for_element(".add-more-button")?.click()?;
-    }
     let links: Vec<String> = tab
         .find_elements(".r-direct--link")
         .expect(".r-direct--link")
