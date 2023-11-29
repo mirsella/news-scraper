@@ -1,13 +1,12 @@
 use anyhow::Result;
 use async_openai::{config::OpenAIConfig, Client as ChatClient};
 use futures::future::select_all;
-use log::{error, info, trace};
+use log::{error, info, trace, warn};
 use shared::Telegram;
 use shared::{config::Config, db_news::DbNews};
 use std::process::exit;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
-use std::thread;
 use std::time::Duration;
 use surrealdb::engine::remote::ws::Ws;
 use surrealdb::{engine::remote::ws::Client as WsClient, opt::auth::Root, Surreal};
@@ -35,7 +34,7 @@ fn sleep_check(running: &AtomicBool, duration: Duration) {
         if !running.load(Ordering::Relaxed) {
             return;
         }
-        thread::sleep(Duration::from_secs(1));
+        std::thread::sleep(Duration::from_secs(1));
         slept += Duration::from_secs(1);
     }
 }
@@ -148,10 +147,17 @@ async fn main() -> Result<()> {
                 match news.save(&db).await {
                     Ok(_) => Ok(Some(news)),
                     Err(e) => {
+                        warn!("saving {id} failed one time: {e:#?}");
+                        telegram.send(format!("rater: saving {id} failed one time: {e:#?}"))?;
+                        tokio::time::sleep(Duration::from_secs(5)).await;
+                        let e = match news.save(&db).await {
+                            Ok(_) => return Ok(Some(news)),
+                            Err(e) => e,
+                        };
                         let errors_strings =
                             e.chain().map(|e| e.to_string()).collect::<Vec<String>>();
-                        error!("saving {id} with {rating:?}: {errors_strings:#?}");
-                        error!("saving {id} with {rating:?}: {e:#?}");
+                        error!("saving {id} with {rating:?} second time: {errors_strings:#?}");
+                        error!("saving {id} with {rating:?} second time: {e:#?}");
                         telegram.send(format!("rater: saving {id} failed: {errors_strings:#?}"))?;
                         Err(e)
                     }
