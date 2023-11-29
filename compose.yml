@@ -19,30 +19,6 @@ services:
       start_period: 5s
       timeout: 5s
 
-  # see https://github.com/unjs/nitro/issues/749 (nitro don't yet support ssl cert as path)
-  # nuxt_ssl:
-  #   restart: unless-stopped
-  #   container_name: nuxt
-  #   depends_on:
-  #     - surrealdb_ssl
-  #   build:
-  #     context: .
-  #     dockerfile: docker/nuxt.dockerfile
-  #   ports:
-  #     - "8080:3000"
-  #   environment:
-  #     - NUXT_PUBLIC_SURREALDB_URLS=${NUXT_PUBLIC_SURREALDB_URLS}
-  #     - NITRO_SSL_CERT=${SSL_CERT}
-  #     - NITRO_SSL_KEY=${SSL_KEY}
-  #   env_file: .env
-  #   volumes:
-  #     - ../letsencrypt:/letsencrypt
-  #   healthcheck:
-  #     test: ["CMD", "curl", "-f", "http://localhost:3000"]
-  #     retries: 3
-  #     start_period: 5s
-  #     timeout: 5s
-
   article-parser:
     restart: unless-stopped
     container_name: article-parser
@@ -68,9 +44,7 @@ services:
       target: fetcher
     depends_on:
       - article-parser
-    # as we have 2 surrealdb services, we can't specify one OR the other in compose
-    # depends_on:
-    #   -- surrealdb
+      - surrealdb
     environment:
       ARTICLE_PARSER_URL: "http://article-parser:8081"
       SURREALDB_HOST: "surrealdb:8000"
@@ -84,9 +58,8 @@ services:
       context: .
       dockerfile: docker/cargo.dockerfile
       target: rater
-    # as we have 2 surrealdb services, we can't specify one OR the other in compose
-    # depends_on:
-    #   - surrealdb
+    depends_on:
+      - surrealdb
     environment:
       RUST_LOG: "rater=debug"
       SURREALDB_HOST: "surrealdb:8000"
@@ -107,33 +80,6 @@ services:
     entrypoint: /surreal start
     volumes:
       - ./db:/db
-    ports:
-      - 8000:8000
-    healthcheck:
-      test: ["CMD", "/surreal", "isready"]
-      retries: 3
-      start_period: 10s
-      timeout: 10s
-
-  surrealdb_ssl:
-    container_name: surrealdb
-    restart: unless-stopped
-    image: surrealdb/surrealdb:1.0.0
-    env_file:
-      - .env
-    user: root
-    environment:
-      - SURREAL_CAPS_ALLOW_FUNC
-      - SURREAL_USER=${DB_USER}
-      - SURREAL_PASS=${DB_PASSWORD}
-      - SURREAL_AUTH=true
-      - SURREAL_PATH=file:/db
-      - SURREAL_WEB_CRT=${SSL_CERT}
-      - SURREAL_WEB_KEY=${SSL_KEY}
-    entrypoint: /surreal start
-    volumes:
-      - ./db:/db
-      - ../letsencrypt:/letsencrypt
     ports:
       - 8000:8000
     healthcheck:
