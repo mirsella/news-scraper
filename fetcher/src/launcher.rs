@@ -5,7 +5,7 @@ use std::{
 
 use crate::sources::{GetNewsOpts, SOURCES};
 use futures::{stream::FuturesUnordered, StreamExt};
-use log::{error, trace};
+use log::{error, info};
 use shared::{config::Config, Telegram, *};
 use tokio::{
     sync::mpsc::{channel, Receiver},
@@ -38,7 +38,7 @@ pub fn init(
     while futures.len() < config.chrome_concurrent.unwrap_or(4) {
         match sources.pop() {
             Some(fetch) => {
-                trace!("spawning {}", fetch.0);
+                info!("spawning {}", fetch.0);
                 let opts = opts.clone();
                 futures.push(spawn_blocking(move || fetch.1(opts)));
             }
@@ -63,7 +63,7 @@ pub fn init(
             };
             match sources.pop() {
                 Some(fetch) => {
-                    trace!("spawning {}", fetch.0);
+                    info!("spawning {}", fetch.0);
                     let opts = opts.clone();
                     futures.push(spawn_blocking(move || fetch.1(opts)));
                 }

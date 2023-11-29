@@ -35,7 +35,8 @@ impl DbNews {
         let news = db
             .update::<Option<DbNews>>(("news", id))
             .content(self)
-            .await?
+            .await
+            .context("surrealdb error")?
             .ok_or(anyhow!("no news found"))?;
         Ok(news)
     }

@@ -1,4 +1,4 @@
-use anyhow::{Context, Result};
+use anyhow::Result;
 use async_openai::{config::OpenAIConfig, Client as ChatClient};
 use futures::future::select_all;
 use log::{error, info, trace};
@@ -145,11 +145,14 @@ async fn main() -> Result<()> {
                     }
                 };
                 info!("{id} rating: {rating:?}");
-                match news.save(&db).await.context("news.save") {
+                match news.save(&db).await {
                     Ok(_) => Ok(Some(news)),
                     Err(e) => {
-                        error!("saving {id} with {rating:?}: '{e}'");
-                        telegram.send(format!("rater: saving {id} failed: {e}"))?;
+                        let errors_strings =
+                            e.chain().map(|e| e.to_string()).collect::<Vec<String>>();
+                        error!("saving {id} with {rating:?}: {errors_strings:#?}");
+                        error!("saving {id} with {rating:?}: {e:#?}");
+                        telegram.send(format!("rater: saving {id} failed: {errors_strings:#?}"))?;
                         Err(e)
                     }
                 }
@@ -162,7 +165,7 @@ async fn main() -> Result<()> {
             match handle? {
                 Err(e) => {
                     running.store(false, Ordering::Relaxed);
-                    error!("handle errored, exitting: {}", e.to_string());
+                    error!("handle errored, exitting: {e}");
                     if let Err(e) = telegram.send(format!("rater: thread error: {}", e)) {
                         error!("TelegramError: {}", e);
                     }
