@@ -27,10 +27,11 @@ fn get_articles_links(tab: &Arc<Tab>) -> Result<Vec<String>> {
         )
         .unwrap();
     let props = result.preview.unwrap().properties;
-    let links = props
+    let mut links = props
         .iter()
         .map(|p| p.value.as_ref().unwrap().to_string())
         .collect::<Vec<_>>();
+    links.retain(|link| !link.contains("videos-du-journal"));
     Ok(links)
 }
 

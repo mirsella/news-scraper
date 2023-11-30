@@ -42,7 +42,20 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
         tab.wait_for_element(".content-une")
             .context("sciencesetavenir wait for element .content-une")?;
 
-        let links = get_articles_links(&tab).context("sciencesetavenir")?;
+        let links = get_articles_links(&tab)
+            .context("sciencesetavenir")
+            .map_err(|e| {
+                let data = tab
+                    .capture_screenshot(
+                        headless_chrome::protocol::cdp::Page::CaptureScreenshotFormatOption::Png,
+                        None,
+                        None,
+                        true,
+                    )
+                    .unwrap();
+                std::fs::write("sciencesetavenir-error.png", data).unwrap();
+                e
+            })?;
         trace!("found {} links on {category}", links.len());
         for url in links {
             if opts.seen_urls.lock().unwrap().contains(&url) {
