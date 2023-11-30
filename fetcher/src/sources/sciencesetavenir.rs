@@ -39,8 +39,8 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
         trace!("checking out category {category}");
         tab.navigate_to(&format!("https://www.sciencesetavenir.fr/{category}/"))
             .context("navigate_to")?;
-        tab.wait_for_element(".content-une")
-            .context("sciencesetavenir wait for element .content-une")?;
+        tab.wait_for_elements(".alaune > div.visuel > a, a.overlay")
+            .context("sciencesetavenir wait for element .alaune > div.visuel > a, a.overlay-une")?;
 
         let links = get_articles_links(&tab)
             .context("sciencesetavenir")
