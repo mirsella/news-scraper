@@ -50,11 +50,11 @@ pub fn init(
             match result {
                 Ok(Err(e)) => tx.send(Err(e)).await.unwrap(),
                 Err(e) => {
-                    let e = e.source();
-                    error!("thread panicked, source: {:?}", e);
-                    if let Err(e) =
-                        telegram.send(format!("fetcher: thread panicked, source: {:?}", e))
-                    {
+                    let source = e.source();
+                    error!("thread panicked, source: {source:#?}, {e}");
+                    if let Err(e) = telegram.send(format!(
+                        "fetcher: thread panicked, source: {source:#?}, {e}"
+                    )) {
                         error!("TelegramError: {}", e);
                     }
                     continue;
