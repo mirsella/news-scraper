@@ -18,7 +18,7 @@ const CATEGORIES: [&str; 8] = [
 fn get_articles_links(tab: &Arc<Tab>) -> Result<Vec<String>> {
     let links = tab
         .find_elements(".alaune > div.visuel > a, a.overlay")
-        .context("finding a[href^='https://www.sciencesetavenir.fr/{category}']")?
+        .context("finding .alaune > div.visuel > a, a.overlay")?
         .iter()
         .map(|a| {
             a.get_attribute_value("href")
