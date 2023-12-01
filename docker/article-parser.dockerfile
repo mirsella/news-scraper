@@ -1,4 +1,4 @@
-FROM denoland/deno:alpine-1.36.3
+FROM denoland/deno:alpine
 WORKDIR /app
 COPY ../deno-article-parser/ /app
 RUN apk add --no-cache curl
