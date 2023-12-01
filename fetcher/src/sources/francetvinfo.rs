@@ -45,9 +45,8 @@ fn get_articles_links(tab: &Arc<Tab>) -> Result<Vec<String>> {
 }
 
 pub fn get_news(opts: GetNewsOpts) -> Result<()> {
-    let browser = opts.new_browser(false);
-    let tab = browser.new_tab()?;
-    let user_agent = browser.get_version().unwrap().user_agent;
+    let tab = opts.browser.new_context()?.new_tab()?;
+    let user_agent = opts.browser.get_version().unwrap().user_agent;
     let user_agent = user_agent.replace("HeadlessChrome", "Chrome");
     tab.set_user_agent(&user_agent, None, None)?;
     for category in CATEGORIES {

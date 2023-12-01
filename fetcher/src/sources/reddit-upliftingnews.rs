@@ -15,7 +15,6 @@ fn _isvalidpost(el: &Element) -> bool {
     // let ts = match el.find_element("time") {
     //     Ok(el) => el,
     //     Err(_) => return false,
-    // };
     // let ts = match ts.get_attribute_value("datetime").unwrap() {
     //     Some(ts) => ts,
     //     None => return false,
@@ -38,9 +37,8 @@ fn get_articles_links(tab: &Arc<Tab>) -> Result<Vec<String>> {
 }
 
 pub fn get_news(opts: GetNewsOpts) -> Result<()> {
-    let browser = opts.new_browser(false);
-    let tab = browser.new_tab()?;
-    let user_agent = browser.get_version().unwrap().user_agent;
+    let tab = opts.browser.new_context()?.new_tab()?;
+    let user_agent = opts.browser.get_version().unwrap().user_agent;
     let user_agent = user_agent.replace("HeadlessChrome", "Chrome");
     tab.set_user_agent(&user_agent, None, None)?;
     tab.navigate_to("https://www.reddit.com/r/UpliftingNews/new/")

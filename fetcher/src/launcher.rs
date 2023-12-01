@@ -1,11 +1,14 @@
 use std::{
     error::Error,
+    ffi::OsStr,
     sync::{Arc, Mutex},
+    time::Duration,
 };
 
 use crate::sources::{GetNewsOpts, SOURCES};
 use anyhow::Context;
 use futures::{stream::FuturesUnordered, StreamExt};
+use headless_chrome::{Browser, LaunchOptionsBuilder};
 use log::{error, info};
 use shared::{config::Config, Telegram, *};
 use tokio::{
@@ -19,7 +22,19 @@ pub fn init(
     seen_urls: Arc<Mutex<Vec<String>>>,
     telegram: Arc<Telegram>,
 ) -> Receiver<anyhow::Result<News>> {
-    let config: Config = config.to_owned();
+    let config = Arc::new(config.clone());
+    let browser = Browser::new(
+        LaunchOptionsBuilder::default()
+            .window_size(Some((1920, 1080)))
+            .headless(config.chrome_headless.unwrap_or(true))
+            .user_data_dir(config.chrome_data_dir.clone())
+            .args(vec![OsStr::new("--blink-settings=imagesEnabled=false")])
+            .idle_browser_timeout(Duration::from_secs(60))
+            .sandbox(false)
+            .build()
+            .unwrap(),
+    )
+    .unwrap();
     let (tx, rx) = channel(500);
 
     let mut futures: FuturesUnordered<JoinHandle<anyhow::Result<()>>> = FuturesUnordered::new();
@@ -31,16 +46,16 @@ pub fn init(
         None => SOURCES.iter().collect(),
     };
 
-    let opts = GetNewsOpts {
-        config: config.clone(),
-        tx: tx.clone(),
-        seen_urls,
-    };
     while futures.len() < config.chrome_concurrent.unwrap_or(4) {
         match sources.pop() {
             Some(fetch) => {
                 info!("spawning {}", fetch.0);
-                let opts = opts.clone();
+                let opts = GetNewsOpts {
+                    browser: browser.clone(),
+                    config: config.clone(),
+                    tx: tx.clone(),
+                    seen_urls: seen_urls.clone(),
+                };
                 futures.push(spawn_blocking(move || fetch.1(opts).context(fetch.0)));
             }
             None => break,
@@ -65,7 +80,12 @@ pub fn init(
             match sources.pop() {
                 Some(fetch) => {
                     info!("spawning {}", fetch.0);
-                    let opts = opts.clone();
+                    let opts = GetNewsOpts {
+                        browser: browser.clone(),
+                        config: config.clone(),
+                        tx: tx.clone(),
+                        seen_urls: seen_urls.clone(),
+                    };
                     futures.push(spawn_blocking(move || fetch.1(opts).context(fetch.0)));
                 }
                 None => break,
