@@ -4,6 +4,7 @@ use std::{
 };
 
 use crate::sources::{GetNewsOpts, SOURCES};
+use anyhow::Context;
 use futures::{stream::FuturesUnordered, StreamExt};
 use log::{error, info};
 use shared::{config::Config, Telegram, *};
@@ -40,7 +41,7 @@ pub fn init(
             Some(fetch) => {
                 info!("spawning {}", fetch.0);
                 let opts = opts.clone();
-                futures.push(spawn_blocking(move || fetch.1(opts)));
+                futures.push(spawn_blocking(move || fetch.1(opts).context(fetch.0)));
             }
             None => break,
         }
@@ -65,7 +66,7 @@ pub fn init(
                 Some(fetch) => {
                     info!("spawning {}", fetch.0);
                     let opts = opts.clone();
-                    futures.push(spawn_blocking(move || fetch.1(opts)));
+                    futures.push(spawn_blocking(move || fetch.1(opts).context(fetch.0)));
                 }
                 None => break,
             }
