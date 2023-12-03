@@ -57,6 +57,7 @@ DEFINE FIELD used ON news TYPE bool DEFAULT false;
 
 DEFINE INDEX link ON news FIELDS link UNIQUE;
 DEFINE INDEX rating ON news FIELDS rating;
+DEFINE INDEX date ON news FIELDS date;
 
 -- ------------------------------
 -- TABLE: user
