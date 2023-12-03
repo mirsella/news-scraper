@@ -10,7 +10,7 @@ fn get_articles_links(tab: &Arc<Tab>) -> Result<Vec<String>> {
         .expect(".titre-lien")
         .iter()
         .map(|el| el.get_attribute_value("href").unwrap().expect("no href ??"))
-        .filter(|url| !url.contains("ouestfrance-auto"))
+        .filter(|url| !url.contains("ouestfrance-auto") || !url.contains("ouestfrance-immo"))
         .collect();
     Ok(links)
 }
