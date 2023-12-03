@@ -1,5 +1,4 @@
 use std::{
-    error::Error,
     ffi::OsStr,
     sync::{Arc, Mutex},
     time::Duration,
@@ -66,11 +65,8 @@ pub fn init(
             match result {
                 Ok(Err(e)) => tx.send(Err(e)).await.unwrap(),
                 Err(e) => {
-                    let source = e.source();
-                    error!("thread panicked, source: {source:#?}, {e}");
-                    if let Err(e) = telegram.send(format!(
-                        "fetcher: thread panicked, source: {source:#?}, {e}"
-                    )) {
+                    error!("thread panicked: {e}");
+                    if let Err(e) = telegram.send(format!("fetcher: thread panicked: {e}")) {
                         error!("TelegramError: {}", e);
                     }
                     continue;
