@@ -16,12 +16,12 @@ use tokio::task::JoinHandle;
 async fn retrieve_db_news(db: &Surreal<WsClient>) -> Result<Vec<DbNews>> {
     let db_news: Vec<DbNews> = db
         .query(
-            "select * from news
+            "if $PROD=1 { return select * from news
 where rating == none
 AND date > time::floor(time::now(), 5d)
 AND used == false
 AND !string::contains(note, 'error rating')
-ORDER BY date DESC",
+ORDER BY date DESC }",
         )
         .await?
         .take(0)?;

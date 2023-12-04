@@ -9,6 +9,7 @@ OPTION IMPORT;
 -- ------------------------------
 
 DEFINE PARAM $MAX_RATING VALUE 100;
+DEFINE PARAM $PROD VALUE 1;
 
 -- ------------------------------
 -- SCOPES
