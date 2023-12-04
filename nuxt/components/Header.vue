@@ -15,7 +15,7 @@ async function signout() {
         class="text-2xl self-start cursor-pointer transition hover:scale-110"
         href="/"
       >
-        <span class="hidden sm:block"> news-scraper </span>
+        <span class="hidden sm:block"> Gusnews </span>
         <span class="sm:hidden mt-2">
           <UIcon name="i-heroicons-home" />
         </span>

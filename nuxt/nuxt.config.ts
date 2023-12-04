@@ -3,7 +3,7 @@ export default defineNuxtConfig({
   modules: ["@nuxt/ui"],
   app: {
     head: {
-      titleTemplate: "%s news-scraper",
+      titleTemplate: "%s gusnews",
     },
   },
   runtimeConfig: {
