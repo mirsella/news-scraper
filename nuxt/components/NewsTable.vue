@@ -77,6 +77,15 @@ function showTips() {
     color: "green",
     timeout: 7000,
   });
+  toast.add({
+    id: "tips-date",
+    title: "Tips",
+    description:
+      "News a sorted by date by default, and only the news newer than one week has been fetched",
+    icon: "i-carbon-information",
+    color: "green",
+    timeout: 7000,
+  });
 }
 let props = defineProps<{ loading: boolean }>();
 watch(
@@ -88,12 +97,12 @@ watch(
 const news = useState<News[]>("news", () => []);
 
 const page = ref(1);
-const pageCount = ref(100);
+const pageCount = ref(500);
 watch(pageCount, async () => {
   page.value = 1;
 });
 const search = ref("");
-const onlyNonused = ref(false);
+const onlyNonused = ref(true);
 const mindate = ref("");
 const minrating = ref(0);
 const filteredNews = computed(() => {
@@ -149,11 +158,19 @@ if (process.client) {
 const columnsChoice = columns
   .filter((c) => c.key != "hiddenid")
   .map((c) => c.key);
-const selectedColumns = ref<string[]>(["title", "rating", "tags", "link"]);
+const selectedColumns = ref<string[]>([
+  "title",
+  "rating",
+  "tags",
+  "link",
+  "used",
+]);
 if (process.client) {
   let localstorageColumns = window.localStorage.getItem("selectedColumns");
-  if (localstorageColumns)
+  if (localstorageColumns) {
     selectedColumns.value = JSON.parse(localstorageColumns);
+    selectedColumns.value.push("used");
+  }
 
   let newsperpage = window.localStorage.getItem("NewsPerPage");
   if (newsperpage) pageCount.value = parseInt(newsperpage);

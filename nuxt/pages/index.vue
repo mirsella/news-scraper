@@ -16,7 +16,7 @@ onMounted(async () => {
     try {
       const t1 = performance.now();
       let result = await $db.query<[News[]]>(
-        "select * omit text_body, html_body from news with index date order by date desc",
+        "select * omit text_body, html_body from news with index date where date >= time::now() - 1w order by date desc",
       );
       if (!result[0].length) throw new Error("no news found");
       result[0].forEach((n) => {
