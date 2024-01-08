@@ -1,5 +1,8 @@
 FROM node:21.0-alpine3.17
 
+ARG NUXT_BASE_URL
+ENV NUXT_BASE_URL=$NUXT_BASE_URL
+
 WORKDIR /app
 
 COPY ../nuxt .

@@ -4,13 +4,14 @@ use headless_chrome::Tab;
 use log::{debug, error, trace};
 use std::sync::Arc;
 
+const BLACKLIST: &[&str] = &["ouestfrance-auto", "ouestfrance-immo", "ouestfrance-emploi"];
 fn get_articles_links(tab: &Arc<Tab>) -> Result<Vec<String>> {
     let links: Vec<String> = tab
         .find_elements(".titre-lien")
         .expect(".titre-lien")
         .iter()
         .map(|el| el.get_attribute_value("href").unwrap().expect("no href ??"))
-        .filter(|url| !url.contains("ouestfrance-auto") && !url.contains("ouestfrance-immo"))
+        .filter(|url| !BLACKLIST.iter().any(|b| url.contains(b)))
         .collect();
     Ok(links)
 }
