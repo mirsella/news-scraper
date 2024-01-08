@@ -2,6 +2,7 @@
 export default defineNuxtConfig({
   modules: ["@nuxt/ui"],
   app: {
+    baseURL: process.env.NUXT_BASE_URL || "/",
     head: {
       titleTemplate: "%s gusnews",
     },
