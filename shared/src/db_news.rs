@@ -14,7 +14,6 @@ use surrealdb::{engine::remote::ws::Client as DbClient, Surreal};
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct DbNews {
-    // pub id: Option<surrealdb::opt::RecordId>,
     pub id: Option<surrealdb::opt::RecordId>,
     pub html_body: Cow<'static, str>,
     pub text_body: Cow<'static, str>,
@@ -80,7 +79,7 @@ impl DbNews {
         ];
         let request = CreateChatCompletionRequestArgs::default()
             .model("gpt-3.5-turbo")
-            .max_tokens(40_u16)
+            .max_tokens(50_u16)
             .messages(conv)
             .n(1)
             .temperature(0_f32)
