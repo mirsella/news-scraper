@@ -1,6 +1,6 @@
 use anyhow::{Context, Result};
 use headless_chrome::Tab;
-use log::{debug, trace};
+use log::{debug, info, trace};
 use shared::News;
 use std::sync::Arc;
 
@@ -35,6 +35,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
         .wait_until_navigated()
         .context("wait_until_navigated")?;
     let links = get_articles_links(&tab)?;
+    info!("found {} articles", links.len());
     for url in links {
         if opts.seen_urls.lock().unwrap().contains(&url) {
             trace!("already seen {url}");
@@ -43,7 +44,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
         opts.seen_urls.lock().unwrap().push(url.clone());
 
         let tags = url
-            .strip_prefix("https://www.futura-sciences.com/")
+            .strip_prefix("https://futura-sciences.com/")
             .expect(&url)
             .split('/')
             .take(2)
