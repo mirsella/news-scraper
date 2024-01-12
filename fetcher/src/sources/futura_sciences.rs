@@ -2,13 +2,11 @@ use anyhow::{Context, Result};
 use headless_chrome::Tab;
 use log::{debug, trace};
 use shared::News;
-use std::sync::Arc;
+use std::{str::pattern::Pattern, sync::Arc};
 
 use crate::sources::fetch_article;
 
 use super::GetNewsOpts;
-
-const CATEGORIES: [&str; 5] = ["sciences", "sante", "tech", "maison", "planete"];
 
 fn get_articles_links(tab: &Arc<Tab>) -> Result<Vec<String>> {
     let links = tab
@@ -32,42 +30,43 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
     let user_agent = opts.browser.get_version().unwrap().user_agent;
     let user_agent = user_agent.replace("HeadlessChrome", "Chrome");
     tab.set_user_agent(&user_agent, None, None)?;
-    for category in CATEGORIES {
-        trace!("checking out category {category}");
-        tab.navigate_to(&format!(
-            "https://futura-sciences.com/{category}/actualites"
-        ))
-        .context("navigate_to")?;
-        tab.wait_until_navigated()
-            .context("category wait_until_navigated")?;
+    tab.navigate_to("https://www.futura-sciences.com/sitemap-html/actualites/")
+        .context("navigate_to")?
+        .wait_until_navigated()
+        .context("wait_until_navigated")?;
+    let links = get_articles_links(&tab)?;
+    for url in links {
+        if opts.seen_urls.lock().unwrap().contains(&url) {
+            trace!("already seen {url}");
+            continue;
+        }
+        opts.seen_urls.lock().unwrap().push(url.clone());
 
-        let links = get_articles_links(&tab).context("futura-sciences")?;
-        trace!("found {} links on {category}", links.len());
-        for url in links {
-            if opts.seen_urls.lock().unwrap().contains(&url) {
-                trace!("already seen {url}");
+        let tags = url
+            .strip_prefix("https://www.futura-sciences.com/")
+            .expect(&url)
+            .split('/')
+            .take(2)
+            .map(str::to_string)
+            .collect();
+
+        let res = fetch_article(&url);
+        let payload = match res {
+            Ok(res) => Ok(News {
+                title: res.title,
+                caption: res.description,
+                provider: "futura-sciences".to_string(),
+                tags,
+                date: res.published.parse().unwrap_or_else(|_| chrono::Utc::now()),
+                body: res.content,
+                link: url,
+            }),
+            Err(err) => {
+                debug!("fetch_article: {}", err);
                 continue;
             }
-            opts.seen_urls.lock().unwrap().push(url.clone());
-
-            let res = fetch_article(&url);
-            let payload = match res {
-                Ok(res) => Ok(News {
-                    title: res.title,
-                    caption: res.description,
-                    provider: "futura-sciences".to_string(),
-                    tags: vec!["france".to_string(), "science".to_string()],
-                    date: res.published.parse().unwrap_or_else(|_| chrono::Utc::now()),
-                    body: res.content,
-                    link: url,
-                }),
-                Err(err) => {
-                    debug!("fetch_article: {}", err);
-                    continue;
-                }
-            };
-            opts.tx.blocking_send(payload)?;
-        }
+        };
+        opts.tx.blocking_send(payload)?;
     }
     Ok(())
 }

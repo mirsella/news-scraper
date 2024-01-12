@@ -62,21 +62,9 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
             opts.seen_urls.lock().unwrap().push(url.clone());
 
             let res = super::fetch_article(&url);
-            // if let Err(err) = res {
-            //     debug!("fetch_article: {}", err);
-            //     if tab.navigate_to(&url).is_err() {
-            //         continue;
-            //     }
-            //     if tab.wait_until_navigated().is_err() {
-            //         continue;
-            //     }
-            //     std::thread::sleep(std::time::Duration::from_secs(1));
-            //     let doc = tab.get_content()?;
-            //     res = super::parse_article(&doc);
-            // }
             let payload = match res {
                 Ok(res) => Ok(News {
-                    tags: vec!["france".to_string()],
+                    tags: vec![category.to_string()],
                     title: res.title,
                     caption: res.description,
                     provider: "leparisien".to_string(),
