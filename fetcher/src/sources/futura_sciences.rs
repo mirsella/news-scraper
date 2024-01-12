@@ -34,7 +34,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
         .context("navigate_to")?
         .wait_until_navigated()
         .context("wait_until_navigated")?;
-    let links = get_articles_links(&tab)?;
+    let links = get_articles_links(&tab).context("futura-sciences")?;
     info!("found {} articles", links.len());
     for url in links {
         if opts.seen_urls.lock().unwrap().contains(&url) {
