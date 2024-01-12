@@ -62,6 +62,11 @@ DEFINE INDEX date ON news FIELDS date;
 
 DEFINE TABLE feed AS select * OMIT text_body, html_body FROM news WHERE date >= time::now() - 1w
 
+DEFINE ANALYZER news_analyzer TOKENIZERS blank,class,camel,punct FILTERS ascii,lowercase
+DEFINE INDEX news_content ON news FIELDS text_body SEARCH ANALYZER news_analyzer BM25(1.2,0.75);
+DEFINE INDEX news_tags ON news FIELDS tags SEARCH ANALYZER news_analyzer BM25(1.2,0.75);
+
+
 -- ------------------------------
 -- TABLE: user
 -- ------------------------------
