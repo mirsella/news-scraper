@@ -2,9 +2,11 @@ mod launcher;
 mod sources;
 use anyhow::Result;
 use clap::Parser;
+use env_logger::Builder;
 use log::{error, info, trace};
 use shared::{config::Config, db_news::DbNews, *};
 use std::{
+    env,
     process::exit,
     sync::{Arc, Mutex},
 };
@@ -29,7 +31,9 @@ struct Cli {
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
+    Builder::new()
+        .parse_filters(&env::var("RUST_LOG").unwrap_or("fetcher=trace".into()))
+        .init();
 
     let cli = Cli::parse();
     if cli.list {
