@@ -60,6 +60,8 @@ DEFINE INDEX link ON news FIELDS link UNIQUE;
 DEFINE INDEX rating ON news FIELDS rating;
 DEFINE INDEX date ON news FIELDS date;
 
+DEFINE TABLE feed AS select * OMIT text_body, html_body FROM news WHERE date >= time::now() - 1w
+
 -- ------------------------------
 -- TABLE: user
 -- ------------------------------
