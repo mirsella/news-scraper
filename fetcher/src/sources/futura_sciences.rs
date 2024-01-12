@@ -2,7 +2,7 @@ use anyhow::{Context, Result};
 use headless_chrome::Tab;
 use log::{debug, trace};
 use shared::News;
-use std::{str::pattern::Pattern, sync::Arc};
+use std::sync::Arc;
 
 use crate::sources::fetch_article;
 
