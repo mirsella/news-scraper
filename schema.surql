@@ -8,7 +8,6 @@ OPTION IMPORT;
 -- PARAMS
 -- ------------------------------
 
-DEFINE PARAM $MAX_RATING VALUE 100;
 DEFINE PARAM $PROD VALUE 1;
 
 -- ------------------------------
@@ -51,7 +50,7 @@ DEFINE FIELD date ON news TYPE datetime ASSERT $value != NONE;
 DEFINE FIELD link ON news TYPE string ASSERT string::is::url($value);
 DEFINE FIELD note ON news TYPE string DEFAULT "";
 DEFINE FIELD provider ON news TYPE string ASSERT $value != NONE PERMISSIONS FOR update NONE;
-DEFINE FIELD rating ON news TYPE option<int> ASSERT $value = NONE OR ($value >= 0 AND $value <= $MAX_RATING);
+DEFINE FIELD rating ON news TYPE option<int> ASSERT $value = NONE OR ($value >= 0 AND $value <= 100);
 DEFINE FIELD tags ON news TYPE option<array<string>>;
 DEFINE FIELD title ON news TYPE string;
 DEFINE FIELD used ON news TYPE bool DEFAULT false;
@@ -60,11 +59,9 @@ DEFINE INDEX link ON news FIELDS link UNIQUE;
 DEFINE INDEX rating ON news FIELDS rating;
 DEFINE INDEX date ON news FIELDS date;
 
-DEFINE TABLE feed AS select * FROM news WHERE date >= time::now() - 1w
-
-DEFINE ANALYZER news_analyzer TOKENIZERS blank,class,camel,punct FILTERS ascii,lowercase
-DEFINE INDEX news_content ON news FIELDS text_body SEARCH ANALYZER news_analyzer BM25(1.2,0.75);
-DEFINE INDEX news_tags ON news FIELDS tags SEARCH ANALYZER news_analyzer BM25(1.2,0.75);
+-- DEFINE ANALYZER news_analyzer TOKENIZERS blank,class,camel,punct FILTERS ascii,lowercase;
+-- DEFINE INDEX news_content ON news FIELDS text_body SEARCH ANALYZER news_analyzer BM25(1.2,0.75);
+-- DEFINE INDEX news_tags ON news FIELDS tags SEARCH ANALYZER news_analyzer BM25(1.2,0.75);
 
 
 -- ------------------------------
