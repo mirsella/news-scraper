@@ -5,21 +5,6 @@ use log::{debug, error, trace, warn};
 use std::sync::Arc;
 
 fn get_articles_links(tab: &Arc<Tab>) -> Result<Vec<String>> {
-    // let links: Vec<String> = tab
-    //     .find_elements(".article-wrapper > a")
-    //     .expect(".article-wrapper > a")
-    //     .iter()
-    //     .filter_map(|el| {
-    //         let mut link = el.get_attribute_value("href").unwrap().expect("no href ??");
-    //         if link.contains("youtube.com") {
-    //             return None;
-    //         }
-    //         if !link.starts_with("http") {
-    //             link.insert_str(0, "https://www.sudouest.fr");
-    //         }
-    //         Some(link)
-    //     })
-    //     .collect();
     let result = tab
         .evaluate(
             "Array.from(document.querySelectorAll('.article-wrapper > a')).map(e => e.href)",
@@ -69,7 +54,10 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
                 caption: res.description,
                 provider: "sudouest".to_string(),
                 tags: vec!["france".to_string()],
-                date: res.published.parse().unwrap_or_else(|_| chrono::Local::now()),
+                date: res
+                    .published
+                    .parse()
+                    .unwrap_or_else(|_| chrono::Local::now()),
                 body: res.content,
                 link: url.clone(),
             }),

@@ -73,7 +73,7 @@ pub fn parse_article(str: &str) -> Result<ApiResponse, anyhow::Error> {
 }
 
 type SourceFn = fn(GetNewsOpts) -> anyhow::Result<()>;
-pub static SOURCES: [(&str, SourceFn); 15] = [
+pub static SOURCES: [(&str, SourceFn); 16] = [
     ("francetvinfo", francetvinfo::get_news),
     ("google", google::get_news),
     ("leparisien", leparisien::get_news),
@@ -89,4 +89,5 @@ pub static SOURCES: [(&str, SourceFn); 15] = [
     ("lavoixdunord", lavoixdunord::get_news),
     ("lme::futura-sciences", lme::futura_sciences::get_news),
     ("lme::geo", lme::geo::get_news),
+    ("lme::nationalgeographic", lme::nationalgeographic::get_news),
 ];
