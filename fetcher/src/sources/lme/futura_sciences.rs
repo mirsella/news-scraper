@@ -6,6 +6,9 @@ use log::{debug, info, trace};
 use shared::News;
 use std::sync::Arc;
 
+// remove id="sidebar-desktop"
+// get .article-content > img and .article-hero-image
+
 fn get_articles_links(tab: &Arc<Tab>) -> Result<Vec<String>> {
     let links = tab
         .find_elements(".article-card-box, .keen-slider__slide")
