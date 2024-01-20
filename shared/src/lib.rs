@@ -1,7 +1,7 @@
 pub mod config;
 pub mod db_news;
 pub mod telegram;
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Local};
 pub use config::Config;
 pub use db_news::DbNews;
 pub use telegram::Telegram;
@@ -9,7 +9,7 @@ pub use telegram::Telegram;
 #[derive(Debug, Clone, Default)]
 pub struct News {
     pub provider: String,
-    pub date: DateTime<Utc>,
+    pub date: DateTime<Local>,
     pub title: String,
     pub caption: String,
     pub body: String,

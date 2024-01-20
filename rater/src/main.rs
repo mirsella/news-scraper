@@ -21,6 +21,7 @@ where rating == none
 AND date > time::floor(time::now() - 2d, 1d)
 AND used == false
 AND !string::contains(note, 'error rating')
+AND array::find_index(tags, 'lemediaexperience') != null
 ORDER BY date DESC }",
         )
         .await?

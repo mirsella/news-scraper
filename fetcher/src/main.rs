@@ -1,6 +1,7 @@
 mod launcher;
 mod sources;
 use anyhow::Result;
+use chrono::DateTime;
 use clap::Parser;
 use env_logger::Builder;
 use log::{error, info, trace};
@@ -92,7 +93,7 @@ async fn main() -> Result<()> {
                 html_body: html_body.into(),
                 text_body: text_body.into(),
                 provider: news.provider.into(),
-                date: news.date.into(),
+                date: DateTime::from(news.date).into(),
                 caption: news.caption.into(),
                 ..Default::default()
             })

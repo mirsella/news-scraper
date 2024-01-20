@@ -1,6 +1,6 @@
 use super::{GetNewsOpts, News};
 use anyhow::{Context, Result};
-use chrono::Utc;
+use chrono::Local;
 use headless_chrome::{Element, Tab};
 use log::{debug, error, trace, warn};
 use std::{sync::Arc, thread, time::Duration};
@@ -76,7 +76,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
                 title: res.title,
                 caption: res.description,
                 provider: "reddit-upliftingnews".to_string(),
-                date: res.published.parse().unwrap_or_else(|_| Utc::now()),
+                date: res.published.parse().unwrap_or_else(|_| Local::now()),
                 body: res.content,
                 link: url,
                 ..Default::default()

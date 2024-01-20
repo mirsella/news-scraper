@@ -27,11 +27,11 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
     let user_agent = opts.browser.get_version().unwrap().user_agent;
     let user_agent = user_agent.replace("HeadlessChrome", "Chrome");
     tab.set_user_agent(&user_agent, None, None)?;
-    tab.navigate_to("https://www.futura-sciences.com/sitemap-html/actualites/")
+    tab.navigate_to("https://www.futura-sciences.com/planete/")
         .context("navigate_to")?
         .wait_until_navigated()
         .context("wait_until_navigated")?;
-    let links = get_articles_links(&tab).context("futura-sciences")?;
+    let links = get_articles_links(&tab).context("lme::futura-sciences")?;
     info!("found {} articles", links.len());
     for url in links {
         if opts.seen_urls.lock().unwrap().contains(&url) {
@@ -40,11 +40,12 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
         }
         opts.seen_urls.lock().unwrap().push(url.clone());
 
-        let tags = url
+        let tags: Vec<_> = url
             .strip_prefix("https://futura-sciences.com/")
             .expect(&url)
             .split('/')
             .take(2)
+            .chain(["lemediaexperience"].into_iter())
             .map(str::to_string)
             .collect();
 
@@ -53,7 +54,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
             Ok(res) => Ok(News {
                 title: res.title,
                 caption: res.description,
-                provider: "futura-sciences".to_string(),
+                provider: "lme::futura-sciences".to_string(),
                 tags,
                 date: res
                     .published

@@ -1,3 +1,5 @@
+mod lme;
+
 use anyhow::anyhow;
 use headless_chrome::Browser;
 use serde::{Deserialize, Serialize};
@@ -7,7 +9,6 @@ use std::time::Duration;
 use tokio::sync::mpsc::Sender;
 
 automod::dir!("src/sources");
-// automod::dir!("src/sources/lme");
 
 pub struct GetNewsOpts {
     pub browser: Browser,
@@ -72,7 +73,7 @@ pub fn parse_article(str: &str) -> Result<ApiResponse, anyhow::Error> {
 }
 
 type SourceFn = fn(GetNewsOpts) -> anyhow::Result<()>;
-pub static SOURCES: [(&str, SourceFn); 13] = [
+pub static SOURCES: [(&str, SourceFn); 15] = [
     ("francetvinfo", francetvinfo::get_news),
     ("google", google::get_news),
     ("leparisien", leparisien::get_news),
@@ -86,4 +87,6 @@ pub static SOURCES: [(&str, SourceFn); 13] = [
     ("20minutes", twentyminutes::get_news),
     ("sudouest", sudouest::get_news),
     ("lavoixdunord", lavoixdunord::get_news),
+    ("lme::futura-sciences", lme::futura_sciences::get_news),
+    ("lme::geo", lme::geo::get_news),
 ];

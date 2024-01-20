@@ -46,7 +46,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
                 title: res.title,
                 caption: res.description,
                 provider: "ouest-france".to_string(),
-                date: res.published.parse().unwrap_or_else(|_| chrono::Utc::now()),
+                date: res.published.parse().unwrap_or_else(|_| chrono::Local::now()),
                 body: res.content,
                 link: url,
             }),

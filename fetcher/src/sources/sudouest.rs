@@ -69,7 +69,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
                 caption: res.description,
                 provider: "sudouest".to_string(),
                 tags: vec!["france".to_string()],
-                date: res.published.parse().unwrap_or_else(|_| chrono::Utc::now()),
+                date: res.published.parse().unwrap_or_else(|_| chrono::Local::now()),
                 body: res.content,
                 link: url.clone(),
             }),

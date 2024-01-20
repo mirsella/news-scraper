@@ -23,7 +23,7 @@ pub struct DbNews {
     pub note: Cow<'static, str>,
     pub provider: Cow<'static, str>,
     pub rating: Option<u32>,
-    pub tags: Option<Vec<String>>,
+    pub tags: Vec<String>,
     pub title: Cow<'static, str>,
     pub used: bool,
 }
@@ -126,10 +126,7 @@ impl DbNews {
             _ = tags.pop()
         };
         self.rating = Some(rating);
-        match &mut self.tags {
-            Some(t) => t.extend(tags.clone()),
-            None => self.tags = Some(tags.clone()),
-        }
+        self.tags.extend(tags.clone());
         Ok((rating, tags))
     }
 }
