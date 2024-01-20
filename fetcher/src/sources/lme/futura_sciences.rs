@@ -9,7 +9,7 @@ use std::sync::Arc;
 fn get_articles_links(tab: &Arc<Tab>) -> Result<Vec<String>> {
     let links = tab
         .find_elements(".article-card-box, .keen-slider__slide")
-        .context("finding .article-card-box")?
+        .context("finding .article-card-box, .keen-slider__slide")?
         .iter()
         .filter_map(|a| {
             if let Some(mut link) = a.get_attribute_value("href").unwrap() {

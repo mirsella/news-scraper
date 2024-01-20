@@ -1,5 +1,5 @@
 use super::GetNewsOpts;
-use crate::sources::fetch_article;
+use crate::sources::parse_article;
 use anyhow::{Context, Result};
 use headless_chrome::Tab;
 use log::{debug, info, trace};
@@ -7,19 +7,12 @@ use shared::News;
 use std::sync::Arc;
 
 fn get_articles_links(tab: &Arc<Tab>) -> Result<Vec<String>> {
-    let links = tab
-        .find_elements(".article-card-box, .keen-slider__slide")
-        .context("finding .article-card-box")?
+    Ok(tab
+        .find_elements("h2.articlePreview-title > a")
+        .context("finding h2.articlePreview-title > a")?
         .iter()
-        .filter_map(|a| {
-            if let Some(mut link) = a.get_attribute_value("href").unwrap() {
-                link.insert_str(0, "https://futura-sciences.com");
-                return Some(link);
-            }
-            None
-        })
-        .collect();
-    Ok(links)
+        .map(|a| a.get_attribute_value("href").unwrap().expect("a href"))
+        .collect())
 }
 
 pub fn get_news(opts: GetNewsOpts) -> Result<()> {
@@ -27,11 +20,11 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
     let user_agent = opts.browser.get_version().unwrap().user_agent;
     let user_agent = user_agent.replace("HeadlessChrome", "Chrome");
     tab.set_user_agent(&user_agent, None, None)?;
-    tab.navigate_to("https://www.futura-sciences.com/planete/")
+    tab.navigate_to("https://www.geo.fr/aventure")
         .context("navigate_to")?
         .wait_until_navigated()
         .context("wait_until_navigated")?;
-    let links = get_articles_links(&tab).context("lme::futura-sciences")?;
+    let links = get_articles_links(&tab).context("lme::geo")?;
     info!("found {} articles", links.len());
     for url in links {
         if opts.seen_urls.lock().unwrap().contains(&url) {
@@ -39,22 +32,21 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
             continue;
         }
         opts.seen_urls.lock().unwrap().push(url.clone());
-
-        let tags: Vec<_> = url
-            .strip_prefix("https://futura-sciences.com/")
-            .expect(&url)
-            .split('/')
-            .take(2)
-            .chain(["lemediaexperience"].into_iter())
+        let tags: Vec<_> = ["adventure", "lemediaexperience"]
+            .into_iter()
             .map(str::to_string)
             .collect();
 
-        let res = fetch_article(&url);
-        let payload = match res {
+        tab.navigate_to(&url)
+            .context("navigate_to url")?
+            .wait_until_navigated()
+            .context("wait_until_navigated url")?;
+        let body = tab.get_content()?;
+        let payload = match parse_article(&body) {
             Ok(res) => Ok(News {
                 title: res.title,
                 caption: res.description,
-                provider: "lme::futura-sciences".to_string(),
+                provider: "lme::geo".to_string(),
                 tags,
                 date: res
                     .published
@@ -64,7 +56,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
                 link: url,
             }),
             Err(err) => {
-                debug!("fetch_article: {}", err);
+                debug!("parse_article: {}", err);
                 continue;
             }
         };
