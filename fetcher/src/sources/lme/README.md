@@ -13,7 +13,7 @@ not interesting as there is no new images https://www.wwf.fr/
 too much uninteresting picture for our format(news article), https://www.earthshots.org/
 pay-wall magazine, inaccessible https://landscapephotographymagazine.com/
 dead since 2021 https://www.nationalgeographic.fr/auteur/national-geographic-traveler
-https://www.bbc.com/travel
+done https://www.bbc.com/travel
 https://www.theguardian.com/uk/travel
 https://www.smithsonianmag.com/category/africa-middleeast/
 https://www.naturesbestphotography.org/

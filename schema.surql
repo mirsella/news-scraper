@@ -39,9 +39,7 @@ DEFINE SCOPE user SESSION 1w
 -- TABLE: news
 -- ------------------------------
 
--- see https://github.com/surrealdb/surrealdb/issues/2150
--- DEFINE TABLE news SCHEMAFULL PERMISSIONS FOR select, update WHERE $auth.activated == true CHANGFEED 1w;
-DEFINE TABLE news SCHEMALESS PERMISSIONS FOR select, update WHERE $auth.activated == true CHANGEFEED 1w;
+DEFINE TABLE news SCHEMAFULL PERMISSIONS FOR select, update WHERE $auth.activated == true CHANGEFEED 1w;
 
 DEFINE FIELD html_body ON news TYPE string;
 DEFINE FIELD text_body ON news TYPE string;
@@ -51,7 +49,8 @@ DEFINE FIELD link ON news TYPE string ASSERT string::is::url($value);
 DEFINE FIELD note ON news TYPE string DEFAULT "";
 DEFINE FIELD provider ON news TYPE string ASSERT $value != NONE PERMISSIONS FOR update NONE;
 DEFINE FIELD rating ON news TYPE option<int> ASSERT $value = NONE OR ($value >= 0 AND $value <= 100);
-DEFINE FIELD tags ON news TYPE array<string>;
+-- see https://github.com/surrealdb/surrealdb/issues/2150
+DEFINE FIELD tags ON news FLEXIBLE TYPE array<string>;
 DEFINE FIELD title ON news TYPE string;
 DEFINE FIELD used ON news TYPE bool DEFAULT false;
 
