@@ -32,7 +32,8 @@ pub struct ApiResponse {
     ttr: f64,
 }
 
-pub fn fetch_article(url: &str) -> Result<ApiResponse, anyhow::Error> {
+pub fn fetch_article(url: impl AsRef<str>) -> Result<ApiResponse, anyhow::Error> {
+    let url = url.as_ref();
     let endpoint = format!(
         "{}/fetch?url={}",
         std::env::var("ARTICLE_PARSER_URL").expect("ARTICLE_PARSER_URL not set"),
@@ -51,7 +52,8 @@ pub fn fetch_article(url: &str) -> Result<ApiResponse, anyhow::Error> {
     let json_result: ApiResponse = response.into_json()?;
     Ok(json_result)
 }
-pub fn parse_article(str: &str) -> Result<ApiResponse, anyhow::Error> {
+pub fn parse_article(str: impl AsRef<str>) -> Result<ApiResponse, anyhow::Error> {
+    let str = str.as_ref();
     let endpoint = format!(
         "{}/parse",
         std::env::var("ARTICLE_PARSER_URL").expect("ARTICLE_PARSER_URL not set")
@@ -73,7 +75,7 @@ pub fn parse_article(str: &str) -> Result<ApiResponse, anyhow::Error> {
 }
 
 type SourceFn = fn(GetNewsOpts) -> anyhow::Result<()>;
-pub static SOURCES: [(&str, SourceFn); 16] = [
+pub static SOURCES: [(&str, SourceFn); 17] = [
     ("francetvinfo", francetvinfo::get_news),
     ("google", google::get_news),
     ("leparisien", leparisien::get_news),
@@ -90,4 +92,5 @@ pub static SOURCES: [(&str, SourceFn); 16] = [
     ("lme::futura-sciences", lme::futura_sciences::get_news),
     ("lme::geo", lme::geo::get_news),
     ("lme::nationalgeographic", lme::nationalgeographic::get_news),
+    ("lme::capturetheatlas", lme::capturetheatlas::get_news),
 ];

@@ -93,7 +93,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
                 link: url,
             }),
             Err(err) => {
-                debug!("fetch_article: {}", err);
+                debug!("parse_article: {}", err);
                 continue;
             }
         };
