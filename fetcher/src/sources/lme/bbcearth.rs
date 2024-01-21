@@ -1,5 +1,5 @@
 use super::GetNewsOpts;
-use crate::sources::parse_article;
+use crate::sources::fetch_article;
 use anyhow::{Context, Result};
 use headless_chrome::Tab;
 use log::{debug, info, trace};
@@ -8,10 +8,17 @@ use std::sync::Arc;
 
 fn get_articles_links(tab: &Arc<Tab>) -> Result<Vec<String>> {
     Ok(tab
-        .find_elements("h2.articlePreview-title > a")
-        .context("finding h2.articlePreview-title > a")?
+        .find_elements("a.article-block:not(.video-card)")
+        .context("finding a.article-block:not(.video-card)")?
         .iter()
-        .map(|a| a.get_attribute_value("href").unwrap().expect("a href"))
+        .filter_map(|a| {
+            let mut link = a.get_attribute_value("href").unwrap().expect("a href");
+            if link.starts_with("/quiz") {
+                return None;
+            }
+            link.insert_str(0, "https://www.bbcearth.com");
+            Some(link)
+        })
         .collect())
 }
 
@@ -20,7 +27,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
     let user_agent = opts.browser.get_version().unwrap().user_agent;
     let user_agent = user_agent.replace("HeadlessChrome", "Chrome");
     tab.set_user_agent(&user_agent, None, None)?;
-    tab.navigate_to("https://www.geo.fr/aventure")
+    tab.navigate_to("https://www.bbcearth.com/nature")
         .context("navigate_to")?
         .wait_until_navigated()
         .context("wait_until_navigated")?;
@@ -32,21 +39,16 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
             continue;
         }
         opts.seen_urls.lock().unwrap().push(url.clone());
-        let tags: Vec<_> = ["adventure", "lemediaexperience"]
+        let tags: Vec<_> = ["nature", "lemediaexperience"]
             .into_iter()
             .map(str::to_string)
             .collect();
 
-        tab.navigate_to(&url)
-            .context("navigate_to url")?
-            .wait_until_navigated()
-            .context("wait_until_navigated url")?;
-        let body = tab.get_content()?;
-        let payload = match parse_article(&body) {
+        let payload = match fetch_article(&url) {
             Ok(res) => Ok(News {
                 title: res.title,
                 caption: res.description,
-                provider: "lme::geo".to_string(),
+                provider: "lme::bbcearth".to_string(),
                 tags,
                 date: res
                     .published
@@ -56,7 +58,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
                 link: url,
             }),
             Err(err) => {
-                debug!("parse_article: {}", err);
+                debug!("fetch_article on {url}: {err}");
                 continue;
             }
         };
