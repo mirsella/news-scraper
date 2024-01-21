@@ -2,7 +2,7 @@ use super::GetNewsOpts;
 use crate::sources::parse_article;
 use anyhow::{Context, Result};
 use headless_chrome::Tab;
-use log::{debug, info, trace, warn};
+use log::{debug, info, trace};
 use shared::News;
 use std::{sync::Arc, thread, time::Duration};
 

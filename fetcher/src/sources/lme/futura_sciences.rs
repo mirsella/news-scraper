@@ -1,13 +1,10 @@
 use super::GetNewsOpts;
-use crate::sources::fetch_article;
+use crate::sources::parse_article;
 use anyhow::{Context, Result};
 use headless_chrome::Tab;
 use log::{debug, info, trace};
 use shared::News;
 use std::sync::Arc;
-
-// remove id="sidebar-desktop"
-// get .article-content > img and .article-hero-image
 
 fn get_articles_links(tab: &Arc<Tab>) -> Result<Vec<String>> {
     let links = tab
@@ -17,6 +14,9 @@ fn get_articles_links(tab: &Arc<Tab>) -> Result<Vec<String>> {
         .filter_map(|a| {
             if let Some(mut link) = a.get_attribute_value("href").unwrap() {
                 link.insert_str(0, "https://futura-sciences.com");
+                if link.contains("futura-sciences.com/live") {
+                    return None;
+                }
                 return Some(link);
             }
             None
@@ -52,8 +52,34 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
             .map(str::to_string)
             .collect();
 
-        let res = fetch_article(&url);
-        let payload = match res {
+        tab.navigate_to(&url)
+            .context("navigate_to url")?
+            .wait_until_navigated()
+            .context("wait_until_navigated url")?;
+        let body = tab.get_content()?;
+
+        tab.evaluate(
+            "document.querySelectorAll('.article-sidebar, .relative, .bottom2').forEach(e => e.remove())",
+            false,
+        )?;
+
+        let mut imgs_els = tab
+            .find_element(".article-content")
+            .context("find_element .article-content")?
+            .find_elements("img")
+            .context("find_elements .article-content img")?;
+        imgs_els.push(
+            tab.find_element(".article-hero-image")
+                .context("find_elements .article-hero-image")?
+                .find_element("img")
+                .context("find_element article-hero-image img")?,
+        );
+        let imgs = imgs_els.iter().fold(String::new(), |mut s, el| {
+            let src = el.get_attribute_value("src").unwrap().expect("a src");
+            s += &format!("<img src='{src}' />");
+            s
+        });
+        let payload = match parse_article(&body) {
             Ok(res) => Ok(News {
                 title: res.title,
                 caption: res.description,
@@ -63,7 +89,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
                     .published
                     .parse()
                     .unwrap_or_else(|_| chrono::Local::now()),
-                body: res.content,
+                body: imgs + &res.content,
                 link: url,
             }),
             Err(err) => {
