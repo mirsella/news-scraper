@@ -90,6 +90,7 @@ async fn main() -> Result<()> {
             .content(DbNews {
                 title: news.title.into(),
                 link: news.link.into(),
+                tags: news.tags,
                 html_body: html_body.into(),
                 text_body: text_body.into(),
                 provider: news.provider.into(),
