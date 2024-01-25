@@ -23,10 +23,10 @@ pub fn sanitize_html(html: &str) -> String {
         "caption", "tbody", "tr", "th", "td", "p", "a", "img", "h1", "h2", "h3", "h4", "h5", "h6",
         "section"
     ];
-    let allowed_attributes = ["href", "title", "src", "alt", "colspan"];
+    let allowed_attributes = ["href", "title", "src", "alt", "colspan", "style"];
     ammonia::Builder::new()
         .tags(tags)
-        .link_rel(None)
+        .link_rel(Some("noopener noreferrer"))
         .add_generic_attributes(&allowed_attributes)
         .clean(html)
         .to_string()

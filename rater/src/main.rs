@@ -123,14 +123,12 @@ async fn main() -> Result<()> {
                     Err(e) if e.to_string().to_lowercase().contains("bad gateway") => {
                         error!("bad gateway: {:?}", e.to_string());
                         dbg!(&e);
-                        // telegram.send("rater: bad gateway !")?;
                         news.rating = None;
                         None
                     }
                     Err(e) if e.to_string().to_lowercase().contains("service unavailable") => {
                         error!("service unavailable: {:?}", e.to_string());
                         dbg!(&e);
-                        // telegram.send("rater: service unavailable !")?;
                         news.rating = None;
                         None
                     }
@@ -159,7 +157,8 @@ async fn main() -> Result<()> {
                             e.chain().map(|e| e.to_string()).collect::<Vec<String>>();
                         error!("saving {id} with {rating:?} second time: {errors_strings:#?}");
                         error!("saving {id} with {rating:?} second time: {e:#?}");
-                        telegram.send(format!("rater: saving {id} failed: {errors_strings:#?}"))?;
+                        telegram
+                            .send(format!("rater: re-saving {id} failed: {errors_strings:#?}"))?;
                         Err(e)
                     }
                 }

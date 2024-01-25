@@ -17,22 +17,22 @@ DEFINE PARAM $PROD VALUE 1;
 DEFINE SCOPE user SESSION 1w
   SIGNUP {
     IF string::len($name) < 1 {
-      throw "invalid name";
+      THROW "invalid name";
     };
     IF string::len($password) < 1 {
-      throw "invalid password";
+      THROW "invalid password";
     };
-    return CREATE user CONTENT { name: $name, password: $password };
+    RETURN CREATE user CONTENT { name: $name, password: $password };
   }
   SIGNIN {
     let $user = SELECT * FROM ONLY user WHERE name = $name;
     IF !$user {
-      throw "user not found";
+      THROW "user not found";
     };
     IF !crypto::argon2::compare($user.password, $password) {
-      throw "invalid password";
+      THROW "invalid password";
     };
-    return $user;
+    RETURN $user;
   };
 
 -- ------------------------------
