@@ -13,6 +13,9 @@ fn get_articles_links(tab: &Arc<Tab>) -> Result<Vec<String>> {
         .iter()
         .filter_map(|a| {
             if let Some(mut link) = a.get_attribute_value("href").unwrap() {
+                if link.contains("personnalites") {
+                    return None;
+                }
                 link.insert_str(0, "https://futura-sciences.com");
                 return Some(link);
             }
