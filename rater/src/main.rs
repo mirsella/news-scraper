@@ -171,7 +171,6 @@ async fn main() -> Result<()> {
             match handle? {
                 Err(e) => {
                     running.store(false, Ordering::Relaxed);
-                    error!("handle errored, exitting: {e}");
                     if let Err(e) = telegram.send(format!("rater: thread error: {}", e)) {
                         error!("TelegramError: {}", e);
                     }

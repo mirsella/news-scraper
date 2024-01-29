@@ -25,7 +25,7 @@ DEFINE SCOPE user SESSION 1w
     RETURN CREATE user CONTENT { name: $name, password: $password };
   }
   SIGNIN {
-    LET $user = (SELECT * FROM ONLY user WHERE name = $name limit 1);
+    LET $user = (SELECT * FROM ONLY user WHERE name = $name LIMIT 1);
     IF !$user {
       THROW "user not found";
     };
