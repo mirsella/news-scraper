@@ -153,12 +153,8 @@ async fn main() -> Result<()> {
                             Ok(_) => return Ok(Some(news)),
                             Err(e) => e,
                         };
-                        let errors_strings =
-                            e.chain().map(|e| e.to_string()).collect::<Vec<String>>();
-                        error!("saving {id} with {rating:?} second time: {errors_strings:#?}");
                         error!("saving {id} with {rating:?} second time: {e:#?}");
-                        telegram
-                            .send(format!("rater: re-saving {id} failed: {errors_strings:#?}"))?;
+                        telegram.send(format!("rater: re-saving {id} failed: {e:#?}"))?;
                         Err(e)
                     }
                 }
@@ -175,12 +171,13 @@ async fn main() -> Result<()> {
                     if let Err(e) = telegram.send(format!("rater: thread error: {}", e)) {
                         error!("TelegramError: {}", e);
                     }
+                    return Err(e);
                 }
                 Ok(Some(news)) => {
                     news_done += 1;
-                    info!("{} {news_done}/{total_news} done.", news.id.expect("no id"),)
+                    info!("{} {news_done}/{total_news} done.", news.id.expect("no id"))
                 }
-                _ => {}
+                _ => (),
             }
         }
         info!("finished this batch {news_done}/{total_news}.")
