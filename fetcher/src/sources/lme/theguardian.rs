@@ -6,8 +6,8 @@ use log::{debug, info, trace};
 use shared::News;
 use std::sync::Arc;
 
-const ALLOWED_PATH: &[&str] = &["/travel", "/for-the-stay", "/lifeandstyle", "/artanddesign"];
 fn get_articles_links(tab: &Arc<Tab>) -> Result<Vec<String>> {
+    let allowed_path = ["/travel", "/for-the-stay", "/lifeandstyle", "/artanddesign"];
     Ok(tab
         .find_element("#maincontent")
         .context("find_elements #maincontent")?
@@ -16,7 +16,7 @@ fn get_articles_links(tab: &Arc<Tab>) -> Result<Vec<String>> {
         .iter()
         .filter_map(|el| {
             let mut link = el.get_attribute_value("href").unwrap().expect("a href");
-            if !ALLOWED_PATH.iter().any(|path| link.starts_with(path))
+            if !allowed_path.iter().any(|path| link.starts_with(path))
                 || link.starts_with("/travel/all")
             {
                 return None;
