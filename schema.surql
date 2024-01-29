@@ -54,6 +54,7 @@ DEFINE FIELD tags ON news FLEXIBLE TYPE array<string>;
 DEFINE FIELD title ON news TYPE string;
 DEFINE FIELD used ON news TYPE bool DEFAULT false;
 
+# TODO: this line crash the db
 DEFINE INDEX link ON news FIELDS link UNIQUE;
 DEFINE INDEX rating ON news FIELDS rating;
 DEFINE INDEX date ON news FIELDS date;
