@@ -8,7 +8,7 @@ OPTION IMPORT;
 -- PARAMS
 -- ------------------------------
 
-DEFINE PARAM $PROD VALUE 1;
+# DEFINE PARAM $PROD VALUE 1;
 
 -- ------------------------------
 -- SCOPES
@@ -25,7 +25,7 @@ DEFINE SCOPE user SESSION 1w
     RETURN CREATE user CONTENT { name: $name, password: $password };
   }
   SIGNIN {
-    let $user = SELECT * FROM ONLY user WHERE name = $name;
+    LET $user = (SELECT * FROM ONLY user WHERE name = $name limit 1);
     IF !$user {
       THROW "user not found";
     };
@@ -57,8 +57,6 @@ DEFINE FIELD used ON news TYPE bool DEFAULT false;
 DEFINE INDEX link ON news FIELDS link UNIQUE;
 DEFINE INDEX rating ON news FIELDS rating;
 DEFINE INDEX date ON news FIELDS date;
-
--- DEFINE TABLE feed AS select * FROM news WHERE date >= time::now() - 1w AND array::find_index(tags, 'lemediaexperience') == NULL;
 
 -- DEFINE ANALYZER news_analyzer TOKENIZERS blank,class,camel,punct FILTERS ascii,lowercase;
 -- DEFINE INDEX news_body ON news FIELDS text_body SEARCH ANALYZER news_analyzer BM25(1.2,0.75);

@@ -70,11 +70,12 @@ services:
   surrealdb:
     container_name: surrealdb
     restart: unless-stopped
-    image: surrealdb/surrealdb:1.0.0
+    image: surrealdb/surrealdb:v1.1.1
     env_file:
       - .env
     user: root
     environment:
+      - SURREAL_NO_BANNER=true
       - SURREAL_CAPS_ALLOW_FUNC
       - SURREAL_USER=${DB_USER}
       - SURREAL_PASS=${DB_PASSWORD}
