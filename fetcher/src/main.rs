@@ -10,6 +10,8 @@ use std::{
     env,
     process::exit,
     sync::{Arc, Mutex},
+    thread,
+    time::Duration,
 };
 use surrealdb::{engine::remote::ws::Ws, opt::auth::Root, Surreal};
 
@@ -101,6 +103,7 @@ async fn main() -> Result<()> {
             .await;
         if let Err(e) = result {
             error!("db.create: {:#?}", e);
+            thread::sleep(Duration::from_secs(10));
             continue;
         }
         counter += 1;
