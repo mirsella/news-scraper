@@ -22,7 +22,7 @@ pub struct DbNews {
     pub link: Cow<'static, str>,
     pub note: Cow<'static, str>,
     pub provider: Cow<'static, str>,
-    pub rating: Option<u32>,
+    pub rating: Option<u8>,
     pub tags: Vec<String>,
     pub title: Cow<'static, str>,
     pub used: bool,
@@ -43,7 +43,7 @@ impl DbNews {
         &mut self,
         client: &ChatClient<OpenAIConfig>,
         prompt: &str,
-    ) -> Result<(u32, Vec<String>)> {
+    ) -> Result<(u8, Vec<String>)> {
         let text = format!("{}\n{}", &self.title, &self.text_body);
         let tokenizer = tiktoken_rs::p50k_base().unwrap();
         let tokens = tokenizer.encode_with_special_tokens(&text);
@@ -107,7 +107,7 @@ impl DbNews {
             .0
             .trim_start_matches("rating: ")
             .trim_start_matches("Rating: ")
-            .parse::<u32>()
+            .parse::<u8>()
             .context(content.clone())?;
         let mut tags: Vec<String> = split
             .1
