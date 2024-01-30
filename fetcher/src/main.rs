@@ -64,49 +64,63 @@ async fn main() -> Result<()> {
     .await?;
     db.use_ns("news").use_db("news").await?;
 
-    let seen_urls: Vec<String> = db.query("select link from news").await?.take((0, "link"))?;
-    let seen_urls = Arc::new(Mutex::new(seen_urls));
-    let mut rx = launcher::init(&config, cli.enable, seen_urls, telegram.clone());
     let mut counter = 0;
-    while let Some(recved) = rx.recv().await {
-        let news = match recved {
-            Ok(news) => news,
-            Err(err) => {
-                error!("recv: {:#?}", err);
-                if let Err(e) = telegram.send(format!("fetcher: recv: {err:#?}")) {
-                    error!("telegram.send: {:#?}", e);
+    for source in sources::SOURCES {
+        let sources: Vec<_> = match cli.enable {
+            Some(ref enabled) => source
+                .1
+                .iter()
+                .filter(|s| enabled.contains(&s.0.to_string()))
+                .collect(),
+            None => source.1.iter().collect(),
+        };
+        let seen_urls: Vec<String> = db
+            .query("select link from $table with index link")
+            .bind(("name", source.0))
+            .await?
+            .take((0, "link"))?;
+        let seen_urls = Arc::new(Mutex::new(seen_urls));
+        let mut rx = launcher::init(&config, sources, seen_urls, telegram.clone());
+        while let Some(recved) = rx.recv().await {
+            let news = match recved {
+                Ok(news) => news,
+                Err(err) => {
+                    error!("recv: {:#?}", err);
+                    if let Err(e) = telegram.send(format!("fetcher: recv: {err:#?}")) {
+                        error!("telegram.send: {:#?}", e);
+                    }
+                    continue;
                 }
+            };
+            trace!(
+                "recv news: {}: {:.20?}..., link: {:?}",
+                news.provider,
+                news.title,
+                news.link
+            );
+            let html_body = sanitize_html(&news.body);
+            let text_body = extract_clean_text(&html_body);
+            let result: Result<Vec<DbNews>, surrealdb::Error> = db
+                .create(source.0)
+                .content(DbNews {
+                    title: news.title.into(),
+                    link: news.link.into(),
+                    tags: news.tags,
+                    html_body: html_body.into(),
+                    text_body: text_body.into(),
+                    provider: news.provider.into(),
+                    date: DateTime::from(news.date).into(),
+                    caption: news.caption.into(),
+                    ..Default::default()
+                })
+                .await;
+            if let Err(e) = result {
+                error!("db.create: {:#?}", e);
+                thread::sleep(Duration::from_secs(5));
                 continue;
             }
-        };
-        trace!(
-            "recv news: {}: {:.20?}..., link: {:?}",
-            news.provider,
-            news.title,
-            news.link
-        );
-        let html_body = sanitize_html(&news.body);
-        let text_body = extract_clean_text(&html_body);
-        let result: Result<Vec<DbNews>, surrealdb::Error> = db
-            .create("news")
-            .content(DbNews {
-                title: news.title.into(),
-                link: news.link.into(),
-                tags: news.tags,
-                html_body: html_body.into(),
-                text_body: text_body.into(),
-                provider: news.provider.into(),
-                date: DateTime::from(news.date).into(),
-                caption: news.caption.into(),
-                ..Default::default()
-            })
-            .await;
-        if let Err(e) = result {
-            error!("db.create: {:#?}", e);
-            thread::sleep(Duration::from_secs(10));
-            continue;
+            counter += 1;
         }
-        counter += 1;
     }
     info!("Total news recorded: {}", counter);
     Ok(())

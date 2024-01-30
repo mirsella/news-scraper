@@ -1,4 +1,5 @@
 mod lme;
+mod news;
 
 use anyhow::anyhow;
 use headless_chrome::Browser;
@@ -7,8 +8,6 @@ use shared::News;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use tokio::sync::mpsc::Sender;
-
-automod::dir!("src/sources");
 
 pub struct GetNewsOpts {
     pub browser: Browser,
@@ -74,32 +73,6 @@ pub fn parse_article(str: impl AsRef<str>) -> Result<ApiResponse, anyhow::Error>
     Ok(json_result)
 }
 
-type SourceFn = fn(GetNewsOpts) -> anyhow::Result<()>;
-pub static SOURCES: [(&str, SourceFn); 22] = [
-    ("francetvinfo", francetvinfo::get_news),
-    ("google", google::get_news),
-    ("leparisien", leparisien::get_news),
-    ("reporterre", reporterre::get_news),
-    ("futura-sciences", futura_sciences::get_news),
-    ("sciencesetavenir", sciencesetavenir::get_news),
-    ("reddit-upliftingnews", reddit_upliftingnews::get_news),
-    ("goodnewsnetwork", goodnewsnetwork::get_news),
-    ("positivr", positivr::get_news),
-    ("ouest-france", ouest_france::get_news),
-    ("20minutes", twentyminutes::get_news),
-    ("sudouest", sudouest::get_news),
-    ("lavoixdunord", lavoixdunord::get_news),
-    ("lme::futura-sciences", lme::futura_sciences::get_news),
-    ("lme::geo", lme::geo::get_news),
-    ("lme::nationalgeographic", lme::nationalgeographic::get_news),
-    ("lme::capturetheatlas", lme::capturetheatlas::get_news),
-    // ("lme::travelandleisure", lme::travelandleisure::get_news),
-    ("lme::bbcearth", lme::bbcearth::get_news),
-    ("lme::bbc", lme::bbc::get_news),
-    ("lme::theguardian", lme::theguardian::get_news),
-    ("lme::smithsonianmag", lme::smithsonianmag::get_news),
-    (
-        "lme::national-history-museum",
-        lme::national_history_museum::get_news,
-    ),
-];
+pub type SourceFn = fn(GetNewsOpts) -> anyhow::Result<()>;
+pub type SourceType = &'static [(&'static str, SourceFn)];
+pub static SOURCES: [(&str, SourceType); 2] = [("news", &news::SOURCES), ("lme", &lme::SOURCES)];

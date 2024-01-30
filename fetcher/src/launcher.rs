@@ -4,7 +4,7 @@ use std::{
     time::Duration,
 };
 
-use crate::sources::{GetNewsOpts, SOURCES};
+use crate::sources::{GetNewsOpts, SourceFn};
 use anyhow::Context;
 use futures::{stream::FuturesUnordered, StreamExt};
 use headless_chrome::{Browser, LaunchOptionsBuilder};
@@ -17,7 +17,7 @@ use tokio::{
 
 pub fn init(
     config: &Config,
-    enabled: Option<Vec<String>>,
+    sources: Vec<&'static (&'static str, SourceFn)>,
     seen_urls: Arc<Mutex<Vec<String>>>,
     telegram: Arc<Telegram>,
 ) -> Receiver<anyhow::Result<News>> {
@@ -35,15 +35,11 @@ pub fn init(
     )
     .unwrap();
     let (tx, rx) = channel(500);
-
     let mut futures: FuturesUnordered<JoinHandle<anyhow::Result<()>>> = FuturesUnordered::new();
-    let mut sources: Vec<_> = match enabled {
-        Some(enabled) => SOURCES
-            .iter()
-            .filter(|s| enabled.contains(&s.0.to_string()))
-            .collect(),
-        None => SOURCES.iter().collect(),
-    };
+    let mut sources: Vec<_> = sources
+        .into_iter()
+        .map(|(s, f)| (s.to_string(), f))
+        .collect();
 
     while futures.len() < config.chrome_concurrent.unwrap_or(4) {
         match sources.pop() {
