@@ -1,27 +1,6 @@
 version: "3.8"
 
 services:
-  # nuxt:
-  #   restart: unless-stopped
-  #   container_name: nuxt
-  #   depends_on:
-  #     - surrealdb
-  #   env_file: .env
-  #   build:
-  #     context: .
-  #     dockerfile: docker/nuxt.dockerfile
-  #     args:
-  #       - NUXT_BASE_URL=$NUXT_BASE_URL
-  #   ports:
-  #     - "8080:3000"
-  #   environment:
-  #     NUXT_PUBLIC_SURREALDB_URLS: ${NUXT_PUBLIC_SURREALDB_URLS}
-  #   healthcheck:
-  #     test: ["CMD", "curl", "-f", "http://localhost:3000"]
-  #     retries: 3
-  #     start_period: 5s
-  #     timeout: 5s
-
   article-parser:
     restart: unless-stopped
     container_name: article-parser
