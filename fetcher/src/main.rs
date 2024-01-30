@@ -4,7 +4,7 @@ use anyhow::Result;
 use chrono::DateTime;
 use clap::Parser;
 use env_logger::Builder;
-use log::{error, info, trace};
+use log::{debug, error, info, trace};
 use shared::{config::Config, db_news::DbNews, *};
 use std::{
     env,
@@ -76,9 +76,12 @@ async fn main() -> Result<()> {
         };
         let seen_urls: Vec<String> = db
             .query("select link from $table with index link")
-            .bind(("name", source.0))
+            .bind(("table", source.0))
             .await?
-            .take((0, "link"))?;
+            .take((0, "link"))
+            .unwrap_or_default();
+        debug!("source {}: found {} seen urls", source.0, seen_urls.len());
+        assert!(seen_urls.len() >= 1000);
         let seen_urls = Arc::new(Mutex::new(seen_urls));
         let mut rx = launcher::init(&config, sources, seen_urls, telegram.clone());
         while let Some(recved) = rx.recv().await {
