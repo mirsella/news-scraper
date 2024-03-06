@@ -2,7 +2,7 @@ use super::{GetNewsOpts, News};
 use anyhow::{Context, Result};
 use headless_chrome::Tab;
 use log::{debug, error, trace};
-use std::sync::Arc;
+use std::{sync::Arc, thread, time::Duration};
 
 const BLACKLIST: &[&str] = &["ouestfrance-auto", "ouestfrance-immo", "ouestfrance-emploi"];
 fn get_articles_links(tab: &Arc<Tab>) -> Result<Vec<String>> {
@@ -25,9 +25,9 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
         .context("navigate_to")?;
     tab.wait_until_navigated().context("wait_until_navigated")?;
 
-    if let Ok(cookie) = tab.find_element("#didomi-notice-agree-button") {
+    if let Ok(cookie) = tab.find_element("#didomi-popup > div > div > div > div.didomi-popup-notice-text-container > div > div > div > div.content-btns > button.su-button.su-fullwidth-mobile.su-primary") {
         cookie.click().context("clicking on cookie")?;
-        std::thread::sleep(std::time::Duration::from_secs(1));
+        thread::sleep(Duration::from_secs(1));
         trace!("clicked cookie");
     }
 
@@ -46,7 +46,10 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
                 title: res.title,
                 caption: res.description,
                 provider: "ouest-france".to_string(),
-                date: res.published.parse().unwrap_or_else(|_| chrono::Local::now()),
+                date: res
+                    .published
+                    .parse()
+                    .unwrap_or_else(|_| chrono::Local::now()),
                 body: res.content,
                 link: url,
             }),

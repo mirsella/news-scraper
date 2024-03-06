@@ -49,7 +49,7 @@ services:
   surrealdb:
     container_name: surrealdb
     restart: unless-stopped
-    image: surrealdb/surrealdb:v1.1.1
+    image: surrealdb/surrealdb:v1.2.1
     env_file:
       - .env
     user: root
