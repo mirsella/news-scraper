@@ -1,7 +1,7 @@
 use super::{GetNewsOpts, News};
 use anyhow::{Context, Result};
 use headless_chrome::Tab;
-use log::{debug, error, trace};
+use log::{debug, error, info, trace};
 use std::{sync::Arc, thread, time::Duration};
 
 const BLACKLIST: &[&str] = &["ouestfrance-auto", "ouestfrance-immo", "ouestfrance-emploi"];
@@ -32,6 +32,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
     }
 
     let links = get_articles_links(&tab).context("ouest-france")?;
+    info!("found {} articles", links.len());
     for url in links {
         if opts.seen_urls.lock().unwrap().contains(&url) {
             trace!("already seen {url}");
