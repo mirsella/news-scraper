@@ -150,7 +150,7 @@ async fn main() -> Result<()> {
                     Ok(_) => Ok(Some(news)),
                     Err(e) => {
                         warn!("saving {id} failed one time: {e:#?}");
-                        telegram.send(format!("rater: saving {id} failed one time: {e:#?}"))?;
+                        // telegram.send(format!("rater: saving {id} failed one time: {e:#?}"))?;
                         tokio::time::sleep(Duration::from_secs(5)).await;
                         let e = match news.save(&db).await {
                             Ok(_) => return Ok(Some(news)),
