@@ -1,16 +1,15 @@
+use super::GetNewsOpts;
 use anyhow::{Context, Result};
 use headless_chrome::Tab;
 use log::{debug, error, trace};
 use shared::News;
 use std::sync::Arc;
 
-use super::GetNewsOpts;
-
 const KEYWORDS: [&str; 4] = ["bonne nouvelle", "joie", "optimisme", "entraide"];
 
 fn get_articles_links(tab: &Arc<Tab>) -> Result<Vec<String>> {
     let parent = tab
-        .find_element_by_xpath("/html/body/div[5]/div/div[11]/div/div[2]/div[2]/div/div/div/div")
+        .find_element_by_xpath("/html/body/div[4]/div/div[12]/div/div[2]/div[2]/div/div/div/div")
         .context("finding parent of articles")?;
 
     let links = parent
@@ -77,7 +76,10 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
                     title: res.title,
                     caption: res.description,
                     provider: "google".to_string(),
-                    date: res.published.parse().unwrap_or_else(|_| chrono::Local::now()),
+                    date: res
+                        .published
+                        .parse()
+                        .unwrap_or_else(|_| chrono::Local::now()),
                     body: res.content,
                     link: url,
                     ..Default::default()
