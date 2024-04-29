@@ -4,7 +4,7 @@ services:
     container_name: article-parser
     build:
       context: .
-      dockerfile: docker/article-parser.dockerfile
+      dockerfile: deno-article-parser/dockerfile
     ports:
       - "8081:8081"
     environment:
@@ -20,7 +20,7 @@ services:
     restart: on-failure
     build:
       context: .
-      dockerfile: docker/cargo.dockerfile
+      dockerfile: cargo.dockerfile
       target: fetcher
     depends_on:
       - article-parser
