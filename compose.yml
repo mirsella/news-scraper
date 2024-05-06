@@ -36,7 +36,7 @@ services:
     restart: unless-stopped
     build:
       context: .
-      dockerfile: docker/cargo.dockerfile
+      dockerfile: cargo.dockerfile
       target: rater
     depends_on:
       - surrealdb
