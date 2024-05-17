@@ -54,7 +54,7 @@ DEFINE FIELD tags ON news FLEXIBLE TYPE array<string>;
 DEFINE FIELD title ON news TYPE string;
 DEFINE FIELD used ON news TYPE bool DEFAULT false;
 
--- DEFINE TABLE news_feed AS SELECT * FROM news WHERE date >= time::now() - 1w PERMISSIONS FOR select, update WHERE $auth.activated == true CHANGEFEED 1w;
+DEFINE TABLE news_feed AS SELECT * FROM news WHERE date >= time::now() - 1w PERMISSIONS FOR select, update WHERE $auth.activated == true CHANGEFEED 1w;
 
 DEFINE INDEX link ON news FIELDS link UNIQUE;
 DEFINE INDEX rating ON news FIELDS rating;
