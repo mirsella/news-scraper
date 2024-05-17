@@ -47,7 +47,6 @@ pub fn init(
                 info!("spawning {}", fetch.0);
                 let opts = GetNewsOpts {
                     browser: browser.clone(),
-                    config: config.clone(),
                     tx: tx.clone(),
                     seen_urls: seen_urls.clone(),
                 };
@@ -74,7 +73,6 @@ pub fn init(
                     info!("spawning {}", fetch.0);
                     let opts = GetNewsOpts {
                         browser: browser.clone(),
-                        config: config.clone(),
                         tx: tx.clone(),
                         seen_urls: seen_urls.clone(),
                     };

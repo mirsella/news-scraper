@@ -11,7 +11,6 @@ use tokio::sync::mpsc::Sender;
 
 pub struct GetNewsOpts {
     pub browser: Browser,
-    pub config: Arc<shared::Config>,
     pub tx: Sender<anyhow::Result<News>>,
     pub seen_urls: Arc<Mutex<Vec<String>>>,
 }
