@@ -1,0 +1,14 @@
+{
+  "name": "bun-article-parser",
+  "module": "index.ts",
+  "scripts": {
+    "start": "bun run index.ts"
+  },
+  "devDependencies": {
+    "bun-types": "latest"
+  },
+  "dependencies": {
+    "@extractus/article-extractor": "latest",
+    "hono": "^4.4.0"
+  }
+}
