@@ -97,3 +97,5 @@ DEFINE FIELD created_date ON user TYPE datetime DEFAULT time::now() PERMISSIONS 
 DEFINE FIELD activated ON user TYPE bool DEFAULT false PERMISSIONS FOR select WHERE true, FOR update NONE;
 DEFINE FIELD name ON user TYPE string ASSERT string::len($value) > 0;
 DEFINE FIELD password ON user TYPE string VALUE $before OR crypto::argon2::generate($value) ASSERT string::len($value) > 0;
+
+DEFINE INDEX name ON user FIELDS name UNIQUE;
