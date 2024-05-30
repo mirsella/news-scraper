@@ -3,8 +3,8 @@ services:
     restart: unless-stopped
     container_name: article-parser
     build:
-      context: .
-      dockerfile: deno-article-parser/dockerfile
+      context: deno-article-parser
+      dockerfile: dockerfile
     ports:
       - "8081:8081"
     environment:
