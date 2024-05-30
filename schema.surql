@@ -79,8 +79,7 @@ DEFINE FIELD link ON lme TYPE string ASSERT string::is::url($value);
 DEFINE FIELD note ON lme TYPE string DEFAULT "";
 DEFINE FIELD provider ON lme TYPE string ASSERT $value != NONE PERMISSIONS FOR update NONE;
 DEFINE FIELD rating ON news TYPE option<int> ASSERT $value = NONE OR ($value >= 0 AND $value <= 100);
--- see https://github.com/surrealdb/surrealdb/issues/2150
-DEFINE FIELD tags ON lme FLEXIBLE TYPE array<string>;
+DEFINE FIELD tags ON lme TYPE array<string>;
 DEFINE FIELD title ON lme TYPE string;
 DEFINE FIELD used ON lme TYPE bool DEFAULT false;
 
