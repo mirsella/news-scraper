@@ -69,16 +69,16 @@ services:
       start_period: 10s
       timeout: 10s
 
-  ngrok:
-    image: ngrok/ngrok:latest
-    container_name: ngrok
-    restart: unless-stopped
-    command:
-      - "tunnel"
-      - "--label"
-      - "edge=${NGROK_EDGE}"
-      - "http://surrealdb:8000"
-    environment:
-      NGROK_AUTHTOKEN: ${NGROK_AUTHTOKEN}
-    ports:
-      - 4040:4040
+  # ngrok:
+  #   image: ngrok/ngrok:latest
+  #   container_name: ngrok
+  #   restart: unless-stopped
+  #   command:
+  #     - "tunnel"
+  #     - "--label"
+  #     - "edge=${NGROK_EDGE}"
+  #     - "http://surrealdb:8000"
+  #   environment:
+  #     NGROK_AUTHTOKEN: ${NGROK_AUTHTOKEN}
+  #   ports:
+  #     - 4040:4040
