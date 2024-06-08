@@ -7,7 +7,6 @@ use shared::Telegram;
 use shared::{config::Config, db_news::DbNews};
 use std::env;
 use std::process::exit;
-use std::str::pattern::Pattern;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::time::Duration;
@@ -142,7 +141,7 @@ async fn main() -> Result<()> {
                         let newline = if news.note.is_empty() { "" } else { "\n" };
                         news.note = format!("{}{newline}rating failed: '{e}'", news.note).into();
                         // only send telegram notif if it's not a "sorry" message
-                        if e.to_string().to_lowercase().find("i'm sorry").is_none() {
+                        if !e.to_string().to_lowercase().contains("i'm sorry") {
                             telegram
                                 .send(format!("rater: {id} {} rating failed: {e}", news.link))?;
                         }
