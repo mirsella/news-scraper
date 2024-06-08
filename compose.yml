@@ -47,7 +47,7 @@ services:
   surrealdb:
     container_name: surrealdb
     restart: unless-stopped
-    image: surrealdb/surrealdb:v1.5.1
+    image: surrealdb/surrealdb:v1.5.2
     env_file:
       - .env
     user: root
