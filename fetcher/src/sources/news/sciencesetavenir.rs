@@ -43,7 +43,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
 
         let links = get_articles_links(&tab)
             .context("sciencesetavenir")
-            .map_err(|e| {
+            .inspect_err(|_error| {
                 let data = tab
                     .capture_screenshot(
                         headless_chrome::protocol::cdp::Page::CaptureScreenshotFormatOption::Png,
@@ -53,7 +53,6 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
                     )
                     .unwrap();
                 std::fs::write("sciencesetavenir-error.png", data).unwrap();
-                e
             })?;
         trace!("found {} links on {category}", links.len());
         for url in links {
