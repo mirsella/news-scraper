@@ -9,7 +9,7 @@ const KEYWORDS: [&str; 4] = ["bonne nouvelle", "joie", "optimisme", "entraide"];
 
 fn get_articles_links(tab: &Arc<Tab>) -> Result<Vec<String>> {
     let parent = tab
-        .find_element_by_xpath("/html/body/div[4]/div/div[12]/div/div[2]/div[2]/div/div/div/div")
+        .find_element("div[data-async-context^='query:']")
         .context("finding parent of articles")?;
 
     let links = parent
