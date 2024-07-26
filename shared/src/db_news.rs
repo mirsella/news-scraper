@@ -54,31 +54,30 @@ impl DbNews {
         let truncated_text = truncated_text.trim_end_matches('\u{FFFD}').to_string();
         let conv = vec![
             ChatCompletionRequestSystemMessage {
-                content: Some(prompt.into()),
+                content: prompt.into(),
                 ..Default::default()
             }
             .into(),
             ChatCompletionRequestSystemMessage {
-                content: Some(
+                content:
                     "you will answer exactly with the following format `rating;tags,tags,tags`"
                         .into(),
-                ),
                 ..Default::default()
             }
             .into(),
             ChatCompletionRequestUserMessage {
-                content: Some(truncated_text.into()),
+                content: truncated_text.into(),
                 ..Default::default()
             }
             .into(),
             ChatCompletionRequestSystemMessage {
-                content: Some("rating: ".into()),
+                content: "rating: ".into(),
                 ..Default::default()
             }
             .into(),
         ];
         let request = CreateChatCompletionRequestArgs::default()
-            .model("gpt-3.5-turbo")
+            .model("gpt-4o-mini")
             .max_tokens(50_u16)
             .messages(conv)
             .n(1)
