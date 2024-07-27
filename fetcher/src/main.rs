@@ -41,7 +41,10 @@ async fn main() -> Result<()> {
     let cli = Cli::parse();
     if cli.list {
         println!("Available sources:");
-        sources::SOURCES.iter().for_each(|s| println!("{}", s.0));
+        for (name, sources) in sources::SOURCES.iter() {
+            println!("{name}:");
+            sources.iter().for_each(|s| println!(" {}", s.0));
+        }
         return Ok(());
     }
 
