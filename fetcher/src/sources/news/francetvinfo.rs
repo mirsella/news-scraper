@@ -56,13 +56,14 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
         tab.wait_until_navigated().context("wait_until_navigated")?;
         let links = get_articles_links(&tab).context("francetvinfo")?;
         trace!("found {} links on {category}", links.len());
+        assert!(links.len() > 0);
         for link in links {
             let url = format!("https://www.francetvinfo.fr{}", link);
-            if opts.seen_urls.lock().unwrap().contains(&url) {
+            if opts.seen_urls.read().unwrap().contains(&url) {
                 trace!("already seen {url}");
                 continue;
             }
-            opts.seen_urls.lock().unwrap().push(url.clone());
+            opts.seen_urls.write().unwrap().push(url.clone());
 
             let res = super::fetch_article(&url);
             let payload = match res {
@@ -71,7 +72,10 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
                     caption: res.description,
                     provider: "francetvinfo".to_string(),
                     tags: vec!["france".to_string()],
-                    date: res.published.parse().unwrap_or_else(|_| chrono::Local::now()),
+                    date: res
+                        .published
+                        .parse()
+                        .unwrap_or_else(|_| chrono::Local::now()),
                     body: res.content,
                     link: url,
                 }),

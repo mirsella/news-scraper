@@ -41,11 +41,11 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
         let links = get_articles_links(&tab).context("lme::futura-sciences")?;
         info!("found {} articles in category {category}", links.len());
         for url in links {
-            if opts.seen_urls.lock().unwrap().contains(&url) {
+            if opts.seen_urls.read().unwrap().contains(&url) {
                 trace!("already seen {url}");
                 continue;
             }
-            opts.seen_urls.lock().unwrap().push(url.clone());
+            opts.seen_urls.write().unwrap().push(url.clone());
 
             let tags: Vec<_> = url
                 .strip_prefix("https://futura-sciences.com/")

@@ -9,7 +9,7 @@ use shared::{config::Config, db_news::DbNews, *};
 use std::{
     env,
     process::exit,
-    sync::{Arc, Mutex},
+    sync::{Arc, RwLock},
     thread,
     time::Duration,
 };
@@ -83,7 +83,7 @@ async fn main() -> Result<()> {
             .await?
             .take((0, "link"))
             .unwrap_or_default();
-        let seen_urls = Arc::new(Mutex::new(seen_urls));
+        let seen_urls = Arc::new(RwLock::new(seen_urls));
         let mut rx = launcher::init(&config, sources, seen_urls, telegram.clone());
         while let Some(recved) = rx.recv().await {
             let news = match recved {

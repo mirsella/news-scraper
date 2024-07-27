@@ -55,12 +55,13 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
                 std::fs::write("sciencesetavenir-error.png", data).unwrap();
             })?;
         trace!("found {} links on {category}", links.len());
+        assert!(links.len() > 0);
         for url in links {
-            if opts.seen_urls.lock().unwrap().contains(&url) {
+            if opts.seen_urls.read().unwrap().contains(&url) {
                 trace!("already seen {url}");
                 continue;
             }
-            opts.seen_urls.lock().unwrap().push(url.clone());
+            opts.seen_urls.write().unwrap().push(url.clone());
 
             let res = fetch_article(&url);
             let payload = match res {

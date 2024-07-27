@@ -33,12 +33,13 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
 
     let links = get_articles_links(&tab).context("ouest-france")?;
     info!("found {} articles", links.len());
+    assert!(links.len() > 0);
     for url in links {
-        if opts.seen_urls.lock().unwrap().contains(&url) {
+        if opts.seen_urls.read().unwrap().contains(&url) {
             trace!("already seen {url}");
             continue;
         }
-        opts.seen_urls.lock().unwrap().push(url.clone());
+        opts.seen_urls.write().unwrap().push(url.clone());
 
         let res = super::fetch_article(&url);
         let payload = match res {

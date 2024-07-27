@@ -1,6 +1,6 @@
 use std::{
     ffi::OsStr,
-    sync::{Arc, Mutex},
+    sync::{Arc, RwLock},
     time::Duration,
 };
 
@@ -18,7 +18,7 @@ use tokio::{
 pub fn init(
     config: &Config,
     sources: Vec<&'static (&'static str, SourceFn)>,
-    seen_urls: Arc<Mutex<Vec<String>>>,
+    seen_urls: Arc<RwLock<Vec<String>>>,
     telegram: Arc<Telegram>,
 ) -> Receiver<anyhow::Result<News>> {
     let config = Arc::new(config.clone());

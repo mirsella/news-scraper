@@ -5,14 +5,14 @@ use anyhow::anyhow;
 use headless_chrome::Browser;
 use serde::{Deserialize, Serialize};
 use shared::News;
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, RwLock};
 use std::time::Duration;
 use tokio::sync::mpsc::Sender;
 
 pub struct GetNewsOpts {
     pub browser: Browser,
     pub tx: Sender<anyhow::Result<News>>,
-    pub seen_urls: Arc<Mutex<Vec<String>>>,
+    pub seen_urls: Arc<RwLock<Vec<String>>>,
 }
 
 #[derive(Debug, Deserialize, Serialize)]

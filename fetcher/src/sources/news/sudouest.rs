@@ -38,8 +38,9 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
 
     let links = get_articles_links(&tab).context("sudouest")?;
     debug!("found {} links", links.len());
+    assert!(links.len() > 0);
     for url in links {
-        if opts.seen_urls.lock().unwrap().contains(&url) {
+        if opts.seen_urls.read().unwrap().contains(&url) {
             trace!("already seen {url}");
             continue;
         }
@@ -66,7 +67,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
                 continue;
             }
         };
-        opts.seen_urls.lock().unwrap().push(url);
+        opts.seen_urls.write().unwrap().push(url);
         if let Err(e) = opts.tx.blocking_send(payload) {
             error!("blocking_send: {e}");
             break;

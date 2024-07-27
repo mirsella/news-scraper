@@ -27,11 +27,11 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
     let links = get_articles_links(&tab).context("get_articles_links")?;
     info!("found {} articles", links.len());
     for url in links {
-        if opts.seen_urls.lock().unwrap().contains(&url) {
+        if opts.seen_urls.read().unwrap().contains(&url) {
             trace!("already seen {url}");
             continue;
         }
-        opts.seen_urls.lock().unwrap().push(url.clone());
+        opts.seen_urls.write().unwrap().push(url.clone());
         let tags: Vec<_> = ["adventure", "lemediaexperience"]
             .into_iter()
             .map(str::to_string)
