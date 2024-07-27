@@ -55,7 +55,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
                 std::fs::write("sciencesetavenir-error.png", data).unwrap();
             })?;
         trace!("found {} links on {category}", links.len());
-        assert!(links.len() > 0);
+        assert!(!links.is_empty());
         for url in links {
             if opts.seen_urls.read().unwrap().contains(&url) {
                 trace!("already seen {url}");

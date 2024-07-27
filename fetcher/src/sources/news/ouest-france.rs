@@ -25,7 +25,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
         .context("navigate_to")?;
     tab.wait_until_navigated().context("wait_until_navigated")?;
 
-    if let Ok(cookie) = tab.find_element("#didomi-popup > div > div > div > div.didomi-popup-notice-text-container > div > div > div > div.content-btns > button.su-button.su-fullwidth-mobile.su-primary") {
+    if let Ok(cookie) = tab.find_element("#didomi-notice-agree-button") {
         cookie.click().context("clicking on cookie")?;
         thread::sleep(Duration::from_secs(1));
         trace!("clicked cookie");
@@ -33,7 +33,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
 
     let links = get_articles_links(&tab).context("ouest-france")?;
     info!("found {} articles", links.len());
-    assert!(links.len() > 0);
+    assert!(!links.is_empty());
     for url in links {
         if opts.seen_urls.read().unwrap().contains(&url) {
             trace!("already seen {url}");
