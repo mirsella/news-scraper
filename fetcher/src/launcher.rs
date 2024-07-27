@@ -26,6 +26,7 @@ pub fn init(
         LaunchOptionsBuilder::default()
             .window_size(Some((1920, 1080)))
             .headless(config.chrome_headless.unwrap_or(true))
+            .devtools(false)
             .user_data_dir(config.chrome_data_dir.clone())
             .args(vec![OsStr::new("--blink-settings=imagesEnabled=false")])
             .idle_browser_timeout(Duration::from_secs(60))
