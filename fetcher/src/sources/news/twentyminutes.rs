@@ -2,19 +2,21 @@ use super::{GetNewsOpts, News};
 use anyhow::{Context, Result};
 use headless_chrome::Tab;
 use log::{debug, error, trace};
-use std::sync::Arc;
+use std::{sync::Arc, thread, time::Duration};
 
 fn get_articles_links(tab: &Arc<Tab>) -> Result<Vec<String>> {
-    tab.find_element(".infinite-more-btn")?.scroll_into_view()?;
+    for _ in 0..5 {
+        tab.find_element("#latest-articles-container > div > button")
+            .context("find_element `Voir plus d’articles`")?
+            .click()
+            .context("click `Voir plus d’articles`")?;
+        thread::sleep(Duration::from_secs(1));
+    }
     let links: Vec<String> = tab
-        .find_elements("article > a")
-        .expect("article not found")
+        .find_elements("#latest-articles-container a")
+        .expect("latest-articles-container articles not found")
         .iter()
-        .map(|el| {
-            let mut link = el.get_attribute_value("href").unwrap().expect("no href ??");
-            link.insert_str(0, "https://www.20minutes.fr");
-            link
-        })
+        .map(|el| el.get_attribute_value("href").unwrap().expect("no href ??"))
         .collect();
     Ok(links)
 }
@@ -28,7 +30,13 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
         .context("navigate_to")?;
     tab.wait_until_navigated().context("wait_until_navigated")?;
 
-    let links = get_articles_links(&tab).context("20minutes")?;
+    if let Ok(cookie) = tab.find_element("#didomi-notice-agree-button") {
+        cookie.click().context("clicking on cookie")?;
+        std::thread::sleep(std::time::Duration::from_secs(1));
+        trace!("clicked cookie");
+    }
+
+    let links = get_articles_links(&tab).context("20minutes get_articles_links")?;
     assert!(!links.is_empty());
     for url in links {
         if opts.seen_urls.read().unwrap().contains(&url) {
