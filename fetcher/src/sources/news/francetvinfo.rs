@@ -56,7 +56,9 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
         tab.wait_until_navigated().context("wait_until_navigated")?;
         let links = get_articles_links(&tab).context("francetvinfo")?;
         trace!("found {} links on {category}", links.len());
-        assert!(!links.is_empty());
+        if links.is_empty() {
+            return Err(anyhow::anyhow!("no links found"));
+        }
         for link in links {
             let url = format!("https://www.francetvinfo.fr{}", link);
             if opts.seen_urls.read().unwrap().contains(&url) {

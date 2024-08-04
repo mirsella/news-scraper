@@ -47,7 +47,9 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
     thread::sleep(Duration::from_secs(2));
 
     let links = get_articles_links(&tab).context("reddit-upliftingnews")?;
-    assert!(!links.is_empty());
+    if links.is_empty() {
+        return Err(anyhow::anyhow!("no links found"));
+    }
     for url in links {
         if opts.seen_urls.read().unwrap().contains(&url) {
             trace!("already seen {url}");

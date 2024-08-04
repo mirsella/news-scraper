@@ -24,7 +24,9 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
     tab.wait_until_navigated().context("wait_until_navigated")?;
 
     let links = get_articles_links(&tab).context("positivr")?;
-    assert!(!links.is_empty());
+    if links.is_empty() {
+        return Err(anyhow::anyhow!("no links found"));
+    }
     for url in links {
         if opts.seen_urls.read().unwrap().contains(&url) {
             trace!("already seen {url}");

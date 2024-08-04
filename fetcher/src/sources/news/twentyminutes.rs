@@ -37,7 +37,9 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
     }
 
     let links = get_articles_links(&tab).context("20minutes get_articles_links")?;
-    assert!(!links.is_empty());
+    if links.is_empty() {
+        return Err(anyhow::anyhow!("no links found"));
+    }
     for url in links {
         if opts.seen_urls.read().unwrap().contains(&url) {
             trace!("already seen {url}");
