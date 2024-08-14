@@ -5,6 +5,8 @@ use log::{debug, error, trace, warn};
 use std::sync::Arc;
 
 fn get_articles_links(tab: &Arc<Tab>) -> Result<Vec<String>> {
+    tab.wait_for_elements(".article-wrapper > a")
+        .context("wait_for_elements .article-wrapper > a")?;
     let result = tab
         .evaluate(
             "Array.from(document.querySelectorAll('.article-wrapper > a')).map(e => e.href)",
