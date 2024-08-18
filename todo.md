@@ -1,6 +1,6 @@
 find a way fix duplicates news because of different providers giving same news:
-need to update from using providers prefix to using tags
-update sources to use tags
+need to update from using providers prefix to using tags:
+need to fix seen_urls, instead of vec<url>, might use vec<(url, provider)>
 
 sources to add:
 
