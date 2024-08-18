@@ -70,7 +70,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
                     tags: vec![category.to_string()],
                     title: res.title,
                     caption: res.description,
-                    provider: "leparisien".to_string(),
+                    provider: "fr::leparisien".to_string(),
                     date: res
                         .published
                         .parse()

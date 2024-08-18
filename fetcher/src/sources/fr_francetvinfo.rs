@@ -72,7 +72,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
                 Ok(res) => Ok(News {
                     title: res.title,
                     caption: res.description,
-                    provider: "francetvinfo".to_string(),
+                    provider: "fr::francetvinfo".to_string(),
                     tags: vec!["france".to_string()],
                     date: res
                         .published

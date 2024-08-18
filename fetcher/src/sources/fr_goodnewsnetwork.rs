@@ -38,7 +38,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
             Ok(res) => Ok(News {
                 title: res.title,
                 caption: res.description,
-                provider: "goodnewsnetwork".to_string(),
+                provider: "fr::goodnewsnetwork".to_string(),
                 date: res
                     .published
                     .parse()

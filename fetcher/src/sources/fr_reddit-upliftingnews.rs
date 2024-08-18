@@ -78,7 +78,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
             Ok(res) => Ok(News {
                 title: res.title,
                 caption: res.description,
-                provider: "reddit-upliftingnews".to_string(),
+                provider: "fr::reddit-upliftingnews".to_string(),
                 date: res.published.parse().unwrap_or_else(|_| Local::now()),
                 body: res.content,
                 link: url,

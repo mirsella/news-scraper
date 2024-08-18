@@ -41,7 +41,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
                 tags: vec!["france".to_string()],
                 title: res.title,
                 caption: res.description,
-                provider: "lavoixdunord".to_string(),
+                provider: "fr::lavoixdunord".to_string(),
                 date: res
                     .published
                     .parse()
