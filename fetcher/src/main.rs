@@ -75,12 +75,12 @@ async fn main() -> Result<()> {
             .collect(),
         None => SOURCES.iter().collect(),
     };
-    let seen_urls: Vec<String> = db
-        .query("select link from news with index link")
-        .await?
-        .take((0, "link"))
-        .unwrap_or_default();
-    let seen_urls = Arc::new(RwLock::new(seen_urls));
+    let seen_news: Vec<String> = {
+        let mut ret = db.query("select link, provider from news").await?;
+        // FIXME: hash link and provider
+        ret.take(0).unwrap_or_default()
+    };
+    let seen_urls = Arc::new(RwLock::new(seen_news));
     let mut rx = launcher::init(&config, sources, seen_urls, telegram.clone());
     while let Some(recved) = rx.recv().await {
         let mut news = match recved {
