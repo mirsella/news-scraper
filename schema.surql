@@ -49,43 +49,22 @@ DEFINE FIELD link ON news TYPE string ASSERT string::is::url($value);
 DEFINE FIELD note ON news TYPE string DEFAULT "";
 DEFINE FIELD provider ON news TYPE string ASSERT $value != NONE PERMISSIONS FOR update NONE;
 DEFINE FIELD rating ON news TYPE option<int> ASSERT $value = NONE OR ($value >= 0 AND $value <= 100);
--- see https://github.com/surrealdb/surrealdb/issues/2150
-DEFINE FIELD tags ON news FLEXIBLE TYPE array<string>;
+DEFINE FIELD tags ON news TYPE array<string>;
 DEFINE FIELD title ON news TYPE string;
 DEFINE FIELD used ON news TYPE bool DEFAULT false;
 
-DEFINE TABLE news_feed AS SELECT * FROM news WHERE date >= time::now() - 1w PERMISSIONS FOR select, update WHERE $auth.activated == true CHANGEFEED 1w;
+DEFINE TABLE fr_feed AS SELECT * FROM news WHERE date >= time::now() - 1w AND string::startsWith(provider, "fr::") PERMISSIONS FOR select, update WHERE $auth.activated == true CHANGEFEED 1w;
+DEFINE TABLE ci_feed AS SELECT * FROM news WHERE date >= time::now() - 1w AND string::startsWith(provider, "ci::") PERMISSIONS FOR select, update WHERE $auth.activated == true CHANGEFEED 1w;
+DEFINE TABLE be_beed AS SELECT * FROM news WHERE date >= time::now() - 1w AND string::startsWith(provider, "be::") PERMISSIONS FOR select, update WHERE $auth.activated == true CHANGEFEED 1w;
+DEFINE TABLE quebec_feed AS SELECT * FROM news WHERE date >= time::now() - 1w AND string::startsWith(provider, "quebec::") PERMISSIONS FOR select, update WHERE $auth.activated == true CHANGEFEED 1w;
 
 DEFINE INDEX link ON news FIELDS link UNIQUE;
 DEFINE INDEX rating ON news FIELDS rating;
 DEFINE INDEX date ON news FIELDS date;
 
--- crash the db
 -- DEFINE ANALYZER news_analyzer TOKENIZERS blank,class,camel,punct FILTERS ascii,lowercase;
 -- DEFINE INDEX news_body ON news FIELDS text_body SEARCH ANALYZER news_analyzer BM25(1.2,0.75);
 -- DEFINE INDEX news_tags ON news FIELDS tags SEARCH ANALYZER news_analyzer BM25(1.2,0.75);
-
--- ------------------------------
--- TABLE: lme
--- ------------------------------
-
-DEFINE TABLE lme SCHEMAFULL PERMISSIONS FOR select, update WHERE $auth.activated == true CHANGEFEED 1w;
-
-DEFINE FIELD html_body ON lme TYPE string;
-DEFINE FIELD text_body ON lme TYPE string;
-DEFINE FIELD caption ON lme TYPE string;
-DEFINE FIELD date ON lme TYPE datetime ASSERT $value != NONE;
-DEFINE FIELD link ON lme TYPE string ASSERT string::is::url($value);
-DEFINE FIELD note ON lme TYPE string DEFAULT "";
-DEFINE FIELD provider ON lme TYPE string ASSERT $value != NONE PERMISSIONS FOR update NONE;
-DEFINE FIELD rating ON news TYPE option<int> ASSERT $value = NONE OR ($value >= 0 AND $value <= 100);
-DEFINE FIELD tags ON lme TYPE array<string>;
-DEFINE FIELD title ON lme TYPE string;
-DEFINE FIELD used ON lme TYPE bool DEFAULT false;
-
-DEFINE INDEX link ON lme FIELDS link UNIQUE;
-DEFINE INDEX rating ON lme FIELDS rating;
-DEFINE INDEX date ON lme FIELDS date;
 
 -- ------------------------------
 -- TABLE: user

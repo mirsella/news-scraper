@@ -1,5 +1,4 @@
-mod lme;
-mod news;
+automod::dir!("src/sources");
 
 use anyhow::anyhow;
 use headless_chrome::Browser;
@@ -73,5 +72,34 @@ pub fn parse_article(str: impl AsRef<str>) -> Result<ApiResponse, anyhow::Error>
 }
 
 pub type SourceFn = fn(GetNewsOpts) -> anyhow::Result<()>;
-pub type SourceType = &'static [(&'static str, SourceFn)];
-pub static SOURCES: [(&str, SourceType); 2] = [("news", &news::SOURCES), ("lme", &lme::SOURCES)];
+pub static SOURCES: &[(&str, SourceFn)] = &[
+    ("fr::google", fr_google::get_news),
+    ("fr::lavoixdunord", fr_lavoixdunord::get_news),
+    ("fr::goodnewsnetwork", fr_goodnewsnetwork::get_news),
+    ("fr::positivr", fr_positivr::get_news),
+    ("fr::reporterre", fr_reporterre::get_news),
+    ("fr::sciencesetavenir", fr_sciencesetavenir::get_news),
+    (
+        "fr::reddit-upliftingnews",
+        fr_reddit_upliftingnews::get_news,
+    ),
+    ("fr::20minutes", fr_twentyminutes::get_news),
+    ("fr::sudouest", fr_sudouest::get_news),
+    ("fr::ouest-france", fr_ouest_france::get_news),
+    ("fr::leparisien", fr_leparisien::get_news),
+    ("fr::francetvinfo", fr_francetvinfo::get_news),
+    ("fr::futura-sciences", fr_futura_sciences::get_news),
+    (
+        "lme::national-history-museum",
+        lme_national_history_museum::get_news,
+    ),
+    // ("lme::travelandleisure", lme_travelandleisure::get_news),
+    // ("lme::bbc", lme_bbc::get_news),
+    ("lme::capturetheatlas", lme_capturetheatlas::get_news),
+    ("lme::bbcearth", lme_bbcearth::get_news),
+    ("lme::smithsonianmag", lme_smithsonianmag::get_news),
+    ("lme::geo", lme_geo::get_news),
+    ("lme::nationalgeographic", lme_nationalgeographic::get_news),
+    ("lme::theguardian", lme_theguardian::get_news),
+    ("lme::futura-sciences", lme_futura_sciences::get_news),
+];
