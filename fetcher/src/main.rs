@@ -83,7 +83,7 @@ async fn main() -> Result<()> {
     let seen_urls = Arc::new(RwLock::new(seen_urls));
     let mut rx = launcher::init(&config, sources, seen_urls, telegram.clone());
     while let Some(recved) = rx.recv().await {
-        let news = match recved {
+        let mut news = match recved {
             Ok(news) => news,
             Err(err) => {
                 error!("recv: {:#?}", err);
@@ -98,6 +98,13 @@ async fn main() -> Result<()> {
             news.provider,
             news.title,
             news.link
+        );
+        news.tags.push(
+            news.provider
+                .split_once("::")
+                .expect("a valid provider with ::")
+                .0
+                .to_string(),
         );
         let html_body = sanitize_html(&news.body);
         let text_body = extract_clean_text(&html_body);

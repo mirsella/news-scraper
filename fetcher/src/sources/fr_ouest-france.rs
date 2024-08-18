@@ -46,7 +46,6 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
         let res = super::fetch_article(&url);
         let payload = match res {
             Ok(res) => Ok(News {
-                tags: vec!["france".to_string()],
                 title: res.title,
                 caption: res.description,
                 provider: "fr::ouest-france".to_string(),
@@ -56,6 +55,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
                     .unwrap_or_else(|_| chrono::Local::now()),
                 body: res.content,
                 link: url,
+                ..Default::default()
             }),
             Err(err) => {
                 debug!("fetch_article: {err}");

@@ -39,13 +39,13 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
                 title: res.title,
                 caption: res.description,
                 provider: "fr::positivr".to_string(),
-                tags: vec!["france".to_string()],
                 date: res
                     .published
                     .parse()
                     .unwrap_or_else(|_| chrono::Local::now()),
                 body: res.content,
                 link: url,
+                ..Default::default()
             }),
             Err(err) => {
                 debug!("fetch_article: {}", err);
