@@ -76,11 +76,11 @@ async fn main() -> Result<()> {
         None => SOURCES.iter().collect(),
     };
     // provider, link
-    let seen_news: Vec<(String, String)> = {
-        let mut ret = db.query("select link, provider from news").await?;
-        // FIXME: hash link and provider
-        ret.take(0).unwrap_or_default()
-    };
+    let seen_news: Vec<(String, String)> = db
+        .query("select provider, link from news")
+        .await?
+        .take(0)
+        .unwrap_or_default();
     let seen_news = Arc::new(RwLock::new(seen_news));
     let mut rx = launcher::init(&config, sources, seen_news.clone(), telegram.clone());
     while let Some(recved) = rx.recv().await {
@@ -106,36 +106,37 @@ async fn main() -> Result<()> {
             .iter()
             .any(|(_, l)| l == &news.link)
         {
-            // TODO: merge with existing news in db
+            // TODO: merge with existing news in db instead of db.create
             unimplemented!()
-        }
-        news.tags.push(
-            news.provider
-                .split_once("::")
-                .expect("a valid provider with ::")
-                .0
-                .to_string(),
-        );
-        let html_body = sanitize_html(&news.body);
-        let text_body = extract_clean_text(&html_body);
-        let result: Result<Vec<DbNews>, surrealdb::Error> = db
-            .create("news")
-            .content(DbNews {
-                title: news.title.into(),
-                link: news.link.into(),
-                tags: news.tags,
-                html_body: html_body.into(),
-                text_body: text_body.into(),
-                provider: news.provider.into(),
-                date: DateTime::from(news.date).into(),
-                caption: news.caption.into(),
-                ..Default::default()
-            })
-            .await;
-        if let Err(e) = result {
-            error!("db.create: {:#?}", e);
-            thread::sleep(Duration::from_secs(5));
-            continue;
+        } else {
+            news.tags.push(
+                news.provider
+                    .split_once("::")
+                    .expect("a valid provider with ::")
+                    .0
+                    .to_string(),
+            );
+            let html_body = sanitize_html(&news.body);
+            let text_body = extract_clean_text(&html_body);
+            let result: Result<Vec<DbNews>, surrealdb::Error> = db
+                .create("news")
+                .content(DbNews {
+                    title: news.title.into(),
+                    link: news.link.into(),
+                    tags: news.tags,
+                    html_body: html_body.into(),
+                    text_body: text_body.into(),
+                    provider: news.provider.into(),
+                    date: DateTime::from(news.date).into(),
+                    caption: news.caption.into(),
+                    ..Default::default()
+                })
+                .await;
+            if let Err(e) = result {
+                error!("db.create: {:#?}", e);
+                thread::sleep(Duration::from_secs(5));
+                continue;
+            }
         }
         counter += 1;
     }
