@@ -54,6 +54,7 @@ DEFINE FIELD title ON news TYPE string;
 DEFINE FIELD used ON news TYPE bool DEFAULT false;
 
 DEFINE TABLE fr_feed AS SELECT * FROM news WHERE date >= time::now() - 1w AND string::startsWith(provider, "fr::") PERMISSIONS FOR select, update WHERE $auth.activated == true CHANGEFEED 1w;
+DEFINE TABLE lme_feed AS SELECT * FROM news WHERE date >= time::now() - 1w AND string::startsWith(provider, "lme::") PERMISSIONS FOR select, update WHERE $auth.activated == true CHANGEFEED 1w;
 DEFINE TABLE ci_feed AS SELECT * FROM news WHERE date >= time::now() - 1w AND string::startsWith(provider, "ci::") PERMISSIONS FOR select, update WHERE $auth.activated == true CHANGEFEED 1w;
 DEFINE TABLE be_beed AS SELECT * FROM news WHERE date >= time::now() - 1w AND string::startsWith(provider, "be::") PERMISSIONS FOR select, update WHERE $auth.activated == true CHANGEFEED 1w;
 DEFINE TABLE quebec_feed AS SELECT * FROM news WHERE date >= time::now() - 1w AND string::startsWith(provider, "quebec::") PERMISSIONS FOR select, update WHERE $auth.activated == true CHANGEFEED 1w;
