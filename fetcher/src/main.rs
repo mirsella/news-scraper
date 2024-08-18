@@ -75,13 +75,14 @@ async fn main() -> Result<()> {
             .collect(),
         None => SOURCES.iter().collect(),
     };
-    let seen_news: Vec<String> = {
+    // provider, link
+    let seen_news: Vec<(String, String)> = {
         let mut ret = db.query("select link, provider from news").await?;
         // FIXME: hash link and provider
         ret.take(0).unwrap_or_default()
     };
-    let seen_urls = Arc::new(RwLock::new(seen_news));
-    let mut rx = launcher::init(&config, sources, seen_urls, telegram.clone());
+    let seen_news = Arc::new(RwLock::new(seen_news));
+    let mut rx = launcher::init(&config, sources, seen_news.clone(), telegram.clone());
     while let Some(recved) = rx.recv().await {
         let mut news = match recved {
             Ok(news) => news,
@@ -99,6 +100,15 @@ async fn main() -> Result<()> {
             news.title,
             news.link
         );
+        if seen_news
+            .read()
+            .unwrap()
+            .iter()
+            .any(|(_, l)| l == &news.link)
+        {
+            // TODO: merge with existing news in db
+            unimplemented!()
+        }
         news.tags.push(
             news.provider
                 .split_once("::")

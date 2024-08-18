@@ -11,7 +11,7 @@ use tokio::sync::mpsc::Sender;
 pub struct GetNewsOpts {
     pub browser: Browser,
     pub tx: Sender<anyhow::Result<News>>,
-    pub seen_urls: Arc<RwLock<Vec<String>>>,
+    pub seen_urls: Arc<RwLock<Vec<(String, String)>>>,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
