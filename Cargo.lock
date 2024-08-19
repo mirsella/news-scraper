@@ -1091,6 +1091,7 @@ dependencies = [
  "automod",
  "chrono",
  "clap",
+ "ctrlc",
  "env_logger",
  "futures",
  "headless_chrome",

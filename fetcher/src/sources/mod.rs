@@ -22,14 +22,7 @@ pub struct GetNewsOpts {
 impl GetNewsOpts {
     // is the link seen with the current provider?
     pub fn is_seen(&self, link: &str) -> bool {
-        let prefix_tag = self
-            .provider
-            .to_string()
-            .split_once("::")
-            .unwrap()
-            .0
-            .to_string();
-        // check tags for prefix
+        let prefix_tag = extract_prefix_from_provider(&self.provider);
         if self
             .seen_links
             .read()
@@ -46,6 +39,10 @@ impl GetNewsOpts {
             .push(SeenLink(link.into(), vec![prefix_tag]));
         false
     }
+}
+
+pub fn extract_prefix_from_provider(module: &str) -> String {
+    module.split_once("::").unwrap().0.to_string()
 }
 
 #[derive(Debug, Deserialize, Serialize)]

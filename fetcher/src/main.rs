@@ -4,13 +4,16 @@ use anyhow::Result;
 use chrono::DateTime;
 use clap::Parser;
 use env_logger::Builder;
-use log::{error, info, trace};
+use log::{debug, error, info, trace};
 use shared::{config::Config, db_news::DbNews, *};
-use sources::{SeenLink, SOURCES};
+use sources::{extract_prefix_from_provider, SeenLink, SOURCES};
 use std::{
     env,
-    process::exit,
-    sync::{Arc, RwLock},
+    process::{self, exit},
+    sync::{
+        atomic::{AtomicU16, Ordering},
+        Arc, RwLock,
+    },
     thread,
     time::Duration,
 };
@@ -67,7 +70,28 @@ async fn main() -> Result<()> {
     .await?;
     db.use_ns("news").use_db("news").await?;
 
-    let mut counter = 0;
+    let counter = Arc::new(AtomicU16::default());
+    {
+        let counter = counter.clone();
+        ctrlc::set_handler(move || {
+            info!("ctrl-c received, exiting. ");
+            info!("Total news recorded: {}", counter.load(Ordering::Relaxed));
+            process::exit(0);
+        })
+        .unwrap();
+    }
+    {
+        let counter = counter.clone();
+        std::panic::set_hook(Box::new(move |panic_info| {
+            println!(
+                "Exiting due to panic. Number of tasks done: {}",
+                counter.load(Ordering::SeqCst)
+            );
+            println!("Panic info: {:?}", panic_info);
+            process::exit(1);
+        }));
+    }
+
     let sources: Vec<_> = match cli.enable {
         Some(ref enabled) => SOURCES
             .iter()
@@ -100,18 +124,17 @@ async fn main() -> Result<()> {
             news.title,
             news.link
         );
+        news.tags.push(extract_prefix_from_provider(&news.provider));
         if seen_news
             .read()
             .unwrap()
             .iter()
             .any(|SeenLink(l, _)| l == &news.link)
         {
-            log::warn!(
+            debug!(
                 "news already seen with different provider, merging: tags: {:?}, link: {}",
-                news.tags,
-                news.link
+                news.tags, news.link
             );
-            // TODO: add the prefix to the tags: fr, lme, ci, etc...
             let result: Result<_, surrealdb::Error> = db
                 .query("update news set tags = array::union(tags, $newtags) return none")
                 .bind(("newtags", news.tags))
@@ -121,15 +144,8 @@ async fn main() -> Result<()> {
                 thread::sleep(Duration::from_secs(5));
                 continue;
             }
-            exit(0);
         } else {
-            news.tags.push(
-                news.provider
-                    .split_once("::")
-                    .expect("a valid provider with ::")
-                    .0
-                    .to_string(),
-            );
+            info!("new news not seen, {}", news.link);
             let html_body = sanitize_html(&news.body);
             let text_body = extract_clean_text(&html_body);
             let result: Result<Vec<DbNews>, surrealdb::Error> = db
@@ -152,8 +168,8 @@ async fn main() -> Result<()> {
                 continue;
             }
         }
-        counter += 1;
+        counter.fetch_add(1, Ordering::Relaxed);
     }
-    info!("Total news recorded: {}", counter);
+    info!("Total news recorded: {}", counter.load(Ordering::Relaxed));
     Ok(())
 }
