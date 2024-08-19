@@ -73,8 +73,8 @@ DEFINE INDEX date ON news FIELDS date;
 
 DEFINE TABLE user SCHEMAFULL PERMISSIONS FOR select, update, delete WHERE id = $auth.id, FOR create NONE;
 
-DEFINE FIELD created_date ON user TYPE datetime DEFAULT time::now() PERMISSIONS FOR update NONE;
-DEFINE FIELD activated ON user TYPE bool DEFAULT false PERMISSIONS FOR select WHERE true, FOR update NONE;
+DEFINE FIELD created_date ON user TYPE datetime DEFAULT time::now() PERMISSIONS FOR update, delete NONE;
+DEFINE FIELD activated ON user TYPE bool DEFAULT false PERMISSIONS FOR select WHERE true, FOR update, delete NONE;
 DEFINE FIELD name ON user TYPE string ASSERT string::len($value) > 0;
 DEFINE FIELD password ON user TYPE string VALUE $before OR crypto::argon2::generate($value) ASSERT string::len($value) > 0;
 
