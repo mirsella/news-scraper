@@ -149,15 +149,16 @@ async fn main() -> Result<()> {
                 news.tags, news.link
             );
             let result: Result<_, surrealdb::Error> = db
-                .query("update news set tags = array::union(tags, $newtags) return none")
+                .query("update news set tags = array::union(tags, $newtags) where link = $link return none")
                 .bind(("newtags", news.tags.clone()))
+                .bind(("link", news.link.clone()))
                 .await;
             error = match result {
                 Ok(result) => result.check().err().map(Into::into),
                 Err(e) => Some(e.into()),
             };
         } else {
-            info!("new news not seen: {}", news.link);
+            debug!("new news: {}", news.link);
             let html_body = sanitize_html(&news.body);
             let text_body = extract_clean_text(&html_body);
             let result: Result<Vec<DbNews>, surrealdb::Error> = db
