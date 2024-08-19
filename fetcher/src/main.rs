@@ -6,7 +6,7 @@ use clap::Parser;
 use env_logger::Builder;
 use log::{error, info, trace};
 use shared::{config::Config, db_news::DbNews, *};
-use sources::SOURCES;
+use sources::{SeenLink, SOURCES};
 use std::{
     env,
     process::exit,
@@ -36,7 +36,7 @@ struct Cli {
 #[tokio::main]
 async fn main() -> Result<()> {
     Builder::new()
-        .parse_filters(&env::var("RUST_LOG").unwrap_or("fetcher=trace".into()))
+        .parse_filters(&env::var("RUST_LOG").unwrap_or("fetcher=debug".into()))
         .init();
 
     let cli = Cli::parse();
@@ -76,8 +76,8 @@ async fn main() -> Result<()> {
         None => SOURCES.iter().collect(),
     };
     // provider, link
-    let seen_news: Vec<(String, String)> = db
-        .query("select provider, link from news")
+    let seen_news: Vec<SeenLink> = db
+        .query("select link, tags from news")
         .await?
         .take(0)
         .unwrap_or_default();
@@ -104,10 +104,16 @@ async fn main() -> Result<()> {
             .read()
             .unwrap()
             .iter()
-            .any(|(_, l)| l == &news.link)
+            .any(|SeenLink(l, _)| l == &news.link)
         {
+            log::warn!(
+                "news already seen with different provider, merging: tags: {:?}, link: {}",
+                news.tags,
+                news.link
+            );
+            // TODO: add the prefix to the tags: fr, lme, ci, etc...
             let result: Result<_, surrealdb::Error> = db
-                .query("update news set tags = array::union(tags, $newtags)")
+                .query("update news set tags = array::union(tags, $newtags) return none")
                 .bind(("newtags", news.tags))
                 .await;
             if let Err(e) = result {
@@ -115,6 +121,7 @@ async fn main() -> Result<()> {
                 thread::sleep(Duration::from_secs(5));
                 continue;
             }
+            exit(0);
         } else {
             news.tags.push(
                 news.provider

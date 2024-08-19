@@ -9,20 +9,41 @@ use std::sync::{Arc, RwLock};
 use std::time::Duration;
 use tokio::sync::mpsc::Sender;
 
+/// (link, tags)
+#[derive(Deserialize)]
+pub struct SeenLink(pub String, pub Vec<String>);
+
 pub struct GetNewsOpts {
     pub browser: Browser,
     pub tx: Sender<anyhow::Result<News>>,
-    pub seen_links: Arc<RwLock<Vec<(String, String)>>>,
+    pub seen_links: Arc<RwLock<Vec<SeenLink>>>,
     pub provider: String,
 }
 impl GetNewsOpts {
-    pub fn is_seen(&self, link: impl Into<String>) -> bool {
-        let tuple = (self.provider.clone(), link.into());
-        if self.seen_links.read().unwrap().contains(&tuple) {
-            trace!("already seen {}:{}", tuple.0, tuple.1);
+    // is the link seen with the current provider?
+    pub fn is_seen(&self, link: &str) -> bool {
+        let prefix_tag = self
+            .provider
+            .to_string()
+            .split_once("::")
+            .unwrap()
+            .0
+            .to_string();
+        // check tags for prefix
+        if self
+            .seen_links
+            .read()
+            .unwrap()
+            .iter()
+            .any(|SeenLink(l, tags)| l == link && tags.contains(&prefix_tag))
+        {
+            trace!("already seen {} with provider {}", link, self.provider);
             return true;
         }
-        self.seen_links.write().unwrap().push(tuple);
+        self.seen_links
+            .write()
+            .unwrap()
+            .push(SeenLink(link.into(), vec![prefix_tag]));
         false
     }
 }

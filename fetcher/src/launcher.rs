@@ -4,7 +4,7 @@ use std::{
     time::Duration,
 };
 
-use crate::sources::{GetNewsOpts, SourceFn};
+use crate::sources::{GetNewsOpts, SeenLink, SourceFn};
 use anyhow::Context;
 use futures::{stream::FuturesUnordered, StreamExt};
 use headless_chrome::{Browser, LaunchOptionsBuilder};
@@ -18,7 +18,7 @@ use tokio::{
 pub fn init(
     config: &Config,
     sources: Vec<&'static (&'static str, SourceFn)>,
-    seen_links: Arc<RwLock<Vec<(String, String)>>>,
+    seen_links: Arc<RwLock<Vec<SeenLink>>>,
     telegram: Arc<Telegram>,
 ) -> Receiver<anyhow::Result<News>> {
     let config = Arc::new(config.clone());
