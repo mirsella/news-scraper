@@ -106,8 +106,15 @@ async fn main() -> Result<()> {
             .iter()
             .any(|(_, l)| l == &news.link)
         {
-            // TODO: merge with existing news in db instead of db.create
-            unimplemented!()
+            let result: Result<_, surrealdb::Error> = db
+                .query("update news set tags = array::union(tags, $newtags)")
+                .bind(("newtags", news.tags))
+                .await;
+            if let Err(e) = result {
+                error!("db merge new tags: {:#?}", e);
+                thread::sleep(Duration::from_secs(5));
+                continue;
+            }
         } else {
             news.tags.push(
                 news.provider
