@@ -59,20 +59,18 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
         if links.is_empty() {
             return Err(anyhow::anyhow!("no links found"));
         }
-        for link in links {
-            let url = format!("https://www.francetvinfo.fr{}", link);
-            if opts.seen_urls.read().unwrap().contains(&url) {
-                trace!("already seen {url}");
+        for url in links {
+            let url = format!("https://www.francetvinfo.fr{}", &url);
+            if opts.is_seen(&url) {
                 continue;
             }
-            opts.seen_urls.write().unwrap().push(url.clone());
 
             let res = super::fetch_article(&url);
             let payload = match res {
                 Ok(res) => Ok(News {
                     title: res.title,
                     caption: res.description,
-                    provider: "fr::francetvinfo".to_string(),
+                    provider: opts.provider.clone(),
                     date: res
                         .published
                         .parse()

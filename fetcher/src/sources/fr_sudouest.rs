@@ -44,10 +44,10 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
         return Err(anyhow::anyhow!("no links found"));
     }
     for url in links {
-        if opts.seen_urls.read().unwrap().contains(&url) {
-            trace!("already seen {url}");
+        if opts.is_seen(&url) {
             continue;
         }
+
         let cookiewall = "En acceptant les cookies, vous pourrez accéder aux contenus";
         let payload = match super::fetch_article(&url) {
             Ok(res) if res.content.contains(cookiewall) => {
@@ -57,7 +57,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
             Ok(res) => Ok(News {
                 title: res.title,
                 caption: res.description,
-                provider: "fr::sudouest".to_string(),
+                provider: opts.provider.clone(),
                 date: res
                     .published
                     .parse()
@@ -71,7 +71,6 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
                 continue;
             }
         };
-        opts.seen_urls.write().unwrap().push(url);
         if let Err(e) = opts.tx.blocking_send(payload) {
             error!("blocking_send: {e}");
             break;

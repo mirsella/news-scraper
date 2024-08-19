@@ -2,7 +2,7 @@ use super::GetNewsOpts;
 use crate::sources::parse_article;
 use anyhow::{Context, Result};
 use headless_chrome::Tab;
-use log::{debug, info, trace};
+use log::{debug, info};
 use shared::News;
 use std::sync::Arc;
 
@@ -41,11 +41,9 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
         let links = get_articles_links(&tab).context("lme::futura-sciences")?;
         info!("found {} articles in category {category}", links.len());
         for url in links {
-            if opts.seen_urls.read().unwrap().contains(&url) {
-                trace!("already seen {url}");
+            if opts.is_seen(&url) {
                 continue;
             }
-            opts.seen_urls.write().unwrap().push(url.clone());
 
             let tags: Vec<_> = url
                 .strip_prefix("https://futura-sciences.com/")
@@ -87,7 +85,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
                 Ok(res) => Ok(News {
                     title: res.title,
                     caption: res.description,
-                    provider: "lme::futura-sciences".to_string(),
+                    provider: opts.provider.clone(),
                     tags,
                     date: res
                         .published

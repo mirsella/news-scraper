@@ -41,16 +41,14 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
         return Err(anyhow::anyhow!("no links found"));
     }
     for url in links {
-        if opts.seen_urls.read().unwrap().contains(&url) {
-            trace!("already seen {url}");
+        if opts.is_seen(&url) {
             continue;
         }
-        opts.seen_urls.write().unwrap().push(url.clone());
         let payload = match super::fetch_article(&url) {
             Ok(res) => Ok(News {
                 title: res.title,
                 caption: res.description,
-                provider: "fr::20minutes".to_string(),
+                provider: opts.provider.clone(),
                 date: res
                     .published
                     .parse()

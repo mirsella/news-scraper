@@ -2,7 +2,7 @@ use super::{GetNewsOpts, News};
 use anyhow::{Context, Result};
 use chrono::Local;
 use headless_chrome::{Element, Tab};
-use log::{debug, error, trace, warn};
+use log::{debug, error, warn};
 use std::{sync::Arc, thread, time::Duration};
 
 fn _isvalidpost(el: &Element) -> bool {
@@ -51,11 +51,9 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
         return Err(anyhow::anyhow!("no links found"));
     }
     for url in links {
-        if opts.seen_urls.read().unwrap().contains(&url) {
-            trace!("already seen {url}");
+        if opts.is_seen(&url) {
             continue;
         }
-        opts.seen_urls.write().unwrap().push(url.clone());
 
         let mut res = super::fetch_article(&url);
         if let Err(err) = res {
@@ -78,7 +76,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
             Ok(res) => Ok(News {
                 title: res.title,
                 caption: res.description,
-                provider: "fr::reddit-upliftingnews".to_string(),
+                provider: opts.provider.clone(),
                 date: res.published.parse().unwrap_or_else(|_| Local::now()),
                 body: res.content,
                 link: url,

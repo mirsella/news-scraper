@@ -18,7 +18,7 @@ use tokio::{
 pub fn init(
     config: &Config,
     sources: Vec<&'static (&'static str, SourceFn)>,
-    seen_urls: Arc<RwLock<Vec<(String, String)>>>,
+    seen_links: Arc<RwLock<Vec<(String, String)>>>,
     telegram: Arc<Telegram>,
 ) -> Receiver<anyhow::Result<News>> {
     let config = Arc::new(config.clone());
@@ -44,14 +44,15 @@ pub fn init(
 
     while futures.len() < config.chrome_concurrent.unwrap_or(4) {
         match sources.pop() {
-            Some(fetch) => {
-                info!("spawning {}", fetch.0);
+            Some(source) => {
+                info!("spawning {}", source.0);
                 let opts = GetNewsOpts {
                     browser: browser.clone(),
                     tx: tx.clone(),
-                    seen_urls: seen_urls.clone(),
+                    seen_links: seen_links.clone(),
+                    provider: source.0.to_string(),
                 };
-                futures.push(spawn_blocking(move || fetch.1(opts).context(fetch.0)));
+                futures.push(spawn_blocking(move || source.1(opts).context(source.0)));
             }
             None => break,
         }
@@ -70,14 +71,15 @@ pub fn init(
                 _ => (),
             };
             match sources.pop() {
-                Some(fetch) => {
-                    info!("spawning {}", fetch.0);
+                Some(source) => {
+                    info!("spawning {}", source.0);
                     let opts = GetNewsOpts {
                         browser: browser.clone(),
                         tx: tx.clone(),
-                        seen_urls: seen_urls.clone(),
+                        seen_links: seen_links.clone(),
+                        provider: source.0.to_string(),
                     };
-                    futures.push(spawn_blocking(move || fetch.1(opts).context(fetch.0)));
+                    futures.push(spawn_blocking(move || source.1(opts).context(source.0)));
                 }
                 None => break,
             }

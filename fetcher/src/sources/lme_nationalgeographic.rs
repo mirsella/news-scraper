@@ -38,11 +38,9 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
         let links = get_articles_links(&tab).context("get_articles_links")?;
         info!("found {} articles", links.len());
         for url in links {
-            if opts.seen_urls.read().unwrap().contains(&url) {
-                trace!("already seen {url}");
+            if opts.is_seen(&url) {
                 continue;
             }
-            opts.seen_urls.write().unwrap().push(url.clone());
             let tags: Vec<_> = [category, "lemediaexperience"]
                 .into_iter()
                 .map(str::to_string)
@@ -73,7 +71,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
                 Ok(res) => Ok(News {
                     title: res.title,
                     caption: res.description,
-                    provider: "lme::nationalgeographic".to_string(),
+                    provider: opts.provider.clone(),
                     tags,
                     date: res
                         .published

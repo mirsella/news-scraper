@@ -59,18 +59,16 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
             return Err(anyhow::anyhow!("no links found"));
         }
         for url in links {
-            if opts.seen_urls.read().unwrap().contains(&url) {
-                trace!("already seen {url}");
+            if opts.is_seen(&url) {
                 continue;
             }
-            opts.seen_urls.write().unwrap().push(url.clone());
 
             let res = fetch_article(&url);
             let payload = match res {
                 Ok(res) => Ok(News {
                     title: res.title,
                     caption: res.description,
-                    provider: "fr::sciencesetavenir".to_string(),
+                    provider: opts.provider.clone(),
                     tags: vec![category.to_string(), "science".to_string()],
                     date: res
                         .published

@@ -2,6 +2,7 @@ automod::dir!("src/sources");
 
 use anyhow::anyhow;
 use headless_chrome::Browser;
+use log::trace;
 use serde::{Deserialize, Serialize};
 use shared::News;
 use std::sync::{Arc, RwLock};
@@ -11,7 +12,19 @@ use tokio::sync::mpsc::Sender;
 pub struct GetNewsOpts {
     pub browser: Browser,
     pub tx: Sender<anyhow::Result<News>>,
-    pub seen_urls: Arc<RwLock<Vec<(String, String)>>>,
+    pub seen_links: Arc<RwLock<Vec<(String, String)>>>,
+    pub provider: String,
+}
+impl GetNewsOpts {
+    pub fn is_seen(&self, link: impl Into<String>) -> bool {
+        let tuple = (self.provider.clone(), link.into());
+        if self.seen_links.read().unwrap().contains(&tuple) {
+            trace!("already seen {}:{}", tuple.0, tuple.1);
+            return true;
+        }
+        self.seen_links.write().unwrap().push(tuple);
+        false
+    }
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -49,6 +62,7 @@ pub fn fetch_article(url: impl AsRef<str>) -> Result<ApiResponse, anyhow::Error>
     let json_result: ApiResponse = response.into_json()?;
     Ok(json_result)
 }
+
 pub fn parse_article(str: impl AsRef<str>) -> Result<ApiResponse, anyhow::Error> {
     let str = str.as_ref();
     let endpoint = format!(
