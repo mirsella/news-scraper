@@ -34,6 +34,12 @@ struct Cli {
     env_file: String,
     #[arg(long, help = "Run chrome in headless mode")]
     headless: Option<bool>,
+    #[arg(
+        long,
+        help = "Don't throw an error if the database is empty",
+        default_value = "false"
+    )]
+    ignore_empty_db: bool,
 }
 
 #[tokio::main]
@@ -87,7 +93,7 @@ async fn main() -> Result<()> {
                 "Exiting due to panic. Number of tasks done: {}",
                 counter.load(Ordering::SeqCst)
             );
-            println!("Panic info: {:?}", panic_info);
+            println!("Panic info: {}", panic_info);
             process::exit(1);
         }));
     }
@@ -105,6 +111,10 @@ async fn main() -> Result<()> {
         .await?
         .take(0)
         .unwrap_or_default();
+
+    assert!(!seen_news.is_empty() || cli.ignore_empty_db);
+    info!("Total news already seen: {}", seen_news.len());
+
     let seen_news = Arc::new(RwLock::new(seen_news));
     let mut rx = launcher::init(&config, sources, seen_news.clone(), telegram.clone());
     while let Some(recved) = rx.recv().await {
@@ -129,7 +139,7 @@ async fn main() -> Result<()> {
             .read()
             .unwrap()
             .iter()
-            .any(|SeenLink(l, _)| l == &news.link)
+            .any(|seen_link| seen_link.link == news.link)
         {
             debug!(
                 "news already seen with different provider, merging: tags: {:?}, link: {}",
@@ -141,7 +151,10 @@ async fn main() -> Result<()> {
                 .await;
             if let Err(e) = result {
                 error!("db merge new tags: {:#?}", e);
-                thread::sleep(Duration::from_secs(5));
+                telegram
+                    .send(format!("fetcher: db merge new tags: {e:#?}"))
+                    .ok();
+                thread::sleep(Duration::from_secs(1));
                 continue;
             }
         } else {
@@ -164,7 +177,8 @@ async fn main() -> Result<()> {
                 .await;
             if let Err(e) = result {
                 error!("db.create: {:#?}", e);
-                thread::sleep(Duration::from_secs(5));
+                telegram.send(format!("fetcher: db.create: {e:#?}")).ok();
+                thread::sleep(Duration::from_secs(1));
                 continue;
             }
         }

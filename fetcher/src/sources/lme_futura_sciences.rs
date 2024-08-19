@@ -38,7 +38,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
             .context("navigate_to")?
             .wait_until_navigated()
             .context("wait_until_navigated")?;
-        let links = get_articles_links(&tab).context("lme::futura-sciences")?;
+        let links = get_articles_links(&tab).context(opts.provider.clone())?;
         info!("found {} articles in category {category}", links.len());
         for url in links {
             if opts.is_seen(&url) {

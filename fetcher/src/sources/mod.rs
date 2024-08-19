@@ -10,8 +10,11 @@ use std::time::Duration;
 use tokio::sync::mpsc::Sender;
 
 /// (link, tags)
-#[derive(Deserialize)]
-pub struct SeenLink(pub String, pub Vec<String>);
+#[derive(Deserialize, Debug)]
+pub struct SeenLink {
+    pub link: String,
+    pub tags: Vec<String>,
+}
 
 pub struct GetNewsOpts {
     pub browser: Browser,
@@ -28,15 +31,15 @@ impl GetNewsOpts {
             .read()
             .unwrap()
             .iter()
-            .any(|SeenLink(l, tags)| l == link && tags.contains(&prefix_tag))
+            .any(|seen_link| seen_link.link == link && seen_link.tags.contains(&prefix_tag))
         {
             trace!("already seen {} with provider {}", link, self.provider);
             return true;
         }
-        self.seen_links
-            .write()
-            .unwrap()
-            .push(SeenLink(link.into(), vec![prefix_tag]));
+        self.seen_links.write().unwrap().push(SeenLink {
+            link: link.into(),
+            tags: vec![prefix_tag],
+        });
         false
     }
 }

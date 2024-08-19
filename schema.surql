@@ -53,11 +53,11 @@ DEFINE FIELD tags ON news TYPE array<string>;
 DEFINE FIELD title ON news TYPE string;
 DEFINE FIELD used ON news TYPE bool DEFAULT false;
 
-DEFINE TABLE fr_feed AS SELECT * FROM news WHERE date >= time::now() - 1w AND array::contains(tags, "fr") PERMISSIONS FOR select, update WHERE $auth.activated == true CHANGEFEED 1w;
-DEFINE TABLE lme_feed AS SELECT * FROM news WHERE date >= time::now() - 1w AND array::contains(tags, "lme") PERMISSIONS FOR select, update WHERE $auth.activated == true CHANGEFEED 1w;
-DEFINE TABLE ci_feed AS SELECT * FROM news WHERE date >= time::now() - 1w AND array::contains(tags, "ci") PERMISSIONS FOR select, update WHERE $auth.activated == true CHANGEFEED 1w;
-DEFINE TABLE be_beed AS SELECT * FROM news WHERE date >= time::now() - 1w AND array::contains(tags, "be") PERMISSIONS FOR select, update WHERE $auth.activated == true CHANGEFEED 1w;
-DEFINE TABLE quebec_feed AS SELECT * FROM news WHERE date >= time::now() - 1w AND array::contains(tags, "quebec") PERMISSIONS FOR select, update WHERE $auth.activated == true CHANGEFEED 1w;
+DEFINE TABLE fr_feed AS SELECT * FROM news WHERE date >= time::now() - 1w AND array::find_index(tags, "fr") ;
+DEFINE TABLE lme_feed AS SELECT * FROM news WHERE date >= time::now() - 1w AND array::find_index(tags, "lme");
+DEFINE TABLE ci_feed AS SELECT * FROM news WHERE date >= time::now() - 1w AND array::find_index(tags, "ci");
+DEFINE TABLE be_beed AS SELECT * FROM news WHERE date >= time::now() - 1w AND array::find_index(tags, "be");
+DEFINE TABLE quebec_feed AS SELECT * FROM news WHERE date >= time::now() - 1w AND array::find_index(tags, "quebec");
 
 DEFINE INDEX link ON news FIELDS link UNIQUE;
 DEFINE INDEX rating ON news FIELDS rating;
