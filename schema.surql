@@ -39,25 +39,25 @@ DEFINE SCOPE user SESSION 1w
 -- TABLE: news
 -- ------------------------------
 
-DEFINE TABLE news SCHEMAFULL PERMISSIONS FOR select, update WHERE $auth.activated == true CHANGEFEED 1w;
+DEFINE TABLE news SCHEMAFULL PERMISSIONS FOR select, update WHERE $auth.activated == true;
 
-DEFINE FIELD html_body ON news TYPE string;
-DEFINE FIELD text_body ON news TYPE string;
-DEFINE FIELD caption ON news TYPE string;
+DEFINE FIELD html_body ON news TYPE string ASSERT $value != NONE;
+DEFINE FIELD text_body ON news TYPE string ASSERT $value != NONE;
+DEFINE FIELD caption ON news TYPE string ASSERT $value != NONE;
 DEFINE FIELD date ON news TYPE datetime ASSERT $value != NONE;
 DEFINE FIELD link ON news TYPE string ASSERT string::is::url($value);
 DEFINE FIELD note ON news TYPE string DEFAULT "";
-DEFINE FIELD provider ON news TYPE string ASSERT $value != NONE PERMISSIONS FOR update NONE;
+DEFINE FIELD provider ON news TYPE string ASSERT $value != NONE;
 DEFINE FIELD rating ON news TYPE option<int> ASSERT $value = NONE OR ($value >= 0 AND $value <= 100);
 DEFINE FIELD tags ON news TYPE array<string>;
-DEFINE FIELD title ON news TYPE string;
+DEFINE FIELD title ON news TYPE string ASSERT $value != NONE;
 DEFINE FIELD used ON news TYPE bool DEFAULT false;
 
 DEFINE TABLE fr_feed AS SELECT * FROM news WHERE date >= time::now() - 1w AND array::find_index(tags, "fr") ;
 DEFINE TABLE lme_feed AS SELECT * FROM news WHERE date >= time::now() - 1w AND array::find_index(tags, "lme");
-DEFINE TABLE ci_feed AS SELECT * FROM news WHERE date >= time::now() - 1w AND array::find_index(tags, "ci");
-DEFINE TABLE be_beed AS SELECT * FROM news WHERE date >= time::now() - 1w AND array::find_index(tags, "be");
-DEFINE TABLE quebec_feed AS SELECT * FROM news WHERE date >= time::now() - 1w AND array::find_index(tags, "quebec");
+-- DEFINE TABLE ci_feed AS SELECT * FROM news WHERE date >= time::now() - 1w AND array::find_index(tags, "ci");
+-- DEFINE TABLE be_feed AS SELECT * FROM news WHERE date >= time::now() - 1w AND array::find_index(tags, "be");
+-- DEFINE TABLE quebec_feed AS SELECT * FROM news WHERE date >= time::now() - 1w AND array::find_index(tags, "quebec");
 
 DEFINE INDEX link ON news FIELDS link UNIQUE;
 DEFINE INDEX rating ON news FIELDS rating;

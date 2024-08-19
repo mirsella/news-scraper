@@ -8,6 +8,8 @@ use log::{debug, error, info, trace};
 use shared::{config::Config, db_news::DbNews, *};
 use sources::{extract_prefix_from_provider, SeenLink, SOURCES};
 use std::{
+    borrow::Cow,
+    convert::Into,
     env,
     process::{self, exit},
     sync::{
@@ -135,6 +137,7 @@ async fn main() -> Result<()> {
             news.link
         );
         news.tags.push(extract_prefix_from_provider(&news.provider));
+        let error: Option<anyhow::Error>;
         if seen_news
             .read()
             .unwrap()
@@ -147,26 +150,22 @@ async fn main() -> Result<()> {
             );
             let result: Result<_, surrealdb::Error> = db
                 .query("update news set tags = array::union(tags, $newtags) return none")
-                .bind(("newtags", news.tags))
+                .bind(("newtags", news.tags.clone()))
                 .await;
-            if let Err(e) = result {
-                error!("db merge new tags: {:#?}", e);
-                telegram
-                    .send(format!("fetcher: db merge new tags: {e:#?}"))
-                    .ok();
-                thread::sleep(Duration::from_secs(1));
-                continue;
-            }
+            error = match result {
+                Ok(result) => result.check().err().map(Into::into),
+                Err(e) => Some(e.into()),
+            };
         } else {
-            info!("new news not seen, {}", news.link);
+            info!("new news not seen: {}", news.link);
             let html_body = sanitize_html(&news.body);
             let text_body = extract_clean_text(&html_body);
             let result: Result<Vec<DbNews>, surrealdb::Error> = db
                 .create("news")
                 .content(DbNews {
                     title: news.title.into(),
-                    link: news.link.into(),
-                    tags: news.tags,
+                    link: Cow::Owned(news.link.clone()),
+                    tags: news.tags.clone(),
                     html_body: html_body.into(),
                     text_body: text_body.into(),
                     provider: news.provider.into(),
@@ -175,14 +174,20 @@ async fn main() -> Result<()> {
                     ..Default::default()
                 })
                 .await;
-            if let Err(e) = result {
-                error!("db.create: {:#?}", e);
-                telegram.send(format!("fetcher: db.create: {e:#?}")).ok();
-                thread::sleep(Duration::from_secs(1));
-                continue;
-            }
+            error = result.err().map(Into::into);
         }
-        counter.fetch_add(1, Ordering::Relaxed);
+        seen_news.write().unwrap().push(SeenLink {
+            link: news.link,
+            tags: news.tags,
+        });
+        if let Some(e) = error {
+            error!("db: {e:#?}");
+            telegram.send(format!("fetcher: db: {e:#?}")).ok();
+            thread::sleep(Duration::from_secs(1));
+            continue;
+        } else {
+            counter.fetch_add(1, Ordering::Relaxed);
+        }
     }
     info!("Total news recorded: {}", counter.load(Ordering::Relaxed));
     Ok(())

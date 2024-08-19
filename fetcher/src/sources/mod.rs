@@ -36,10 +36,6 @@ impl GetNewsOpts {
             trace!("already seen {} with provider {}", link, self.provider);
             return true;
         }
-        self.seen_links.write().unwrap().push(SeenLink {
-            link: link.into(),
-            tags: vec![prefix_tag],
-        });
         false
     }
 }
