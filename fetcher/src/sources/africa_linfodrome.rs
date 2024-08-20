@@ -2,12 +2,12 @@ use super::{GetNewsOpts, News};
 use anyhow::{bail, Context, Result};
 use headless_chrome::Tab;
 use log::{error, info};
-use std::sync::Arc;
+use std::{sync::Arc, thread, time::Duration};
 
 fn get_articles_links(tab: &Arc<Tab>) -> Result<Vec<String>> {
     let links: Vec<String> = tab
-        .find_elements(".artPerm")
-        .context("find_elements .artPerm")?
+        .find_elements(".artPerm[href]")
+        .context("find_elements .artPerm[href]")?
         .iter()
         .map(|el| {
             let href = el.get_attribute_value("href").unwrap().expect("no href ??");
@@ -26,6 +26,9 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
     tab.navigate_to("https://www.linfodrome.com/")
         .context("navigate_to")?;
     tab.wait_until_navigated().context("wait_until_navigated")?;
+
+    tab.evaluate("setInterval(() => window.scrollBy(0, 1000), 50)", false)?;
+    thread::sleep(Duration::from_secs(2));
 
     let links = get_articles_links(&tab)?;
     info!("found {} articles", links.len());
