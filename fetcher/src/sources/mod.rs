@@ -140,4 +140,5 @@ pub static SOURCES: &[(&str, SourceFn)] = &[
     ("africa::apanews", africa_apanews::get_news),
     ("africa::abidjan", africa_abidjan::get_news),
     ("africa::linfodrome", africa_linfodrome::get_news),
+    ("africa::tv5monde", africa_tvfivemonde::get_news),
 ];

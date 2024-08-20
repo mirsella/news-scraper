@@ -2,7 +2,7 @@ use super::{GetNewsOpts, News};
 use anyhow::bail;
 use anyhow::{Context, Result};
 use headless_chrome::Tab;
-use log::{debug, error, info, trace};
+use log::{debug, error, info};
 use std::{sync::Arc, thread, time::Duration};
 
 const BLACKLIST: &[&str] = &["ouestfrance-auto", "ouestfrance-immo", "ouestfrance-emploi"];
@@ -29,7 +29,6 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
     if let Ok(cookie) = tab.find_element("#didomi-notice-agree-button") {
         cookie.click().context("clicking on cookie")?;
         thread::sleep(Duration::from_secs(1));
-        trace!("clicked cookie");
     }
 
     let links = get_articles_links(&tab).context("ouest-france")?;
