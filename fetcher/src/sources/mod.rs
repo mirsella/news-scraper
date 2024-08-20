@@ -141,7 +141,7 @@ pub static SOURCES: &[(&str, SourceFn)] = &[
     ("africa::africanews", africa_africanews::get_news),
     // belgium
     ("be::rtbf", be_rtbf::get_news),
-    // ("be::rtl", be_rtl::get_news),
+    ("be::rtl", be_rtl::get_news),
     // ("be::lalibre", be_lalibre::get_news),
     // quebec
 ];
