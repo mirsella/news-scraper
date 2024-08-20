@@ -6,8 +6,8 @@ use std::sync::Arc;
 
 fn get_articles_links(tab: &Arc<Tab>) -> Result<Vec<String>> {
     let links: Vec<String> = tab
-        .find_elements(".ebloc-mea, .card-article > a")
-        .context("find_elements .ebloc-mea, .card-article > a")?
+        .find_elements(".ebloc-mea, .card-article > a, .slick-slide[href]")
+        .context("find_elements .ebloc-mea, .card-article > a, .slick-slide[href]")?
         .iter()
         .map(|el| el.get_attribute_value("href").unwrap().expect("no href ??"))
         .collect();
