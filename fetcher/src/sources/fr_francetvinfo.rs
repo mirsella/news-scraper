@@ -1,4 +1,5 @@
 use super::{GetNewsOpts, News};
+use anyhow::bail;
 use anyhow::{anyhow, Context, Result};
 use headless_chrome::Tab;
 use log::{debug, error, trace};
@@ -57,7 +58,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
         let links = get_articles_links(&tab).context("francetvinfo")?;
         trace!("found {} links on {category}", links.len());
         if links.is_empty() {
-            return Err(anyhow::anyhow!("no links found"));
+            bail!("no links found");
         }
         for url in links {
             let url = format!("https://www.francetvinfo.fr{}", &url);

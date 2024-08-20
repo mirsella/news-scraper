@@ -1,4 +1,5 @@
 use super::{GetNewsOpts, News};
+use anyhow::bail;
 use anyhow::{Context, Result};
 use headless_chrome::Tab;
 use log::{debug, error};
@@ -28,7 +29,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
 
     let links = get_articles_links(&tab).context("lavoixdunord get_articles_links")?;
     if links.is_empty() {
-        return Err(anyhow::anyhow!("no links found"));
+        bail!("no links found");
     }
     for url in links {
         if opts.is_seen(&url) {

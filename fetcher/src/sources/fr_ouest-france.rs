@@ -1,4 +1,5 @@
 use super::{GetNewsOpts, News};
+use anyhow::bail;
 use anyhow::{Context, Result};
 use headless_chrome::Tab;
 use log::{debug, error, info, trace};
@@ -8,7 +9,7 @@ const BLACKLIST: &[&str] = &["ouestfrance-auto", "ouestfrance-immo", "ouestfranc
 fn get_articles_links(tab: &Arc<Tab>) -> Result<Vec<String>> {
     let links: Vec<String> = tab
         .find_elements(".titre-lien")
-        .expect(".titre-lien")
+        .context(".titre-lien")?
         .iter()
         .map(|el| el.get_attribute_value("href").unwrap().expect("no href ??"))
         .filter(|url| !BLACKLIST.iter().any(|b| url.contains(b)))
@@ -34,7 +35,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
     let links = get_articles_links(&tab).context("ouest-france")?;
     info!("found {} articles", links.len());
     if links.is_empty() {
-        return Err(anyhow::anyhow!("no links found"));
+        bail!("no links found");
     }
     for url in links {
         if opts.is_seen(&url) {

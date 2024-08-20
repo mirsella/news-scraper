@@ -1,6 +1,6 @@
 use super::GetNewsOpts;
 use crate::sources::fetch_article;
-use anyhow::{Context, Result};
+use anyhow::{bail, Context, Result};
 use headless_chrome::Tab;
 use log::{debug, info};
 use shared::News;
@@ -38,6 +38,9 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
         .context("wait_until_navigated")?;
     let links = get_articles_links(&tab).context("get_articles_links")?;
     info!("found {} articles", links.len());
+    if links.is_empty() {
+        bail!("no links found");
+    }
     for url in links {
         if opts.is_seen(&url) {
             continue;

@@ -1,4 +1,5 @@
 use super::{GetNewsOpts, News};
+use anyhow::bail;
 use anyhow::{Context, Result};
 use chrono::Local;
 use headless_chrome::{Element, Tab};
@@ -48,7 +49,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
 
     let links = get_articles_links(&tab).context("reddit-upliftingnews")?;
     if links.is_empty() {
-        return Err(anyhow::anyhow!("no links found"));
+        bail!("no links found");
     }
     for url in links {
         if opts.is_seen(&url) {
