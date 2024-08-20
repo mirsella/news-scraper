@@ -104,6 +104,7 @@ pub fn parse_article(str: impl AsRef<str>) -> Result<ApiResponse, anyhow::Error>
 
 pub type SourceFn = fn(GetNewsOpts) -> anyhow::Result<()>;
 pub static SOURCES: &[(&str, SourceFn)] = &[
+    // gusnews french
     ("fr::google", fr_google::get_news),
     ("fr::lavoixdunord", fr_lavoixdunord::get_news),
     ("fr::goodnewsnetwork", fr_goodnewsnetwork::get_news),
@@ -120,6 +121,7 @@ pub static SOURCES: &[(&str, SourceFn)] = &[
     ("fr::leparisien", fr_leparisien::get_news),
     ("fr::francetvinfo", fr_francetvinfo::get_news),
     ("fr::futura-sciences", fr_futura_sciences::get_news),
+    // le media experience
     (
         "lme::national-history-museum",
         lme_national_history_museum::get_news,
@@ -133,4 +135,5 @@ pub static SOURCES: &[(&str, SourceFn)] = &[
     ("lme::nationalgeographic", lme_nationalgeographic::get_news),
     ("lme::theguardian", lme_theguardian::get_news),
     ("lme::futura-sciences", lme_futura_sciences::get_news),
+    // gusnews cote d'ivoire
 ];
