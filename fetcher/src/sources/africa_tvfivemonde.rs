@@ -31,10 +31,12 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
         thread::sleep(Duration::from_secs(1));
     }
 
-    tab.wait_for_element(".pager_more")
-        .context("wait_for_element .pager_more")?
-        .click()?;
-    thread::sleep(Duration::from_secs(10));
+    for _ in 0..3 {
+        tab.wait_for_element(".pager_more")
+            .context("wait_for_element .pager_more")?
+            .click()?;
+        thread::sleep(Duration::from_secs(1));
+    }
 
     let links = get_articles_links(&tab)?;
     info!("found {} articles", links.len());
