@@ -2,6 +2,7 @@ mod launcher;
 mod sources;
 use anyhow::Result;
 use chrono::DateTime;
+use clap::builder::PossibleValuesParser;
 use clap::Parser;
 use env_logger::Builder;
 use log::{debug, error, info, trace};
@@ -30,7 +31,7 @@ struct Cli {
         help = "List available news sources that can be used with --enable"
     )]
     list: bool,
-    #[arg(long, short, value_delimiter = ',', num_args = 1.., help = "Enable ONLY specified news sources")]
+    #[arg(long, short, value_delimiter = ',', num_args = 1.., help = "Enable ONLY specified news sources", value_parser = PossibleValuesParser::new(SOURCES.iter().map(|(name, _)| *name)))]
     enable: Option<Vec<String>>,
     #[arg(long, default_value = ".env")]
     env_file: String,
