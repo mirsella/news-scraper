@@ -31,13 +31,6 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
         thread::sleep(Duration::from_secs(1));
     }
 
-    for _ in 0..10 {
-        tab.wait_for_element("button.group")
-            .context("wait_for_element load more")?
-            .click()?;
-        thread::sleep(Duration::from_secs(1));
-    }
-
     let links = get_articles_links(&tab)?;
     info!("found {} articles", links.len());
     if links.is_empty() {
