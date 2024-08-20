@@ -104,7 +104,6 @@ pub fn parse_article(str: impl AsRef<str>) -> Result<ApiResponse, anyhow::Error>
 
 pub type SourceFn = fn(GetNewsOpts) -> anyhow::Result<()>;
 pub static SOURCES: &[(&str, SourceFn)] = &[
-    // gusnews french
     ("fr::google", fr_google::get_news),
     ("fr::lavoixdunord", fr_lavoixdunord::get_news),
     ("fr::goodnewsnetwork", fr_goodnewsnetwork::get_news),
@@ -121,7 +120,6 @@ pub static SOURCES: &[(&str, SourceFn)] = &[
     ("fr::leparisien", fr_leparisien::get_news),
     ("fr::francetvinfo", fr_francetvinfo::get_news),
     ("fr::futura-sciences", fr_futura_sciences::get_news),
-    // le media experience
     (
         "lme::national-history-museum",
         lme_national_history_museum::get_news,
@@ -135,11 +133,15 @@ pub static SOURCES: &[(&str, SourceFn)] = &[
     ("lme::nationalgeographic", lme_nationalgeographic::get_news),
     ("lme::theguardian", lme_theguardian::get_news),
     ("lme::futura-sciences", lme_futura_sciences::get_news),
-    // gusnews africa
     ("africa::lemonde", africa_lemonde::get_news),
     ("africa::apanews", africa_apanews::get_news),
     ("africa::abidjan", africa_abidjan::get_news),
     ("africa::linfodrome", africa_linfodrome::get_news),
     ("africa::tv5monde", africa_tvfivemonde::get_news),
     ("africa::africanews", africa_africanews::get_news),
+    // belgium
+    ("be::rtbf", be_rtbf::get_news),
+    // ("be::rtl", be_rtl::get_news),
+    // ("be::lalibre", be_lalibre::get_news),
+    // quebec
 ];
