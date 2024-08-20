@@ -53,11 +53,11 @@ DEFINE FIELD tags ON news TYPE array<string>;
 DEFINE FIELD title ON news TYPE string ASSERT $value != NONE;
 DEFINE FIELD used ON news TYPE bool DEFAULT false;
 
-DEFINE TABLE fr_feed AS SELECT * FROM news WHERE date >= time::now() - 1w AND array::find_index(tags, "fr") PERMISSIONS FOR select WHERE $auth.activated == true;
-DEFINE TABLE lme_feed AS SELECT * FROM news WHERE date >= time::now() - 1w AND array::find_index(tags, "lme") PERMISSIONS FOR select WHERE $auth.activated == true;
-DEFINE TABLE africa_feed AS SELECT * FROM news WHERE date >= time::now() - 1w AND array::find_index(tags, "africa") PERMISSIONS FOR select WHERE $auth.activated == true;
-DEFINE TABLE be_feed AS SELECT * FROM news WHERE date >= time::now() - 1w AND array::find_index(tags, "be") PERMISSIONS FOR select WHERE $auth.activated == true;
-DEFINE TABLE quebec_feed AS SELECT * FROM news WHERE date >= time::now() - 1w AND array::find_index(tags, "quebec") PERMISSIONS FOR select WHERE $auth.activated == true;
+DEFINE TABLE fr_feed AS SELECT * FROM news WHERE date >= time::now() - 1w AND array::find_index(tags, "fr") != none PERMISSIONS FOR select WHERE $auth.activated == true;
+DEFINE TABLE lme_feed AS SELECT * FROM news WHERE date >= time::now() - 1w AND array::find_index(tags, "lme") != none PERMISSIONS FOR select WHERE $auth.activated == true;
+DEFINE TABLE africa_feed AS SELECT * FROM news WHERE date >= time::now() - 1w AND array::find_index(tags, "africa") != none PERMISSIONS FOR select WHERE $auth.activated == true;
+DEFINE TABLE be_feed AS SELECT * FROM news WHERE date >= time::now() - 1w AND array::find_index(tags, "be") != none PERMISSIONS FOR select WHERE $auth.activated == true;
+DEFINE TABLE quebec_feed AS SELECT * FROM news WHERE date >= time::now() - 1w AND array::find_index(tags, "quebec") != none PERMISSIONS FOR select WHERE $auth.activated == true;
 
 DEFINE INDEX link ON news FIELDS link UNIQUE;
 DEFINE INDEX rating ON news FIELDS rating;
@@ -73,8 +73,8 @@ DEFINE INDEX date ON news FIELDS date;
 
 DEFINE TABLE user SCHEMAFULL PERMISSIONS FOR select, update, delete WHERE id = $auth.id, FOR create NONE;
 
-DEFINE FIELD created_date ON user TYPE datetime DEFAULT time::now() PERMISSIONS FOR update, delete NONE;
-DEFINE FIELD activated ON user TYPE bool DEFAULT false PERMISSIONS FOR select WHERE true, FOR update, delete NONE;
+DEFINE FIELD created_date ON user TYPE datetime DEFAULT time::now() PERMISSIONS FOR update NONE;
+DEFINE FIELD activated ON user TYPE bool DEFAULT false PERMISSIONS FOR select WHERE true, FOR update NONE;
 DEFINE FIELD name ON user TYPE string ASSERT string::len($value) > 0;
 DEFINE FIELD password ON user TYPE string VALUE $before OR crypto::argon2::generate($value) ASSERT string::len($value) > 0;
 
