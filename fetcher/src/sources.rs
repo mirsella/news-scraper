@@ -143,6 +143,7 @@ pub static SOURCES: &[(&str, SourceFn)] = &[
     ("be::lalibre", be_lalibre::get_news),
     // quebec
     // https://www.lapresse.ca/
+    ("quebec::lapresse", quebec_lapresse::get_news),
     // https://www.journaldequebec.com/actualite
     // https://montrealgazette.com/
     // https://www.thesuburban.com/
