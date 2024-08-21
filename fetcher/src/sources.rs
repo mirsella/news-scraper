@@ -142,12 +142,17 @@ pub static SOURCES: &[(&str, SourceFn)] = &[
     ("be::rtl", be_rtl::get_news),
     ("be::lalibre", be_lalibre::get_news),
     // quebec
-    // https://www.lapresse.ca/
     ("quebec::lapresse", quebec_lapresse::get_news),
     // https://www.journaldequebec.com/actualite
+    ("quebec::journaldequebec", quebec_journaldequebec::get_news),
     // https://montrealgazette.com/
-    // https://www.thesuburban.com/
-    // https://www.24heures.ca/actualites/montreal
+    // ("quebec::montrealgazette", quebec_montrealgazette::get_news),
     // https://www.qctonline.com/
+    // ("quebec::qctonline", quebec_qctonline::get_news),
+    // https://www.thesuburban.com/
+    // ("quebec::thesuburban", quebec_thesuburban::get_news),
+    // https://www.24heures.ca/actualites/montreal
+    // ("quebec::24heures", quebec_24heures::get_news),
     // https://www.tvanouvelles.ca/regional
+    // ("quebec::tvanouvelles", quebec_tvanouvelles::get_news),
 ];
