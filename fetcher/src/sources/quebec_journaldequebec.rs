@@ -2,7 +2,7 @@ use super::{GetNewsOpts, News};
 use anyhow::{bail, Context, Result};
 use headless_chrome::Tab;
 use log::{error, info};
-use std::{collections::HashSet, sync::Arc};
+use std::{collections::HashSet, sync::Arc, thread, time::Duration};
 
 fn get_articles_links(tab: &Arc<Tab>) -> Result<HashSet<String>> {
     let links = tab
@@ -26,6 +26,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
     tab.wait_for_element(".btn-default")
         .context("wait_for_element load more button")?
         .click()?;
+    thread::sleep(Duration::from_secs(1));
 
     let links = get_articles_links(&tab)?;
     info!("found {} articles", links.len());
