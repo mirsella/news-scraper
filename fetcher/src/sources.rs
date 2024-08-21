@@ -146,7 +146,7 @@ pub static SOURCES: &[(&str, SourceFn)] = &[
     // https://www.journaldequebec.com/actualite
     ("quebec::journaldequebec", quebec_journaldequebec::get_news),
     // https://montrealgazette.com/
-    // ("quebec::montrealgazette", quebec_montrealgazette::get_news),
+    ("quebec::montrealgazette", quebec_montrealgazette::get_news),
     // https://www.qctonline.com/
     // ("quebec::qctonline", quebec_qctonline::get_news),
     // https://www.thesuburban.com/
