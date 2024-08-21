@@ -9,7 +9,10 @@ fn get_articles_links(tab: &Arc<Tab>) -> Result<HashSet<String>> {
         .find_elements(".story-title > a")
         .context("find_elements articles links")?
         .iter()
-        .map(|el| el.get_attribute_value("href").unwrap().expect("no href ??"))
+        .map(|el| {
+            let href = el.get_attribute_value("href").unwrap().expect("no href ??");
+            "https://www.24heures.ca".to_string() + &href
+        })
         .collect();
     Ok(links)
 }
