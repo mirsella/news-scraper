@@ -145,10 +145,8 @@ pub static SOURCES: &[(&str, SourceFn)] = &[
     ("quebec::lapresse", quebec_lapresse::get_news),
     ("quebec::journaldequebec", quebec_journaldequebec::get_news),
     ("quebec::montrealgazette", quebec_montrealgazette::get_news),
-    // https://www.qctonline.com/
     ("quebec::qctonline", quebec_qctonline::get_news),
-    // https://www.thesuburban.com/
-    // ("quebec::thesuburban", quebec_thesuburban::get_news),
+    ("quebec::thesuburban", quebec_thesuburban::get_news),
     // https://www.24heures.ca/actualites/montreal
     // ("quebec::24heures", quebec_24heures::get_news),
     // https://www.tvanouvelles.ca/regional
