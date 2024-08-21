@@ -23,10 +23,15 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
         .context("navigate_to")?;
     tab.wait_until_navigated().context("wait_until_navigated")?;
 
+    if let Ok(cookie) = tab.find_element(".fc-button.fc-cta-consent") {
+        cookie.click().context("clicking on cookie")?;
+        thread::sleep(Duration::from_secs(1));
+    }
+
     tab.wait_for_element(".btn-default")
         .context("wait_for_element load more button")?
         .click()?;
-    thread::sleep(Duration::from_secs(1));
+    thread::sleep(Duration::from_secs(2));
 
     let links = get_articles_links(&tab)?;
     info!("found {} articles", links.len());
