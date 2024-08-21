@@ -9,7 +9,6 @@ use std::sync::{Arc, RwLock};
 use std::time::Duration;
 use tokio::sync::mpsc::Sender;
 
-/// (link, tags)
 #[derive(Deserialize, Debug)]
 pub struct SeenLink {
     pub link: String,
@@ -143,4 +142,11 @@ pub static SOURCES: &[(&str, SourceFn)] = &[
     ("be::rtl", be_rtl::get_news),
     ("be::lalibre", be_lalibre::get_news),
     // quebec
+    // https://www.lapresse.ca/
+    // https://www.journaldequebec.com/actualite
+    // https://montrealgazette.com/
+    // https://www.thesuburban.com/
+    // https://www.24heures.ca/actualites/montreal
+    // https://www.qctonline.com/
+    // https://www.tvanouvelles.ca/regional
 ];
