@@ -20,7 +20,7 @@ async fn retrieve_db_news(db: &Surreal<WsClient>) -> Result<Vec<DbNews>> {
         .query(
             "if $PROD=1 { return select * from news
 where rating == none
-AND date > time::floor(time::now() - 4d, 1d)
+AND date > time::floor(time::now() - 7d, 1d)
 AND used == false
 AND !string::contains(note, 'error rating')
 ORDER BY date DESC }",
