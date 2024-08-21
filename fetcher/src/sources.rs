@@ -113,7 +113,7 @@ pub static SOURCES: &[(&str, SourceFn)] = &[
         "fr::reddit-upliftingnews",
         fr_reddit_upliftingnews::get_news,
     ),
-    ("fr::20minutes", fr_twentyminutes::get_news),
+    ("fr::20minutes", fr_20minutes::get_news),
     ("fr::sudouest", fr_sudouest::get_news),
     ("fr::ouest-france", fr_ouest_france::get_news),
     ("fr::leparisien", fr_leparisien::get_news),
@@ -147,7 +147,6 @@ pub static SOURCES: &[(&str, SourceFn)] = &[
     ("quebec::montrealgazette", quebec_montrealgazette::get_news),
     ("quebec::qctonline", quebec_qctonline::get_news),
     ("quebec::thesuburban", quebec_thesuburban::get_news),
-    // https://www.24heures.ca/actualites/montreal
     // ("quebec::24heures", quebec_24heures::get_news),
     // https://www.tvanouvelles.ca/regional
     // ("quebec::tvanouvelles", quebec_tvanouvelles::get_news),
