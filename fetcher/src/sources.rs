@@ -147,7 +147,7 @@ pub static SOURCES: &[(&str, SourceFn)] = &[
     ("quebec::montrealgazette", quebec_montrealgazette::get_news),
     ("quebec::qctonline", quebec_qctonline::get_news),
     ("quebec::thesuburban", quebec_thesuburban::get_news),
-    // ("quebec::24heures", quebec_24heures::get_news),
+    ("quebec::24heures", quebec_24heures::get_news),
     // https://www.tvanouvelles.ca/regional
     // ("quebec::tvanouvelles", quebec_tvanouvelles::get_news),
 ];
