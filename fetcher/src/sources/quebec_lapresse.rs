@@ -2,10 +2,10 @@ use super::{GetNewsOpts, News};
 use anyhow::{bail, Context, Result};
 use headless_chrome::Tab;
 use log::{error, info};
-use std::sync::Arc;
+use std::{collections::HashSet, sync::Arc};
 
-fn get_articles_links(tab: &Arc<Tab>) -> Result<Vec<String>> {
-    let links: Vec<String> = tab
+fn get_articles_links(tab: &Arc<Tab>) -> Result<HashSet<String>> {
+    let links = tab
         .find_elements(".storyCard__cover")
         .context("find_elements articles links")?
         .iter()
