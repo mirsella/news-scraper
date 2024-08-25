@@ -29,7 +29,7 @@ pub fn init(
             .devtools(false)
             .user_data_dir(config.chrome_data_dir.clone())
             .args(vec![OsStr::new("--blink-settings=imagesEnabled=false")])
-            .idle_browser_timeout(Duration::from_secs(60))
+            .idle_browser_timeout(Duration::from_secs(120))
             .sandbox(false)
             .build()
             .unwrap(),
