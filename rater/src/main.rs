@@ -62,7 +62,7 @@ async fn main() -> Result<()> {
     .expect("Error setting Ctrl-C handler");
 
     let config = Config::load(".env").unwrap_or_else(|e| {
-        error!("config: {}", e);
+        error!(".env: {:?}", e);
         exit(1);
     });
 
