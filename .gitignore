@@ -1,4 +1,5 @@
 chrome_data
+*.json
 index.html
 data.surql
 history.txt
