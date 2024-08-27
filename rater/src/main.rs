@@ -136,14 +136,14 @@ async fn main() -> Result<()> {
                         None
                     }
                     Err(e) => {
-                        error!("rating {id}: {e}");
+                        error!("rating {id}: {e:?}");
                         news.rating = Some(0);
                         let newline = if news.note.is_empty() { "" } else { "\n" };
                         news.note = format!("{}{newline}rating failed: '{e}'", news.note).into();
                         // only send telegram notif if it's not a "sorry" message
                         if !e.to_string().to_lowercase().contains("i'm sorry") {
                             telegram
-                                .send(format!("rater: {id} {} rating failed: {e}", news.link))?;
+                                .send(format!("rater: {id} {} rating failed: {e:?}", news.link))?;
                         }
                         None
                     }

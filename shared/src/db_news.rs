@@ -104,8 +104,8 @@ impl DbNews {
             .ok_or(anyhow!("invalid response: {content}"))?;
         let rating = split
             .0
+            .to_lowercase()
             .trim_start_matches("rating: ")
-            .trim_start_matches("Rating: ")
             .parse::<u8>()
             .context(content.clone())?;
         let mut tags: Vec<String> = split
