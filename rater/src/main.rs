@@ -18,7 +18,7 @@ use tokio::task::JoinHandle;
 async fn retrieve_db_news(db: &Surreal<WsClient>) -> Result<Vec<DbNews>> {
     let db_news: Vec<DbNews> = db
         .query(
-            "if $PROD=1 { return select *, omit html_body from news
+            "if $PROD=1 { return select * from news
 where rating == none
 AND date > time::floor(time::now() - 7d, 1d)
 AND used == false
