@@ -43,19 +43,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
         tab.wait_for_elements(".alaune > div.visuel > a, a.overlay")
             .context("sciencesetavenir wait for element .alaune > div.visuel > a, a.overlay-une")?;
 
-        let links = get_articles_links(&tab)
-            .context("sciencesetavenir")
-            .inspect_err(|_error| {
-                let data = tab
-                    .capture_screenshot(
-                        headless_chrome::protocol::cdp::Page::CaptureScreenshotFormatOption::Png,
-                        None,
-                        None,
-                        true,
-                    )
-                    .unwrap();
-                std::fs::write("sciencesetavenir-error.png", data).unwrap();
-            })?;
+        let links = get_articles_links(&tab)?;
         trace!("found {} links on {category}", links.len());
         if links.is_empty() {
             bail!("no links found");
