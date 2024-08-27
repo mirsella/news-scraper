@@ -15,6 +15,8 @@ use tokio::{
     task::{spawn_blocking, JoinHandle},
 };
 
+/// this is because the headless chrome crate doesn't support using multiple tab at the same time
+/// if we want some parallelism, we need to spawn a whole new browser for each source
 fn new_browser(headless: bool) -> Browser {
     let browser = Browser::new(
         LaunchOptionsBuilder::default()
