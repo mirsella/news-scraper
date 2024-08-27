@@ -15,19 +15,12 @@ use tokio::{
     task::{spawn_blocking, JoinHandle},
 };
 
-pub fn init(
-    config: &Config,
-    sources: Vec<&'static (&'static str, SourceFn)>,
-    seen_links: Arc<RwLock<Vec<SeenLink>>>,
-    telegram: Arc<Telegram>,
-) -> Receiver<anyhow::Result<News>> {
-    let config = Arc::new(config.clone());
+fn new_browser(headless: bool) -> Browser {
     let browser = Browser::new(
         LaunchOptionsBuilder::default()
             .window_size(Some((1920, 1080)))
-            .headless(config.chrome_headless.unwrap_or(true))
+            .headless(headless)
             .devtools(false)
-            .user_data_dir(config.chrome_data_dir.clone())
             .args(vec![OsStr::new("--blink-settings=imagesEnabled=false")])
             .idle_browser_timeout(Duration::from_secs(120))
             .sandbox(false)
@@ -35,6 +28,16 @@ pub fn init(
             .unwrap(),
     )
     .unwrap();
+    browser
+}
+
+pub fn init(
+    config: &Config,
+    sources: Vec<&'static (&'static str, SourceFn)>,
+    seen_links: Arc<RwLock<Vec<SeenLink>>>,
+    telegram: Arc<Telegram>,
+) -> Receiver<anyhow::Result<News>> {
+    let config = Arc::new(config.clone());
     let (tx, rx) = channel(500);
     let mut futures: FuturesUnordered<JoinHandle<anyhow::Result<()>>> = FuturesUnordered::new();
     let mut sources: Vec<_> = sources
@@ -47,7 +50,7 @@ pub fn init(
             Some(source) => {
                 info!("spawning {}", source.0);
                 let opts = GetNewsOpts {
-                    browser: browser.clone(),
+                    browser: new_browser(config.chrome_headless.unwrap_or(true)),
                     tx: tx.clone(),
                     seen_links: seen_links.clone(),
                     provider: source.0.to_string(),
@@ -74,7 +77,7 @@ pub fn init(
                 Some(source) => {
                     info!("spawning {}", source.0);
                     let opts = GetNewsOpts {
-                        browser: browser.clone(),
+                        browser: new_browser(config.chrome_headless.unwrap_or(true)),
                         tx: tx.clone(),
                         seen_links: seen_links.clone(),
                         provider: source.0.to_string(),
