@@ -16,6 +16,6 @@ CMD ["/fetcher"]
 FROM alpine:3.18.3 AS rater
 RUN apk add --no-cache ca-certificates tzdata
 ENV TZ=Europe/Paris
-COPY --from=builder /app/target/x86_64-unknown-linux-musl/release/rater /rater
 COPY .env /.env
+COPY --from=builder /app/target/x86_64-unknown-linux-musl/release/rater /rater
 CMD ["/rater"]
