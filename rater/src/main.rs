@@ -23,7 +23,7 @@ where rating == none
 AND date > time::floor(time::now() - 7d, 1d)
 AND used == false
 AND !string::contains(note, 'error rating')
-ORDER BY date DESC }",
+ORDER BY date DESC limit 500 }",
         )
         .await?
         .take(0)?;
