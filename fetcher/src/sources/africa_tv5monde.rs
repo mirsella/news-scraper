@@ -29,14 +29,14 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
 
     if let Ok(cookie) = tab.find_element("#didomi-notice-disagree-button") {
         cookie.click().context("clicking on cookie")?;
-        thread::sleep(Duration::from_secs(1));
+        thread::sleep(Duration::from_secs(3));
     }
 
     for _ in 0..3 {
         tab.wait_for_element(".pager_more")
             .context("wait_for_element .pager_more")?
             .click()?;
-        thread::sleep(Duration::from_secs(1));
+        thread::sleep(Duration::from_secs(4));
     }
 
     let links = get_articles_links(&tab)?;
