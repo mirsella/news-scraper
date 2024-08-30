@@ -29,11 +29,6 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
         thread::sleep(Duration::from_secs(1));
     }
 
-    tab.wait_for_element(".btn")
-        .context("wait_for_element load more button")?
-        .click()?;
-    thread::sleep(Duration::from_secs(2));
-
     let links = get_articles_links(&tab)?;
     info!("found {} articles", links.len());
     if links.is_empty() {
