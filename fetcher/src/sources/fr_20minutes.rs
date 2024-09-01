@@ -11,7 +11,7 @@ fn get_articles_links(tab: &Arc<Tab>) -> Result<Vec<String>> {
             .context("find_element `Voir plus d’articles`")?
             .click()
             .context("click `Voir plus d’articles`")?;
-        thread::sleep(Duration::from_secs(1));
+        thread::sleep(Duration::from_secs(5));
     }
     let links: Vec<String> = tab
         .find_elements("#latest-articles-container a")
@@ -34,11 +34,11 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
 
     if let Ok(cookie) = tab.find_element("#didomi-notice-agree-button") {
         cookie.click().context("clicking on cookie")?;
-        std::thread::sleep(std::time::Duration::from_secs(1));
+        std::thread::sleep(std::time::Duration::from_secs(3));
         trace!("clicked cookie");
     }
 
-    let links = get_articles_links(&tab).context("20minutes get_articles_links")?;
+    let links = get_articles_links(&tab)?;
     if links.is_empty() {
         bail!("no links found");
     }
