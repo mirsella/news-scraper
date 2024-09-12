@@ -25,6 +25,8 @@ services:
     depends_on:
       - article-parser
       - surrealdb
+    labels:
+      - coolify.managed=false
     environment:
       ARTICLE_PARSER_URL: "http://article-parser:8081"
       SURREALDB_HOST: "surrealdb:8000"
