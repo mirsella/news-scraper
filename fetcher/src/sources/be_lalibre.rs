@@ -10,8 +10,11 @@ fn get_articles_links(tab: &Arc<Tab>) -> Result<Vec<String>> {
         .context("find_elements articles links")?
         .iter()
         .map(|el| {
-            let href = el.get_attribute_value("href").unwrap().expect("no href ??");
-            tab.get_url() + &href
+            let mut href = el.get_attribute_value("href").unwrap().expect("no href ??");
+            if !href.starts_with("http") {
+                href = tab.get_url() + &href
+            }
+            href
         })
         .collect();
     Ok(links)
