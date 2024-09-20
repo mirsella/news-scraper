@@ -8,7 +8,7 @@ use std::sync::Arc;
 fn get_articles_links(tab: &Arc<Tab>) -> Result<Vec<String>> {
     let links: Vec<String> = tab
         .find_elements(".entry-title > .naked")
-        .expect(".entry-title > .naked")
+        .context(".entry-title > .naked")?
         .iter()
         .map(|el| el.get_attribute_value("href").unwrap().expect("no href ??"))
         .collect();
