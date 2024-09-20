@@ -33,7 +33,7 @@ mod tests {
     #[ignore]
     fn it_creates_from_env() {
         if let Err(e) = dotenvy::dotenv() {
-            eprintln!("Error loading .env file: {}", e);
+            eprintln!("Error loading .env file: {e}");
         }
 
         let token = env::var("TELEGRAM_TOKEN").expect("TELEGRAM_TOKEN not set in env");

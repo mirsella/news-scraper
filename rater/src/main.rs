@@ -173,18 +173,18 @@ async fn main() -> Result<()> {
             match handle? {
                 Err(e) => {
                     running.store(false, Ordering::Relaxed);
-                    if let Err(e) = telegram.send(format!("rater: thread error: {}", e)) {
+                    if let Err(e) = telegram.send(format!("rater: thread error: {e}")) {
                         error!("TelegramError: {}", e);
                     }
                     return Err(e);
                 }
                 Ok(Some(news)) => {
                     news_done += 1;
-                    info!("{} {news_done}/{total_news} done.", news.id.expect("no id"))
+                    info!("{} {news_done}/{total_news} done.", news.id.expect("no id"));
                 }
                 _ => (),
             }
         }
-        info!("finished this batch {news_done}/{total_news}.")
+        info!("finished this batch {news_done}/{total_news}.");
     }
 }

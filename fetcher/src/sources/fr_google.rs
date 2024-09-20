@@ -35,8 +35,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
     for keyword in KEYWORDS {
         trace!("checking out keyword {keyword}");
         tab.navigate_to(&format!(
-            "https://www.google.com/search?q={}&tbm=nws&tbs=qdr%3Ad",
-            keyword
+            "https://www.google.com/search?q={keyword}&tbm=nws&tbs=qdr%3Ad"
         ))
         .context("navigate_to")?;
         tab.wait_until_navigated().context("wait_until_navigated")?;

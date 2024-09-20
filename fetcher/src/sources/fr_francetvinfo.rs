@@ -53,7 +53,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
     tab.set_user_agent(&user_agent, None, None)?;
     for category in CATEGORIES {
         trace!("checking out category {category}");
-        tab.navigate_to(&format!("https://www.francetvinfo.fr/{}/", category))
+        tab.navigate_to(&format!("https://www.francetvinfo.fr/{category}/"))
             .context("navigate_to")?;
         tab.wait_until_navigated().context("wait_until_navigated")?;
         let links = get_articles_links(&tab).context("francetvinfo")?;

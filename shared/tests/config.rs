@@ -21,6 +21,6 @@ fn test_load_config_default_path() {
 #[should_panic]
 fn test_load_config_invalid_path() {
     let config = Config::load("nonexistent.env");
-    println!("{:?}", config);
+    println!("{config:?}");
     config.unwrap();
 }

@@ -122,7 +122,7 @@ impl DbNews {
             .collect();
         // if response was truncated, remove the last unfinished tag
         if let Some(FinishReason::Length) = &choice.finish_reason {
-            _ = tags.pop()
+            _ = tags.pop();
         };
         self.rating = Some(rating);
         self.tags.extend(tags.clone());

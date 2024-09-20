@@ -17,7 +17,7 @@ pub struct News {
     pub tags: Vec<String>,
 }
 
-pub fn sanitize_html(html: &str) -> String {
+#[must_use] pub fn sanitize_html(html: &str) -> String {
     let tags = maplit::hashset![
         "b", "i", "u", "em", "strong", "strike", "code", "hr", "br", "div", "table", "thead",
         "caption", "tbody", "tr", "th", "td", "p", "a", "img", "h1", "h2", "h3", "h4", "h5", "h6",
@@ -32,7 +32,7 @@ pub fn sanitize_html(html: &str) -> String {
         .to_string()
 }
 
-pub fn extract_clean_text(html: &str) -> String {
+#[must_use] pub fn extract_clean_text(html: &str) -> String {
     let s = nanohtml2text::html2text(html);
     let re = regex::Regex::new(r"\(?https?://[^\s]+").unwrap();
     let s = re.replace_all(&s, " ").to_string();

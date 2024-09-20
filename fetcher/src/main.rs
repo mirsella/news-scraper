@@ -6,7 +6,7 @@ use clap::builder::PossibleValuesParser;
 use clap::Parser;
 use env_logger::Builder;
 use log::{debug, error, info, trace};
-use shared::{config::Config, db_news::DbNews, *};
+use shared::{config::Config, db_news::DbNews, Telegram, extract_clean_text, sanitize_html};
 use sources::{extract_prefix_from_provider, SeenLink, SOURCES};
 use std::{
     borrow::Cow,
@@ -96,7 +96,7 @@ async fn main() -> Result<()> {
                 "Exiting due to panic. Number of tasks done: {}",
                 counter.load(Ordering::SeqCst)
             );
-            println!("Panic info: {}", panic_info);
+            println!("Panic info: {panic_info}");
             process::exit(1);
         }));
     }

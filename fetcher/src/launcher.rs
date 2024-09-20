@@ -9,7 +9,7 @@ use anyhow::Context;
 use futures::{stream::FuturesUnordered, StreamExt};
 use headless_chrome::{Browser, LaunchOptionsBuilder};
 use log::{error, info};
-use shared::{config::Config, Telegram, *};
+use shared::{config::Config, Telegram, News};
 use tokio::{
     sync::mpsc::{channel, Receiver},
     task::{spawn_blocking, JoinHandle},
@@ -44,7 +44,7 @@ pub fn init(
     let mut futures: FuturesUnordered<JoinHandle<anyhow::Result<()>>> = FuturesUnordered::new();
     let mut sources: Vec<_> = sources
         .into_iter()
-        .map(|(s, f)| (s.to_string(), f))
+        .map(|(s, f)| ((*s).to_string(), f))
         .collect();
 
     while futures.len() < config.chrome_concurrent.unwrap_or(4) {
