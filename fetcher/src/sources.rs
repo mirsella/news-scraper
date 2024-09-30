@@ -2,7 +2,7 @@ automod::dir!("src/sources");
 
 use anyhow::anyhow;
 use headless_chrome::Browser;
-use log::trace;
+use log::{debug, trace};
 use serde::{Deserialize, Serialize};
 use shared::News;
 use std::sync::{Arc, RwLock};
@@ -60,6 +60,7 @@ pub struct ApiResponse {
 
 pub fn fetch_article(url: impl AsRef<str>) -> Result<ApiResponse, anyhow::Error> {
     let url = url.as_ref();
+    debug!("fetching {}", url);
     let endpoint = format!(
         "{}/fetch?url={}",
         std::env::var("ARTICLE_PARSER_URL").expect("ARTICLE_PARSER_URL not set"),

@@ -63,7 +63,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
             }),
             Err(err) => {
                 error!("parse_article: {err}");
-                bail!("parse_article: {err}");
+                continue;
             }
         };
         opts.tx.blocking_send(payload).unwrap();
