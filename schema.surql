@@ -53,15 +53,15 @@ DEFINE FIELD tags ON news TYPE array<string>;
 DEFINE FIELD title ON news TYPE string ASSERT $value != NONE;
 DEFINE FIELD used ON news TYPE bool DEFAULT false;
 
-DEFINE TABLE fr_feed AS SELECT * FROM news WHERE date >= time::now() - 1w AND "fr" INSIDE tags PERMISSIONS FOR select WHERE $auth.activated == true;
-DEFINE TABLE lme_feed AS SELECT * FROM news WHERE date >= time::now() - 1w AND "lme" INSIDE tags PERMISSIONS FOR select WHERE $auth.activated == true;
-DEFINE TABLE africa_feed AS SELECT * FROM news WHERE date >= time::now() - 1w AND "africa" INSIDE tags PERMISSIONS FOR select WHERE $auth.activated == true;
-DEFINE TABLE be_feed AS SELECT * FROM news WHERE date >= time::now() - 1w AND "be" INSIDE tags PERMISSIONS FOR select WHERE $auth.activated == true;
-DEFINE TABLE quebec_feed AS SELECT * FROM news WHERE date >= time::now() - 1w AND "quebec" INSIDE tags PERMISSIONS FOR select WHERE $auth.activated == true;
+-- DEFINE TABLE fr_feed AS SELECT * FROM news WHERE date >= time::now() - 1w AND "fr" INSIDE tags PERMISSIONS FOR select WHERE $auth.activated == true;
+-- DEFINE TABLE lme_feed AS SELECT * FROM news WHERE date >= time::now() - 1w AND "lme" INSIDE tags PERMISSIONS FOR select WHERE $auth.activated == true;
+-- DEFINE TABLE africa_feed AS SELECT * FROM news WHERE date >= time::now() - 1w AND "africa" INSIDE tags PERMISSIONS FOR select WHERE $auth.activated == true;
+-- DEFINE TABLE be_feed AS SELECT * FROM news WHERE date >= time::now() - 1w AND "be" INSIDE tags PERMISSIONS FOR select WHERE $auth.activated == true;
+-- DEFINE TABLE quebec_feed AS SELECT * FROM news WHERE date >= time::now() - 1w AND "quebec" INSIDE tags PERMISSIONS FOR select WHERE $auth.activated == true;
 
 DEFINE INDEX link ON news FIELDS link UNIQUE;
-DEFINE INDEX rating ON news FIELDS rating;
-DEFINE INDEX date ON news FIELDS date;
+-- DEFINE INDEX rating ON news FIELDS rating;
+-- DEFINE INDEX date ON news FIELDS date;
 
 -- DEFINE ANALYZER news_analyzer TOKENIZERS blank,class,camel,punct FILTERS ascii,lowercase;
 -- DEFINE INDEX news_body ON news FIELDS text_body SEARCH ANALYZER news_analyzer BM25(1.2,0.75);
