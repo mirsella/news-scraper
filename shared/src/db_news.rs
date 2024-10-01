@@ -47,7 +47,7 @@ impl DbNews {
         let text = format!("{}\n{}", &self.title, &self.text_body);
         let tokenizer = tiktoken_rs::p50k_base().unwrap();
         let tokens = tokenizer.encode_with_special_tokens(&text);
-        let truncated_tokens = tokens.into_iter().take(1000).collect::<Vec<usize>>();
+        let truncated_tokens = tokens.into_iter().take(600).collect::<Vec<usize>>();
         let truncated_text =
             String::from_utf8_lossy(&tokenizer._decode_native(&truncated_tokens)).to_string();
         // remove the � from lost bytes
