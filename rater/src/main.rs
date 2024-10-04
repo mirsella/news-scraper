@@ -18,12 +18,11 @@ use tokio::task::JoinHandle;
 async fn retrieve_db_news(db: &Surreal<WsClient>) -> Result<Vec<DbNews>> {
     let db_news: Vec<DbNews> = db
         .query(
-            "if $PROD=1 { return select * from news
+            "return select * from news
 where rating == none
-AND date > time::floor(time::now() - 7d, 1d)
-AND used == false
+AND date >= time::now() - 1w
 AND !string::contains(note, 'error rating')
-ORDER BY date DESC limit 500 }",
+ORDER BY date DESC limit 500",
         )
         .await?
         .take(0)?;
@@ -121,7 +120,7 @@ async fn main() -> Result<()> {
                     return Ok(None);
                 }
                 trace!("processing {}, {}", id.id, news.link);
-                let rating = match news.rate(&openai, rating_chat_prompt.as_ref()).await {
+                let rating = match news.rate(&openai, &rating_chat_prompt).await {
                     Ok(rating) => Some(rating),
                     Err(e) if e.to_string().to_lowercase().contains("bad gateway") => {
                         error!("bad gateway: {:?}", e.to_string());

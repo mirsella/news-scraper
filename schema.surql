@@ -49,6 +49,7 @@ DEFINE FIELD link ON news TYPE string ASSERT string::is::url($value);
 DEFINE FIELD note ON news TYPE string DEFAULT "";
 DEFINE FIELD provider ON news TYPE string ASSERT $value != NONE;
 DEFINE FIELD rating ON news TYPE option<int> ASSERT $value = NONE OR ($value >= 0 AND $value <= 100);
+DEFINE FIELD rating_travel ON news TYPE option<int> ASSERT $value = NONE OR ($value >= 0 AND $value <= 100);
 DEFINE FIELD tags ON news TYPE array<string>;
 DEFINE FIELD title ON news TYPE string ASSERT $value != NONE;
 DEFINE FIELD used ON news TYPE bool DEFAULT false;

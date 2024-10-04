@@ -23,6 +23,7 @@ pub struct DbNews {
     pub note: Cow<'static, str>,
     pub provider: Cow<'static, str>,
     pub rating: Option<u8>,
+    pub rating_travel: Option<u8>,
     pub tags: Vec<String>,
     pub title: Cow<'static, str>,
     pub used: bool,
@@ -43,7 +44,7 @@ impl DbNews {
         &mut self,
         client: &ChatClient<OpenAIConfig>,
         prompt: &str,
-    ) -> Result<(u8, Vec<String>)> {
+    ) -> Result<(u8, u8, Vec<String>)> {
         let text = format!("{}\n{}", &self.title, &self.text_body);
         let tokenizer = tiktoken_rs::p50k_base().unwrap();
         let tokens = tokenizer.encode_with_special_tokens(&text);
@@ -60,7 +61,7 @@ impl DbNews {
             .into(),
             ChatCompletionRequestSystemMessage {
                 content:
-                    "you will answer exactly with the following format `rating;tags,tags,tags`"
+                    "you're a expert journalist. after the user article you will answer exactly with the following format `rating1, rating2;tags,tags,tags`"
                         .into(),
                 ..Default::default()
             }
@@ -70,11 +71,11 @@ impl DbNews {
                 ..Default::default()
             }
             .into(),
-            ChatCompletionRequestSystemMessage {
-                content: "rating: ".into(),
-                ..Default::default()
-            }
-            .into(),
+            // ChatCompletionRequestSystemMessage {
+            //     content: "rating: ".into(),
+            //     ..Default::default()
+            // }
+            // .into(),
         ];
         let request = CreateChatCompletionRequestArgs::default()
             .model("gpt-4o-mini")
@@ -102,12 +103,17 @@ impl DbNews {
         let split = content
             .split_once(';')
             .ok_or(anyhow!("invalid response: {content}"))?;
-        let rating = split
-            .0
-            .to_lowercase()
-            .trim_start_matches("rating: ")
-            .parse::<u8>()
-            .context(content.clone())?;
+        let ratings: (u8, u8) = {
+            let lowercase = split.0.to_lowercase();
+            let r = lowercase
+                .trim_start_matches("rating: ")
+                .split_once(',')
+                .context(content.clone())?;
+            (
+                r.0.trim().parse().context(content.clone())?,
+                r.1.trim().parse().context(content.clone())?,
+            )
+        };
         let mut tags: Vec<String> = split
             .1
             .split(',')
@@ -122,10 +128,12 @@ impl DbNews {
             .collect();
         // if response was truncated, remove the last unfinished tag
         if let Some(FinishReason::Length) = &choice.finish_reason {
+            println!("db_news.rate(): response was truncated");
             _ = tags.pop();
         };
-        self.rating = Some(rating);
+        self.rating = Some(ratings.0);
+        self.rating_travel = Some(ratings.1);
         self.tags.extend(tags.clone());
-        Ok((rating, tags))
+        Ok((ratings.0, ratings.1, tags))
     }
 }
