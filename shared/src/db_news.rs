@@ -59,23 +59,18 @@ impl DbNews {
                 ..Default::default()
             }
             .into(),
-            ChatCompletionRequestSystemMessage {
-                content:
-                    "you're a expert journalist. after the user article you will answer exactly with the following format `rating1, rating2;tags,tags,tags`"
-                        .into(),
-                ..Default::default()
-            }
-            .into(),
             ChatCompletionRequestUserMessage {
                 content: truncated_text.into(),
                 ..Default::default()
             }
             .into(),
-            // ChatCompletionRequestSystemMessage {
-            //     content: "rating: ".into(),
-            //     ..Default::default()
-            // }
-            // .into(),
+            ChatCompletionRequestSystemMessage {
+                content:
+                "you're a expert journalist. you will answer with exactly the following format `rating1,rating2;tags,tags,tags`. directly put the values."
+                    .into(),
+                ..Default::default()
+            }
+            .into(),
         ];
         let request = CreateChatCompletionRequestArgs::default()
             .model("gpt-4o-mini")
