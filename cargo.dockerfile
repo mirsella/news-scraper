@@ -10,7 +10,7 @@ RUN apk add --no-cache chromium ca-certificates tzdata
 ENV TZ=Europe/Paris
 COPY .env /.env
 COPY --from=builder /app/target/x86_64-unknown-linux-musl/release/fetcher /fetcher
-RUN set -o pipefail && echo "0 */4 * * * /fetcher" | crontab -
+RUN set -o pipefail && echo "0 */4 * * * /fetcher && pkill -f chromium" | crontab -
 CMD ["crond", "-f", "-l", "0"]
 # CMD ["/fetcher"]
 
