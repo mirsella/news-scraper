@@ -22,9 +22,9 @@ services:
       context: .
       dockerfile: cargo.dockerfile
       target: fetcher
-    # depends_on:
-    #   - article-parser
-    #   - surrealdb
+    depends_on:
+      - article-parser
+      - surrealdb
     environment:
       ARTICLE_PARSER_URL: "http://article-parser:8081"
       SURREALDB_HOST: "surrealdb:8000"
