@@ -60,7 +60,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
                 .collect();
 
             tab.navigate_to(&url)
-                .context("navigate_to url")?
+                .context("navigate_to {url}")?
                 .wait_until_navigated()
                 .context("wait_until_navigated url")?;
             let body = tab.get_content()?;
