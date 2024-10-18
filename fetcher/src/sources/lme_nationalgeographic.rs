@@ -51,7 +51,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
                 .map(str::to_string)
                 .collect();
             tab.navigate_to(&url)
-                .context("navigate_to {url}")?
+                .context(format!("navigate_to {url}"))?
                 .wait_until_navigated()
                 .context("wait_until_navigated url")?;
 
