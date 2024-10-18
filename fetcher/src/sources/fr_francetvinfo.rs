@@ -1,6 +1,6 @@
 use super::{GetNewsOpts, News};
 use anyhow::bail;
-use anyhow::{anyhow, Context, Result};
+use anyhow::{Context, Result};
 use headless_chrome::Tab;
 use log::{debug, error, trace};
 use std::sync::Arc;
@@ -27,21 +27,19 @@ fn get_articles_links(tab: &Arc<Tab>) -> Result<Vec<String>> {
         )
         .context("gettings articles __links")?;
     articles.truncate(NUMBER_OF_ARTICLES_PER_CATEGORY);
-    let mut links = Vec::with_capacity(articles.len());
-    for article in articles {
-        if let Some(attrs) = article.get_attributes().context("getting attributes")? {
-            for i in 0..attrs.len() {
-                if attrs[i] == "href" {
-                    if let Some(link) = attrs.get(i + 1) {
-                        links.push(link.clone());
-                    }
+    let links = articles
+        .iter()
+        .map(|el| el.get_attribute_value("href").unwrap().expect("no href ??"))
+        .map(|mut link| {
+            if !link.starts_with("http") {
+                if !link.starts_with('/') {
+                    link.insert(0, '/');
                 }
+                link.insert_str(0, "https://www.francetvinfo.fr");
             }
-        }
-    }
-    if links.is_empty() {
-        return Err(anyhow!("didn't found any links"));
-    }
+            link
+        })
+        .collect();
     Ok(links)
 }
 
@@ -62,7 +60,6 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
             bail!("no links found");
         }
         for url in links {
-            let url = format!("https://www.francetvinfo.fr{}", &url);
             if opts.is_seen(&url) {
                 continue;
             }
