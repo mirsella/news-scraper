@@ -79,7 +79,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
                     ..Default::default()
                 }),
                 Err(err) => {
-                    debug!("fetch_article: {err}");
+                    debug!("fetch_article: {err:?}");
                     continue;
                 }
             };

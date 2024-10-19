@@ -49,7 +49,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
                 ..Default::default()
             }),
             Err(err) => {
-                error!("fetch_article: {err}");
+                error!("fetch_article: {err:?}");
                 continue;
             }
         };
