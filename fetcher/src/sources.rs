@@ -1,9 +1,10 @@
 automod::dir!("src/sources");
 
-use anyhow::anyhow;
+use anyhow::{anyhow, Context};
 use headless_chrome::Browser;
 use log::{debug, trace};
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use shared::News;
 use std::sync::{Arc, RwLock};
 use std::time::Duration;
@@ -49,7 +50,7 @@ pub struct ApiResponse {
     title: String,
     description: String,
     image: String,
-    author: String,
+    author: Value,
     favicon: String,
     content: String,
     published: String,
@@ -76,7 +77,10 @@ pub fn fetch_article(url: impl AsRef<str>) -> Result<ApiResponse, anyhow::Error>
             return Err(anyhow!("{url}: {e}"));
         }
     };
-    let json_result: ApiResponse = response.into_json()?;
+    dbg!(&response);
+    let json_result: ApiResponse = response
+        .into_json()
+        .context("deserialize json response to ApiResponse struct")?;
     Ok(json_result)
 }
 
@@ -98,7 +102,9 @@ pub fn parse_article(str: impl AsRef<str>) -> Result<ApiResponse, anyhow::Error>
             return Err(anyhow!("{}", e));
         }
     };
-    let json_result: ApiResponse = response.into_json()?;
+    let json_result: ApiResponse = response
+        .into_json()
+        .context("deserialize json response to ApiResponse struct")?;
     Ok(json_result)
 }
 
