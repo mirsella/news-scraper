@@ -1,7 +1,6 @@
 use super::{GetNewsOpts, News};
 use anyhow::bail;
 use anyhow::{Context, Result};
-use chrono::Local;
 use headless_chrome::{Element, Tab};
 use log::error;
 use std::{sync::Arc, thread, time::Duration};
@@ -79,7 +78,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
                 title: res.title,
                 caption: res.description,
                 provider: opts.provider.clone(),
-                date: res.published.parse().unwrap_or_else(|_| Local::now()),
+                date: res.published,
                 body: res.content,
                 link: url,
                 ..Default::default()

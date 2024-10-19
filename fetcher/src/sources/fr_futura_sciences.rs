@@ -62,10 +62,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
                 caption: res.description,
                 provider: opts.provider.clone(),
                 tags,
-                date: res
-                    .published
-                    .parse()
-                    .unwrap_or_else(|_| chrono::Local::now()),
+date: res.published,
                 body: res.content,
                 link: url,
             }),

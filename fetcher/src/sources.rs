@@ -1,7 +1,7 @@
 automod::dir!("src/sources");
 
 use anyhow::{anyhow, Context};
-use chrono::{DateTime, Local, NaiveDateTime};
+use chrono::{DateTime, Local};
 use headless_chrome::Browser;
 use log::{debug, trace};
 use serde::{Deserialize, Serialize};
