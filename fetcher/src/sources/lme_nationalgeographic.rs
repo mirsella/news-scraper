@@ -3,7 +3,7 @@ use crate::sources::parse_article;
 use anyhow::bail;
 use anyhow::{Context, Result};
 use headless_chrome::Tab;
-use log::{debug, info, trace};
+use log::{info, trace};
 use shared::News;
 use std::{sync::Arc, thread, time::Duration};
 
@@ -86,7 +86,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
                     link: url,
                 }),
                 Err(err) => {
-                    debug!("parse_article: {}", err);
+                    log::warn!("parse_article: {err}");
                     continue;
                 }
             };

@@ -3,7 +3,7 @@ use anyhow::bail;
 use anyhow::{Context, Result};
 use chrono::Local;
 use headless_chrome::{Element, Tab};
-use log::{debug, error, warn};
+use log::error;
 use std::{sync::Arc, thread, time::Duration};
 
 fn _isvalidpost(el: &Element) -> bool {
@@ -59,13 +59,13 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
 
         let mut res = super::fetch_article(&url);
         if let Err(err) = res {
-            debug!("fetch_article: {}", err);
+            log::warn!("fetch_article: {err}");
             if let Err(e) = tab.navigate_to(&url) {
-                warn!("could not navigate to {url}: {e}");
+                log::warn!("could not navigate to {url}: {e}");
                 continue;
             };
             if let Err(e) = tab.wait_until_navigated().context("wait_until_navigated") {
-                warn!("could not load {url}: {e}");
+                log::warn!("could not load {url}: {e}");
                 continue;
             }
             std::thread::sleep(std::time::Duration::from_secs(1));
@@ -85,7 +85,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
                 ..Default::default()
             }),
             Err(err) => {
-                debug!("parse_article: {}", err);
+                log::warn!("parse_article: {err}");
                 continue;
             }
         };

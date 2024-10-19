@@ -2,7 +2,7 @@ use super::{GetNewsOpts, News};
 use anyhow::bail;
 use anyhow::{Context, Result};
 use headless_chrome::Tab;
-use log::{debug, error, info};
+use log::{error, info};
 use std::{sync::Arc, thread, time::Duration};
 
 const BLACKLIST: &[&str] = &["ouestfrance-auto", "ouestfrance-immo", "ouestfrance-emploi"];
@@ -57,7 +57,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
                 ..Default::default()
             }),
             Err(err) => {
-                debug!("fetch_article: {err:?}");
+                log::warn!("fetch_article: {err}");
                 continue;
             }
         };

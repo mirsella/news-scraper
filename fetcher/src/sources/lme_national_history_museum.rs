@@ -3,7 +3,7 @@ use crate::sources::fetch_article;
 use anyhow::bail;
 use anyhow::{Context, Result};
 use headless_chrome::Tab;
-use log::{debug, info};
+use log::info;
 use shared::News;
 use std::sync::Arc;
 
@@ -52,7 +52,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
                 ..Default::default()
             }),
             Err(err) => {
-                debug!("fetch_article on {url}: {err}");
+                log::warn!("fetch_article: {err}");
                 continue;
             }
         };

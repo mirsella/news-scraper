@@ -1,7 +1,7 @@
 use super::{GetNewsOpts, News};
 use anyhow::{bail, Context, Result};
 use headless_chrome::Tab;
-use log::{debug, error, info, trace};
+use log::{error, info, trace};
 use std::{sync::Arc, thread, time::Duration};
 
 fn get_articles_links(tab: &Arc<Tab>) -> Result<Vec<String>> {
@@ -64,7 +64,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
                 ..Default::default()
             }),
             Err(err) => {
-                debug!("fetch_article: {err:?}");
+                log::warn!("fetch_article: {err}");
                 continue;
             }
         };

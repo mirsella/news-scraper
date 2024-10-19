@@ -2,7 +2,7 @@ use super::{GetNewsOpts, News};
 use anyhow::bail;
 use anyhow::{Context, Result};
 use headless_chrome::Tab;
-use log::{debug, error};
+use log::error;
 use std::sync::Arc;
 
 fn get_articles_links(tab: &Arc<Tab>) -> Result<Vec<String>> {
@@ -48,7 +48,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
                 tags: vec!["usa/world".to_string(), "goodnews".to_string()],
             }),
             Err(err) => {
-                debug!("fetch_article: {}", err);
+                log::warn!("fetch_article: {err}");
                 continue;
             }
         };

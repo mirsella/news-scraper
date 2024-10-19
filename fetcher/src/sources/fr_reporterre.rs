@@ -2,7 +2,7 @@ use super::{GetNewsOpts, News};
 use anyhow::bail;
 use anyhow::{Context, Result};
 use headless_chrome::Tab;
-use log::{debug, trace};
+use log::trace;
 use std::sync::Arc;
 
 const CATEGORIES: [&str; 8] = [
@@ -70,7 +70,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
                     link: url,
                 }),
                 Err(err) => {
-                    debug!("fetch_article: {}", err);
+                    log::warn!("fetch_article: {err}");
                     continue;
                 }
             };

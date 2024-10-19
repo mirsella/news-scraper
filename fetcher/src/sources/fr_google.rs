@@ -2,7 +2,7 @@ use super::GetNewsOpts;
 use anyhow::bail;
 use anyhow::{Context, Result};
 use headless_chrome::Tab;
-use log::{debug, error, trace};
+use log::{error, trace};
 use shared::News;
 use std::sync::Arc;
 
@@ -58,7 +58,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
 
             let mut res = super::fetch_article(&url);
             if let Err(err) = res {
-                debug!("fetch_article: {}", err);
+                log::warn!("fetch_article: {err}");
                 if tab.navigate_to(&url).is_err() {
                     continue;
                 };
@@ -87,7 +87,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
                     ..Default::default()
                 }),
                 Err(err) => {
-                    debug!("parse_article: {}", err);
+                    log::warn!("parse_article: {err}");
                     continue;
                 }
             };

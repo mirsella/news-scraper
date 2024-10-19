@@ -9,7 +9,7 @@ use anyhow::Context;
 use futures::{stream::FuturesUnordered, StreamExt};
 use headless_chrome::{Browser, LaunchOptionsBuilder};
 use log::{error, info};
-use shared::{config::Config, Telegram, News};
+use shared::{config::Config, News, Telegram};
 use tokio::{
     sync::mpsc::{channel, Receiver},
     task::{spawn_blocking, JoinHandle},

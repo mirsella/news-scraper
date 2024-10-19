@@ -2,7 +2,7 @@ use super::{GetNewsOpts, News};
 use anyhow::bail;
 use anyhow::{Context, Result};
 use headless_chrome::Tab;
-use log::{debug, error, trace, warn};
+use log::{debug, error, trace};
 use std::sync::Arc;
 
 fn get_articles_links(tab: &Arc<Tab>) -> Result<Vec<String>> {
@@ -53,7 +53,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
         let cookiewall = "En acceptant les cookies, vous pourrez accéder aux contenus";
         let payload = match super::fetch_article(&url) {
             Ok(res) if res.content.contains(cookiewall) => {
-                warn!("cookiewall on {url}");
+                log::warn!("cookiewall on {url}");
                 continue;
             }
             Ok(res) => Ok(News {
@@ -69,7 +69,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
                 ..Default::default()
             }),
             Err(err) => {
-                debug!("fetch_article: {err:?}");
+                log::warn!("fetch_article: {err}");
                 continue;
             }
         };
