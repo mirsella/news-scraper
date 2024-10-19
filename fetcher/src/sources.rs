@@ -4,7 +4,7 @@ use anyhow::{anyhow, Context};
 use chrono::{DateTime, Local};
 use headless_chrome::Browser;
 use log::{debug, trace};
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 use serde_json::Value;
 use shared::News;
 use std::sync::{Arc, RwLock};
@@ -45,9 +45,6 @@ pub fn extract_prefix_from_provider(module: &str) -> String {
     module.split_once("::").unwrap().0.to_string()
 }
 
-fn local_now() -> DateTime<Local> {
-    Local::now()
-}
 #[derive(Debug, Deserialize, Serialize)]
 pub struct ApiResponse {
     url: String,
@@ -57,11 +54,19 @@ pub struct ApiResponse {
     author: Value,
     favicon: String,
     content: String,
-    #[serde(default = "local_now")]
+    #[serde(deserialize_with = "deserialize_null_default")]
     published: DateTime<Local>,
     source: String,
     links: Vec<String>,
     ttr: f64,
+}
+
+fn deserialize_null_default<'de, D>(deserializer: D) -> Result<DateTime<Local>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let opt = Option::deserialize(deserializer)?;
+    Ok(opt.unwrap_or_else(Local::now))
 }
 
 pub fn fetch_article(url: impl AsRef<str>) -> Result<ApiResponse, anyhow::Error> {
