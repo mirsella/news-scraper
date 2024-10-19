@@ -9,10 +9,16 @@ use std::sync::Arc;
 
 fn get_articles_links(tab: &Arc<Tab>) -> Result<Vec<String>> {
     Ok(tab
-        .find_elements("div.elementor-widget-container > a[href]")
-        .context("finding div.elementor-widget-container > a[href]")?
+        .find_elements(".elementor-button-link")
+        .context("find_elements articles")?
         .iter()
-        .map(|el| el.get_attribute_value("href").unwrap().expect("a href"))
+        .filter_map(|el| {
+            let url = el.get_attribute_value("href").unwrap().expect("a href");
+            if !url.contains("https://capturetheatlas.com") {
+                return None;
+            }
+            Some(url)
+        })
         .collect())
 }
 
@@ -22,7 +28,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
     let user_agent = opts.browser.get_version().unwrap().user_agent;
     let user_agent = user_agent.replace("HeadlessChrome", "Chrome");
     tab.set_user_agent(&user_agent, None, None)?;
-    tab.navigate_to("https://capturetheatlas.com/photo-tours/")
+    tab.navigate_to("https://capturetheatlas.com")
         .context("navigate_to")?
         .wait_until_navigated()
         .context("wait_until_navigated")?;
@@ -35,22 +41,18 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
         if opts.is_seen(&url) {
             continue;
         }
-        let tags: Vec<_> = ["photography", "lemediaexperience"]
-            .into_iter()
-            .map(str::to_string)
-            .collect();
         let payload = match fetch_article(&url) {
             Ok(res) => Ok(News {
                 title: res.title,
                 caption: res.description,
                 provider: opts.provider.clone(),
-                tags,
                 date: res
                     .published
                     .parse()
                     .unwrap_or_else(|_| chrono::Local::now()),
                 body: res.content,
                 link: url,
+                ..Default::default()
             }),
             Err(err) => {
                 debug!("fetch_article: {}", err);
