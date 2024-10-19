@@ -14,7 +14,7 @@ fn get_articles_links(tab: &Arc<Tab>) -> Result<Vec<String>> {
         .iter()
         .filter_map(|el| {
             let url = el.get_attribute_value("href").unwrap().expect("a href");
-            if !url.contains("https://capturetheatlas.com") {
+            if !url.contains("https://capturetheatlas.com") || url.contains(".com/about") {
                 return None;
             }
             Some(url)
@@ -46,7 +46,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
                 title: res.title,
                 caption: res.description,
                 provider: opts.provider.clone(),
-date: res.published,
+                date: res.published,
                 body: res.content,
                 link: url,
                 ..Default::default()
