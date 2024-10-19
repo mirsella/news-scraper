@@ -77,7 +77,6 @@ pub fn fetch_article(url: impl AsRef<str>) -> Result<ApiResponse, anyhow::Error>
             return Err(anyhow!("{url}: {e}"));
         }
     };
-    dbg!(&response);
     let json_result: ApiResponse = response
         .into_json()
         .context("deserialize json response to ApiResponse struct")?;
