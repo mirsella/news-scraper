@@ -89,7 +89,7 @@ pub fn fetch_article(url: impl AsRef<str>) -> Result<ApiResponse, anyhow::Error>
     };
     let json_result: ApiResponse = response
         .into_json()
-        .context("deserialize json response to ApiResponse struct")?;
+        .context("deserialize json response to ApiRespofr_journaldesfemmes struct")?;
     Ok(json_result)
 }
 
@@ -150,7 +150,8 @@ pub static SOURCES: &[(&str, SourceFn)] = &[
     ("lme::futura-sciences", lme_futura_sciences::get_news),
     ("lme::beetravel", lme_beetravel::get_news),
     ("lme::voyagespirates", lme_voyagespirates::get_news),
-    ("lme::journaldesfemmes", lme_journaldesfemmes::get_news),
+    ("fr::journaldesfemmes", fr_journaldesfemmes::get_news),
+    ("fr::demotivateur", fr_demotivateur::get_news),
     ("africa::lemonde", africa_lemonde::get_news),
     ("africa::apanews", africa_apanews::get_news),
     ("africa::abidjan", africa_abidjan::get_news),
@@ -160,7 +161,6 @@ pub static SOURCES: &[(&str, SourceFn)] = &[
     ("be::rtbf", be_rtbf::get_news),
     ("be::rtl", be_rtl::get_news),
     ("be::lalibre", be_lalibre::get_news),
-    // quebec
     ("quebec::lapresse", quebec_lapresse::get_news),
     ("quebec::journaldequebec", quebec_journaldequebec::get_news),
     ("quebec::montrealgazette", quebec_montrealgazette::get_news),
