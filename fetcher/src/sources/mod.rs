@@ -149,6 +149,8 @@ pub static SOURCES: &[(&str, SourceFn)] = &[
     ("lme::theguardian", lme_theguardian::get_news),
     ("lme::futura-sciences", lme_futura_sciences::get_news),
     ("lme::beetravel", lme_beetravel::get_news),
+    ("lme::voyagespirates", lme_voyagespirates::get_news),
+    ("lme::journaldesfemmes", lme_journaldesfemmes::get_news),
     ("africa::lemonde", africa_lemonde::get_news),
     ("africa::apanews", africa_apanews::get_news),
     ("africa::abidjan", africa_abidjan::get_news),
