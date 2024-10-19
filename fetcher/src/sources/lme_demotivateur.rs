@@ -47,7 +47,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
                 date: res.published,
                 body: res.content,
                 link: url,
-                ..Default::default()
+                tags: vec!["fr".to_string()],
             }),
             Err(err) => {
                 error!("fetch_article on {url}: {err:?}");
