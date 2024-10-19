@@ -42,13 +42,14 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
             continue;
         }
 
+        thread::sleep(Duration::from_secs(1)); // seems to be blocked when fecthing a lot of articles
         let res = super::fetch_article(&url);
         let payload = match res {
             Ok(res) => Ok(News {
                 title: res.title,
                 caption: res.description,
                 provider: opts.provider.clone(),
-date: res.published,
+                date: res.published,
                 body: res.content,
                 link: url,
                 ..Default::default()
