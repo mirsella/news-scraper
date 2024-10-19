@@ -70,7 +70,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
                 ..Default::default()
             }),
             Err(err) => {
-                error!("parse_article: {err:?}");
+                error!("parse_article on {url}: {err:?}");
                 continue;
             }
         };

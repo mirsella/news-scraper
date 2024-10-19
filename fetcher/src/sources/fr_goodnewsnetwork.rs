@@ -48,7 +48,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
                 tags: vec!["usa/world".to_string(), "goodnews".to_string()],
             }),
             Err(err) => {
-                log::warn!("fetch_article: {err}");
+                log::warn!("fetch_article on {url}: {err}");
                 continue;
             }
         };

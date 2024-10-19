@@ -59,7 +59,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
 
         let mut res = super::fetch_article(&url);
         if let Err(err) = res {
-            log::warn!("fetch_article: {err}");
+            log::warn!("fetch_article on {url}: {err}");
             if let Err(e) = tab.navigate_to(&url) {
                 log::warn!("could not navigate to {url}: {e}");
                 continue;
@@ -85,7 +85,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
                 ..Default::default()
             }),
             Err(err) => {
-                log::warn!("parse_article: {err}");
+                log::warn!("parse_article on {url}: {err}");
                 continue;
             }
         };
