@@ -1,6 +1,7 @@
 automod::dir!("src/sources");
 
 use anyhow::{anyhow, Context};
+use chrono::{DateTime, Local, NaiveDateTime};
 use headless_chrome::Browser;
 use log::{debug, trace};
 use serde::{Deserialize, Serialize};
@@ -44,6 +45,9 @@ pub fn extract_prefix_from_provider(module: &str) -> String {
     module.split_once("::").unwrap().0.to_string()
 }
 
+fn local_now() -> DateTime<Local> {
+    Local::now()
+}
 #[derive(Debug, Deserialize, Serialize)]
 pub struct ApiResponse {
     url: String,
@@ -53,7 +57,8 @@ pub struct ApiResponse {
     author: Value,
     favicon: String,
     content: String,
-    published: String,
+    #[serde(default = "local_now")]
+    published: DateTime<Local>,
     source: String,
     links: Vec<String>,
     ttr: f64,
