@@ -89,7 +89,7 @@ pub fn fetch_article(url: impl AsRef<str>) -> Result<ApiResponse, anyhow::Error>
     };
     let json_result: ApiResponse = response
         .into_json()
-        .context("deserialize json response to ApiRespolme_huffingtonpost struct")?;
+        .context("deserialize json response to ApiResponse struct")?;
     Ok(json_result)
 }
 
