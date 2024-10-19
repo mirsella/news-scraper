@@ -6,18 +6,19 @@ use headless_chrome::Tab;
 use log::{debug, info};
 use shared::News;
 use std::sync::Arc;
+use std::thread;
+use std::time::Duration;
 
 fn get_articles_links(tab: &Arc<Tab>) -> Result<Vec<String>> {
     Ok(tab
-        .find_elements("a.article-block:not(.video-card)")
-        .context("finding a.article-block:not(.video-card)")?
+        .find_elements(".article-block")
+        .context("finding articles links")?
         .iter()
         .filter_map(|a| {
-            let mut link = a.get_attribute_value("href").unwrap().expect("a href");
-            if link.starts_with("/quiz") {
+            let link = a.get_attribute_value("href").unwrap().expect("a href");
+            if link.contains("/quiz/") {
                 return None;
             }
-            link.insert_str(0, "https://www.bbcearth.com");
             Some(link)
         })
         .collect())
@@ -29,10 +30,11 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
     let user_agent = opts.browser.get_version().unwrap().user_agent;
     let user_agent = user_agent.replace("HeadlessChrome", "Chrome");
     tab.set_user_agent(&user_agent, None, None)?;
-    tab.navigate_to("https://www.bbcearth.com/nature")
+    tab.navigate_to("https://www.bbcearth.com")
         .context("navigate_to")?
         .wait_until_navigated()
         .context("wait_until_navigated")?;
+    thread::sleep(Duration::from_secs(3));
     let links = get_articles_links(&tab).context("get_articles_links")?;
     info!("found {} articles", links.len());
     if links.is_empty() {
