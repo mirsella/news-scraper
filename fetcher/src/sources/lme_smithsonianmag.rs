@@ -13,13 +13,7 @@ fn get_articles_links(tab: &Arc<Tab>) -> Result<Vec<String>> {
         .context("finding articles links")?
         .iter()
         .map(|el| {
-            let mut link = el
-                .find_element("a[href]")
-                .context("find_element a[href]")
-                .expect("a a[href]")
-                .get_attribute_value("href")
-                .unwrap()
-                .expect("a href");
+            let mut link = el.get_attribute_value("href").unwrap().expect("a href");
             link.insert_str(0, "https://www.smithsonianmag.com");
             link
         })
@@ -56,7 +50,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
                 caption: res.description,
                 provider: opts.provider.clone(),
                 tags,
-date: res.published,
+                date: res.published,
                 body: res.content,
                 link: url,
             }),
