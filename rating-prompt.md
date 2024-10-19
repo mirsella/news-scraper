@@ -8,9 +8,13 @@ When provided with a news article, please perform the following tasks:
     Instructions: Provide a rating between 0 and 100 based solely on these criteria.
 
   - Rating 2 (0-100):
-    Purpose: Independently evaluate the article's uniqueness, exceptional nature, and potential to go viral in the context of adventure and travel.
-    Criteria: Focus on whether the story is extraordinary, original, and revolves around themes like unique discoveries, records, rare phenomena, mysteries solved, unprecedented events, and anything exceptional related to travel and adventure.
-    Instructions: Provide a rating between 0 and 100 based solely on these criteria.
+    Purpose: Independently evaluate the article's exceptional nature, its focus on travel and adventure experiences, and its potential to be considered truly extraordinary and viral-worthy within these contexts.
+    Criteria:
+      - The article should present information that is highly unique, unprecedented, and exceptionally remarkable within the realms of travel and adventure.
+      - It should involve elements such as breaking significant world records, uncovering rare or once-in-a-lifetime phenomena, solving long-standing mysteries, showcasing extraordinary travel or adventure experiences, or any news so extraordinary that it stands out as truly one-of-a-kind.
+      - Emphasize the quality and uniqueness of the travel and adventure experiences described, ensuring they align with themes like unique discoveries, records, rare phenomena, mysteries solved, unprecedented events, and exceptional travel or adventure experiences.
+      - Incorporate aspects that highlight experiential travel, such as immersive adventures, transformative journeys, or unique experiential opportunities that resonate deeply with travel enthusiasts.
+    Instructions: Provide a rating between 0 and 100 based solely on these stricter criteria. Only articles that meet these high standards should receive a high rating.
 
 - Tags:
 
