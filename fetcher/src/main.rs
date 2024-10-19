@@ -6,7 +6,7 @@ use clap::builder::PossibleValuesParser;
 use clap::Parser;
 use env_logger::Builder;
 use log::{debug, error, info, trace};
-use shared::{config::Config, db_news::DbNews, Telegram, extract_clean_text, sanitize_html};
+use shared::{config::Config, db_news::DbNews, extract_clean_text, sanitize_html, Telegram};
 use sources::{extract_prefix_from_provider, SeenLink, SOURCES};
 use std::{
     borrow::Cow,

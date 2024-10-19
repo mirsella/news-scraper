@@ -12,7 +12,6 @@ pub struct Config {
     pub openai_api_key: String,
     pub article_parser_url: String,
     pub surrealdb_host: String,
-    pub rating_chat_prompt: String,
     pub parallel_rating: usize,
     pub telegram_token: String,
     pub telegram_id: i64,
@@ -31,13 +30,12 @@ impl fmt::Debug for Config {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
-            "Config {{\n    db_user: {}\n    db_password: {}\n    openai_api_key: {}\n    article_parser_url: {}\n    surrealdb_url: {}\n    rating_chat_prompt: {:20?}...\n    chrome_concurrent: {:?}\n    chrome_data_dir: {:?}\n}}",
+            "Config {{\n    db_user: {}\n    db_password: {}\n    openai_api_key: {}\n    article_parser_url: {}\n    surrealdb_url: {}\n    chrome_concurrent: {:?}\n    chrome_data_dir: {:?}\n}}",
             "*".repeat(self.db_user.len()),
             "*".repeat(self.db_password.len()),
             "*".repeat(self.openai_api_key.len()),
             self.article_parser_url,
             self.surrealdb_host,
-            self.rating_chat_prompt,
             self.chrome_concurrent,
             self.chrome_data_dir,
         )

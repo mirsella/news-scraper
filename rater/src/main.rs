@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{Context, Result};
 use async_openai::{config::OpenAIConfig, Client as ChatClient};
 use env_logger::Builder;
 use futures::future::select_all;
@@ -70,7 +70,8 @@ async fn main() -> Result<()> {
         username: &config.db_user,
         password: &config.db_password,
     })
-    .await?;
+    .await
+    .context("connecting to surrealdb")?;
     db.use_ns("news").use_db("news").await?;
     let db = Arc::new(db);
 
@@ -81,7 +82,7 @@ async fn main() -> Result<()> {
     let telegram = Telegram::new(config.telegram_token.clone(), config.telegram_id);
     let telegram = Arc::new(telegram);
     let sem = Arc::new(Semaphore::new(config.parallel_rating));
-    let rating_chat_prompt = Arc::new(config.rating_chat_prompt.clone());
+    let prompt = include_str!("../../rating-prompt.md");
 
     loop {
         if !running.load(Ordering::Relaxed) {
@@ -111,7 +112,6 @@ async fn main() -> Result<()> {
             let sem = sem.clone();
             let openai = openai.clone();
             let db = db.clone();
-            let rating_chat_prompt = rating_chat_prompt.clone();
             let running = running.clone();
             let telegram = telegram.clone();
             let handle: JoinHandle<Result<Option<DbNews>>> = tokio::spawn(async move {
@@ -120,7 +120,7 @@ async fn main() -> Result<()> {
                     return Ok(None);
                 }
                 trace!("processing {}, {}", id.id, news.link);
-                let rating = match news.rate(&openai, &rating_chat_prompt).await {
+                let rating = match news.rate(&openai, prompt).await {
                     Ok(rating) => Some(rating),
                     Err(e) if e.to_string().to_lowercase().contains("bad gateway") => {
                         error!("bad gateway: {:?}", e.to_string());

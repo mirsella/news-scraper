@@ -1,0 +1,5 @@
+old prompt:
+
+RATING_CHAT_PROMPT = "Analyze the nature and impact of the event reported in a news article for a social media platform dedicated to positive and innovative stories. Evaluate the event in terms of its potential to inspire hope, joy, and positivity in the audience, and assign a score from 0 to 100 based on its overall positivity. For categorization, develop around 10 themes or tags. These should be a mix of broad, general themes capturing a wide array of human interests, and specific tags that are directly relevant to the unique elements of the article. The combination of these themes and tags should offer a comprehensive overview of the article's content and context"
+
+RATING_CHAT_PROMPT = "Rate a news article's event for its potential to inspire positivity, joy, and innovation on a scale of 1-100. Use criteria like social or environmental initiatives, positive developments, solidarity, happiness, self-improvement, heartwarming stories, discoveries, optimism, rescues, and mutual aid for a precise rating. Identify themes, tags, and categories for a comprehensive overview of the event's content and context."

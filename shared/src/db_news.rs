@@ -66,7 +66,8 @@ impl DbNews {
             .into(),
             ChatCompletionRequestSystemMessage {
                 content:
-                "you're a expert journalist. you will answer with exactly the following format `rating1,rating2;tags,tags,tags`. directly put the values."
+                // "you're a expert journalist. you will answer with exactly the following format `rating1,rating2;tags,tags,tags`. directly put the values."
+                "the article is finished. you will answer with exactly the following format `rating1,rating2;tags,tags,tags`. directly put the values:"
                     .into(),
                 ..Default::default()
             }
@@ -84,8 +85,8 @@ impl DbNews {
         let response = client
             .chat() // Get the API "group" (completions, images, etc.) from the client
             .create(request) // Make the API call in that "group"
-            .await?;
-        // println!("cost of tokens {:?}", response.usage.clone().unwrap());
+            .await
+            .context("created openai request")?;
         let choice = response
             .choices
             .first()
