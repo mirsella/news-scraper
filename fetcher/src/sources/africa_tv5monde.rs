@@ -7,7 +7,7 @@ use std::{sync::Arc, thread, time::Duration};
 fn get_articles_links(tab: &Arc<Tab>) -> Result<Vec<String>> {
     let links: Vec<String> = tab
         .find_elements(".views-row:not(.with-video) > a[href]")
-        .context("find_elements .views-row:not(.with-video) > a[href]")?
+        .context("finding articles links")?
         .iter()
         .map(|el| {
             let href = el.get_attribute_value("href").unwrap().expect("no href ??");
@@ -24,8 +24,9 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
     let user_agent = user_agent.replace("HeadlessChrome", "Chrome");
     tab.set_user_agent(&user_agent, None, None)?;
     tab.navigate_to("https://information.tv5monde.com/afrique")
-        .context("navigate_to")?;
-    tab.wait_until_navigated().context("wait_until_navigated")?;
+        .context("navigate_to")?
+        .wait_until_navigated()
+        .context("wait_until_navigated")?;
 
     if let Ok(cookie) = tab.find_element("#didomi-notice-disagree-button") {
         cookie.click().context("clicking on cookie")?;
@@ -36,7 +37,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
         tab.wait_for_element(".pager_more")
             .context("wait_for_element .pager_more")?
             .click()?;
-        thread::sleep(Duration::from_secs(4));
+        thread::sleep(Duration::from_secs(5));
     }
 
     let links = get_articles_links(&tab)?;
@@ -61,7 +62,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
                 title: res.title,
                 caption: res.description,
                 provider: opts.provider.clone(),
-date: res.published,
+                date: res.published,
                 body: res.content,
                 link: url,
                 ..Default::default()
