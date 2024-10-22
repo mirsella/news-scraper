@@ -6,7 +6,7 @@ use log::{error, trace};
 use std::{sync::Arc, thread, time::Duration};
 
 fn get_articles_links(tab: &Arc<Tab>) -> Result<Vec<String>> {
-    for _ in 0..5 {
+    for _ in 0..4 {
         tab.find_element("#latest-articles-container > div > button")
             .context("find_element `Voir plus d’articles`")?
             .click()
@@ -51,7 +51,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
                 title: res.title,
                 caption: res.description,
                 provider: opts.provider.clone(),
-date: res.published,
+                date: res.published,
                 body: res.content,
                 link: url,
                 ..Default::default()
