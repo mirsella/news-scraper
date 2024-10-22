@@ -23,13 +23,13 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
     let user_agent = opts.browser.get_version()?.user_agent;
     let user_agent = user_agent.replace("HeadlessChrome", "Chrome");
     tab.set_user_agent(&user_agent, None, None)?;
-    for category in ["societe/actu", "societe/sportives", "loisirs/voyage"] {
+    for category in ["societe/actu", "societe/sportives", "loisirs/voyages"] {
         tab.navigate_to(&format!("https://www.journaldesfemmes.fr/{category}"))
             .context("navigate_to")?;
         tab.wait_until_navigated().context("wait_until_navigated")?;
 
         let links = get_articles_links(&tab)?;
-        info!("found {} articles", links.len());
+        info!("found {} articles on {category}", links.len());
         if links.is_empty() {
             bail!("no links found");
         }
