@@ -45,23 +45,19 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
             continue;
         }
         opts.seen_urls.write().unwrap().push(url.clone());
-        let tags: Vec<_> = ["travel", "lemediaexperience"]
-            .into_iter()
-            .map(str::to_string)
-            .collect();
 
         let payload = match fetch_article(&url) {
             Ok(res) => Ok(News {
                 title: res.title,
                 caption: res.description,
                 provider: "lme::bbc".to_string(),
-                tags,
                 date: res
                     .published
                     .parse()
                     .unwrap_or_else(|_| chrono::Local::now()),
                 body: res.content,
                 link: url,
+                ..Default::default()
             }),
             Err(err) => {
                 debug!("fetch_article on {url}: {err}");

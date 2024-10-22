@@ -32,10 +32,6 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
             continue;
         }
         opts.seen_urls.write().unwrap().push(url.clone());
-        let tags: Vec<_> = ["trip-ideas", "lemediaexperience"]
-            .into_iter()
-            .map(str::to_string)
-            .collect();
         tab.navigate_to(&url)
             .context("navigate_to url")?
             .wait_until_navigated()
@@ -61,13 +57,13 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
                 title: res.title,
                 caption: res.description,
                 provider: "lme::travelandleisure".to_string(),
-                tags,
                 date: res
                     .published
                     .parse()
                     .unwrap_or_else(|_| chrono::Local::now()),
                 body: imgs.clone() + &res.content,
                 link: url,
+                ..Default::default()
             }),
             Err(err) => {
                 debug!("parse_article: {}", err);

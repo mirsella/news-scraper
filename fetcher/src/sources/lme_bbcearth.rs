@@ -45,20 +45,16 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
         if opts.is_seen(&url) {
             continue;
         }
-        let tags: Vec<_> = ["nature", "lemediaexperience"]
-            .into_iter()
-            .map(str::to_string)
-            .collect();
 
         let payload = match fetch_article(&url) {
             Ok(res) => Ok(News {
                 title: res.title,
                 caption: res.description,
                 provider: opts.provider.clone(),
-                tags,
-date: res.published,
+                date: res.published,
                 body: res.content,
                 link: url,
+                ..Default::default()
             }),
             Err(err) => {
                 log::warn!("fetch_article on {url}: {err}");

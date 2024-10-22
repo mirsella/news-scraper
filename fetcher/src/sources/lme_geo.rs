@@ -35,10 +35,6 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
         if opts.is_seen(&url) {
             continue;
         }
-        let tags: Vec<_> = ["adventure", "lemediaexperience"]
-            .into_iter()
-            .map(str::to_string)
-            .collect();
 
         tab.navigate_to(&url)
             .context(format!("navigate_to {url}"))?
@@ -50,10 +46,10 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
                 title: res.title,
                 caption: res.description,
                 provider: opts.provider.clone(),
-                tags,
-date: res.published,
+                date: res.published,
                 body: res.content,
                 link: url,
+                ..Default::default()
             }),
             Err(err) => {
                 log::warn!("parse_article on {url}: {err}");
