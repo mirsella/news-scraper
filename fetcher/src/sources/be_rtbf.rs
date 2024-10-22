@@ -7,7 +7,7 @@ use std::{sync::Arc, thread, time::Duration};
 fn get_articles_links(tab: &Arc<Tab>) -> Result<Vec<String>> {
     let links: Vec<String> = tab
         .find_elements("a.stretched-link")
-        .context("find_elements a.stretched-link")?
+        .context("finding articles links")?
         .iter()
         .map(|el| {
             let href = el.get_attribute_value("href").unwrap().expect("no href ??");
@@ -55,7 +55,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
                 title: res.title,
                 caption: res.description,
                 provider: opts.provider.clone(),
-date: res.published,
+                date: res.published,
                 body: res.content,
                 link: url,
                 ..Default::default()

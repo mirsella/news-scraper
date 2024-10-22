@@ -45,7 +45,7 @@ date: res.published,
                 tags: vec!["usa/world".to_string(), "goodnews".to_string()],
             }),
             Err(err) => {
-                log::warn!("fetch_article on {url}: {err}");
+                log::warn!("fetch_article on {url}: {err:?}");
                 continue;
             }
         };

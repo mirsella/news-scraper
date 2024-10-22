@@ -67,7 +67,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
                 link: url,
             }),
             Err(err) => {
-                log::warn!("fetch_article on {url}: {err}");
+                log::warn!("fetch_article on {url}: {err:?}");
                 continue;
             }
         };

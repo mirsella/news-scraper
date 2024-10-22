@@ -47,7 +47,7 @@ date: res.published,
                 ..Default::default()
             }),
             Err(err) => {
-                log::warn!("fetch_article on {url}: {err}");
+                log::warn!("fetch_article on {url}: {err:?}");
                 continue;
             }
         };

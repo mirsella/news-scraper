@@ -76,7 +76,7 @@ date: res.published,
                     link: url,
                 }),
                 Err(err) => {
-                    log::warn!("fetch_article on {url}: {err}");
+                    log::warn!("fetch_article on {url}: {err:?}");
                     continue;
                 }
             };
