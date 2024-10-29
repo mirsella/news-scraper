@@ -7,12 +7,11 @@ RUN cargo build --release
 # Fetcher runtime
 FROM alpine:3.18.3 AS fetcher
 SHELL ["/bin/ash", "-eo", "pipefail", "-c"]
-RUN apk add --no-cache chromium ca-certificates tzdata
+RUN apk add --no-cache chromium ca-certificates tzdata tini
 ENV TZ=Europe/Paris
 COPY .env /.env
 COPY --from=builder /app/target/x86_64-unknown-linux-musl/release/fetcher /fetcher
-RUN echo "0 7,9,13,17 * * * /fetcher && pkill -f chromium \
-  0 0 * * * pkill -f chromium" | crontab -
+RUN echo "0 7,9,13,17 * * * tini -- /fetcher \n0 0 * * * pkill -f chromium" | crontab -
 CMD ["crond", "-f", "-l", "0"]
 # CMD ["/fetcher"]
 

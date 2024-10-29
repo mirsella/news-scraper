@@ -27,6 +27,8 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
         .context("navigate_to")?;
     tab.wait_until_navigated().context("wait_until_navigated")?;
 
+    thread::sleep(Duration::from_secs(1));
+
     if let Ok(cookie) = tab.find_element(".fc-button.fc-cta-consent") {
         cookie.click().context("clicking on cookie")?;
         thread::sleep(Duration::from_secs(1));
