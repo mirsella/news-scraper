@@ -5,7 +5,6 @@ use chrono::{DateTime, Local};
 use headless_chrome::Browser;
 use log::{debug, trace};
 use serde::{Deserialize, Deserializer, Serialize};
-use serde_json::Value;
 use shared::News;
 use std::sync::{Arc, RwLock};
 use std::time::Duration;
@@ -51,7 +50,7 @@ pub struct ApiResponse {
     title: String,
     description: String,
     image: String,
-    author: Value,
+    author: String,
     favicon: String,
     content: String,
     #[serde(deserialize_with = "deserialize_null_default")]
@@ -65,8 +64,9 @@ fn deserialize_null_default<'de, D>(deserializer: D) -> Result<DateTime<Local>, 
 where
     D: Deserializer<'de>,
 {
-    let opt = Option::deserialize(deserializer)?;
-    Ok(opt.unwrap_or_else(Local::now))
+    let string = String::deserialize(deserializer)?;
+    let parsed = dateparser::parse(&string);
+    Ok(parsed.map(Into::into).unwrap_or_else(|_| Local::now()))
 }
 
 pub fn fetch_article(url: impl AsRef<str>) -> Result<ApiResponse, anyhow::Error> {
