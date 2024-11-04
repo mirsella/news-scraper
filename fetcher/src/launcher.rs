@@ -4,7 +4,7 @@ use std::{
     time::Duration,
 };
 
-use crate::sources::{GetNewsOpts, SeenLink, SourceFn};
+use crate::sources::{GetNewsOpts, SourceFn};
 use anyhow::Context;
 use futures::{stream::FuturesUnordered, StreamExt};
 use headless_chrome::{Browser, LaunchOptionsBuilder};
@@ -36,7 +36,7 @@ fn new_browser(headless: bool) -> Browser {
 pub fn init(
     config: &Config,
     sources: Vec<&'static (&'static str, SourceFn)>,
-    seen_links: Arc<RwLock<Vec<SeenLink>>>,
+    seen_links: Arc<RwLock<Vec<String>>>,
     telegram: Arc<Telegram>,
 ) -> Receiver<anyhow::Result<News>> {
     let config = Arc::new(config.clone());

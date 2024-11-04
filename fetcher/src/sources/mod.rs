@@ -10,29 +10,16 @@ use std::sync::{Arc, RwLock};
 use std::time::Duration;
 use tokio::sync::mpsc::Sender;
 
-#[derive(Deserialize, Debug)]
-pub struct SeenLink {
-    pub link: String,
-    pub tags: Vec<String>,
-}
-
 pub struct GetNewsOpts {
     pub browser: Browser,
     pub tx: Sender<anyhow::Result<News>>,
-    pub seen_links: Arc<RwLock<Vec<SeenLink>>>,
+    pub seen_links: Arc<RwLock<Vec<String>>>,
     pub provider: String,
 }
 impl GetNewsOpts {
     // is the link seen with the current provider?
     pub fn is_seen(&self, link: &str) -> bool {
-        let prefix_tag = extract_prefix_from_provider(&self.provider);
-        if self
-            .seen_links
-            .read()
-            .unwrap()
-            .iter()
-            .any(|seen_link| seen_link.link == link && seen_link.tags.contains(&prefix_tag))
-        {
+        if self.seen_links.read().unwrap().contains(&link.to_string()) {
             trace!("already seen {} with provider {}", link, self.provider);
             return true;
         }

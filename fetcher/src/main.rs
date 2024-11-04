@@ -7,7 +7,7 @@ use clap::Parser;
 use env_logger::Builder;
 use log::{debug, error, info, trace};
 use shared::{config::Config, db_news::DbNews, extract_clean_text, sanitize_html, Telegram};
-use sources::{extract_prefix_from_provider, SeenLink, SOURCES};
+use sources::{extract_prefix_from_provider, SOURCES};
 use std::{
     borrow::Cow,
     convert::Into,
@@ -109,8 +109,8 @@ async fn main() -> Result<()> {
         None => SOURCES.iter().collect(),
     };
     // provider, link
-    let seen_news: Vec<SeenLink> = db
-        .query("select link, tags from news")
+    let seen_news: Vec<String> = db
+        .query("select value link from news parallel")
         .await?
         .take(0)
         .unwrap_or_default();
@@ -139,12 +139,7 @@ async fn main() -> Result<()> {
         );
         news.tags.push(extract_prefix_from_provider(&news.provider));
         let error: Option<anyhow::Error>;
-        if seen_news
-            .read()
-            .unwrap()
-            .iter()
-            .any(|seen_link| seen_link.link == news.link)
-        {
+        if seen_news.read().unwrap().contains(&news.link) {
             debug!(
                 "news already seen with different provider, merging: tags: {:?}, link: {}",
                 news.tags, news.link
@@ -178,10 +173,7 @@ async fn main() -> Result<()> {
                 .await;
             error = result.err().map(Into::into);
         }
-        seen_news.write().unwrap().push(SeenLink {
-            link: news.link,
-            tags: news.tags,
-        });
+        seen_news.write().unwrap().push(news.link);
         if let Some(e) = error {
             error!("db: {e:#?}");
             telegram.send(format!("fetcher: db: {e:#?}")).ok();
