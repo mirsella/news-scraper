@@ -10,9 +10,9 @@ fn get_articles_links(tab: &Arc<Tab>) -> Result<Vec<String>> {
         .context("find_elements articles links")?
         .iter()
         .map(|el| {
-            let mut href = el.get_attribute_value("href").unwrap().expect("no href ??");
+            let href = el.get_attribute_value("href").unwrap().expect("no href ??");
             if !href.starts_with("http") {
-                href = tab.get_url() + &href;
+                return format!("https://lalibre.be{href}");
             }
             href
         })
@@ -51,7 +51,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
                 title: res.title,
                 caption: res.description,
                 provider: opts.provider.clone(),
-date: res.published,
+                date: res.published,
                 body: res.content,
                 link: url,
                 ..Default::default()
