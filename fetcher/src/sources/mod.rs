@@ -45,13 +45,14 @@ pub struct ApiResponse {
     source: String,
     links: Vec<String>,
     ttr: f64,
+    r#type: String,
 }
 
 fn deserialize_null_default<'de, D>(deserializer: D) -> Result<DateTime<Local>, D::Error>
 where
     D: Deserializer<'de>,
 {
-    let string = String::deserialize(deserializer)?;
+    let string = String::deserialize(deserializer).unwrap_or_default();
     let parsed = dateparser::parse(&string);
     Ok(parsed.map(Into::into).unwrap_or_else(|_| Local::now()))
 }
@@ -66,16 +67,16 @@ pub fn fetch_article(url: impl AsRef<str>) -> Result<ApiResponse, anyhow::Error>
     );
     let response = ureq::get(&endpoint).timeout(Duration::from_secs(6)).call();
     let response = match response {
-        Ok(response) => response,
+        Ok(response) => response.into_string()?,
         Err(ureq::Error::Status(code, res)) => {
-            return Err(anyhow!("{code}: {:#?}", res));
+            return Err(anyhow!("{url} returned: {code} {res:#?}"));
         }
         Err(e) => {
             return Err(anyhow!("{url}: {e}"));
         }
     };
-    let json_result: ApiResponse = response
-        .into_json()
+    let json_result = serde_json::from_str(&response)
+        .or_else(|_| serde_json::from_str(&response.replace('"', "'")))
         .context("deserialize json response to ApiResponse struct")?;
     Ok(json_result)
 }
