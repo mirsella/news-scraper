@@ -2,7 +2,8 @@
 -- OPTION
 -- ------------------------------
 
-OPTION IMPORT;
+# https://github.com/surrealdb/surrealdb/issues/2841#issuecomment-2459678370
+# OPTION IMPORT;
 
 -- ------------------------------
 -- PARAMS
