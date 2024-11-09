@@ -8,7 +8,7 @@
     "bun-types": "latest"
   },
   "dependencies": {
-    "@extractus/article-extractor": "=8.0.15",
+    "@extractus/article-extractor": "^8.0.16",
     "hono": "^4.4.0"
   }
 }
