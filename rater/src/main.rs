@@ -93,7 +93,7 @@ async fn main() -> Result<()> {
         let db_news = retrieve_db_news(&db).await;
         let db_news = match db_news {
             Ok(news) if news.is_empty() => {
-                trace!("no news to process");
+                info!("no news to process");
                 sleep_check(&running, Duration::from_secs(60));
                 continue;
             }
