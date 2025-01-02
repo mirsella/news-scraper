@@ -108,7 +108,6 @@ async fn main() -> Result<()> {
             .collect(),
         None => SOURCES.iter().collect(),
     };
-    // provider, link
     let seen_news: Vec<String> = db
         .query("select value link from news parallel")
         .await?
@@ -116,7 +115,13 @@ async fn main() -> Result<()> {
         .unwrap_or_default();
 
     assert!(!seen_news.is_empty() || cli.ignore_empty_db);
-    info!("Total news already seen: {}", seen_news.len());
+    info!(
+        "Total news already seen: {} ({} bytes)",
+        seen_news.len(),
+        size_of::<Vec<String>>()
+            + (size_of::<String>() * seen_news.capacity())
+            + seen_news.iter().map(|s| s.capacity() + 1).sum::<usize>()
+    );
 
     let seen_news = Arc::new(RwLock::new(seen_news));
     let mut rx = launcher::init(&config, sources, seen_news.clone(), telegram.clone());
