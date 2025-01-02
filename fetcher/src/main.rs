@@ -20,7 +20,7 @@ use std::{
     thread,
     time::Duration,
 };
-use surrealdb::{engine::remote::ws::Ws, opt::auth::Root, Surreal};
+use surrealdb::{engine::remote::http::Http, opt::auth::Root, Surreal};
 
 #[derive(Parser, Debug)]
 struct Cli {
@@ -71,7 +71,7 @@ async fn main() -> Result<()> {
     let telegram = Telegram::new(config.telegram_token.clone(), config.telegram_id);
     let telegram = Arc::new(telegram);
 
-    let db = Surreal::new::<Ws>(&config.surrealdb_host).await?;
+    let db = Surreal::new::<Http>(&config.surrealdb_host).await?;
     db.signin(Root {
         username: &config.db_user,
         password: &config.db_password,

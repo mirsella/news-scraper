@@ -10,12 +10,12 @@ use std::process::exit;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::time::Duration;
-use surrealdb::engine::remote::ws::Ws;
-use surrealdb::{engine::remote::ws::Client as WsClient, opt::auth::Root, Surreal};
+use surrealdb::engine::remote::http::Http;
+use surrealdb::{opt::auth::Root, Surreal};
 use tokio::sync::Semaphore;
 use tokio::task::JoinHandle;
 
-async fn retrieve_db_news(db: &Surreal<WsClient>) -> Result<Vec<DbNews>> {
+async fn retrieve_db_news<T: surrealdb::Connection>(db: &Surreal<T>) -> Result<Vec<DbNews>> {
     let db_news: Vec<DbNews> = db
         .query(
             "return select * from news
@@ -65,7 +65,7 @@ async fn main() -> Result<()> {
         exit(1);
     });
 
-    let db = Surreal::new::<Ws>(&config.surrealdb_host).await?;
+    let db = Surreal::new::<Http>(&config.surrealdb_host).await?;
     db.signin(Root {
         username: &config.db_user,
         password: &config.db_password,

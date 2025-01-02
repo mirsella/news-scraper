@@ -7,10 +7,9 @@ use async_openai::{
     },
     Client as ChatClient,
 };
-use std::borrow::Cow;
-
 use serde::{Deserialize, Serialize};
-use surrealdb::{engine::remote::ws::Client as DbClient, Surreal};
+use std::borrow::Cow;
+use surrealdb::Surreal;
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct DbNews {
@@ -30,7 +29,7 @@ pub struct DbNews {
 }
 
 impl DbNews {
-    pub async fn save(&self, db: &Surreal<DbClient>) -> Result<DbNews> {
+    pub async fn save<T: surrealdb::Connection>(&self, db: &Surreal<T>) -> Result<DbNews> {
         let id = self.id.clone().unwrap();
         let news = db
             .update::<Option<DbNews>>(("news", id))
