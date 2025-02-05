@@ -1,3 +1,4 @@
+use anyhow::bail;
 use ureq::Response;
 
 pub struct Telegram {
@@ -13,6 +14,9 @@ impl Telegram {
         }
     }
     pub fn send(&self, msg: impl Into<String>) -> anyhow::Result<Response> {
+        if std::env::var("NO_TELEGRAM").is_ok() {
+            bail!("telegram disabled by NO_TELEGRAM env");
+        }
         let msg = msg.into();
         let url = format!("https://api.telegram.org/bot{}/sendMessage", self.token);
         let data = serde_json::json!({
