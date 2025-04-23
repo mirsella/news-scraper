@@ -13,4 +13,4 @@ jobs:
       - name: Build Docker Compose
         run: |
           cp .env.example .env
-          docker-compose build
+          docker compose build
