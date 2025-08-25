@@ -5,7 +5,7 @@ use headless_chrome::Tab;
 use log::{error, trace};
 use std::sync::Arc;
 
-const CATEGORIES: [&str; 9] = [
+const CATEGORIES: &[&str] = &[
     "politique",
     "societe",
     "faits-divers",
@@ -13,8 +13,8 @@ const CATEGORIES: [&str; 9] = [
     "economie",
     "monde",
     "culture",
-    "sport",
-    "environnement",
+    "sante",
+    "sciences",
 ];
 
 // number of links keep per category
@@ -54,6 +54,11 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
         tab.navigate_to(&format!("https://www.francetvinfo.fr/{category}/"))
             .context("navigate_to")?;
         tab.wait_until_navigated().context("wait_until_navigated")?;
+
+        if let Ok(cookie) = tab.find_element("#didomi-notice-agree-button") {
+            cookie.click().context("clicking on cookie")?;
+        }
+
         let links = get_articles_links(&tab).context("francetvinfo")?;
         trace!("found {} links on {category}", links.len());
         if links.is_empty() {
@@ -70,7 +75,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
                     title: res.title,
                     caption: res.description,
                     provider: opts.provider.clone(),
-date: res.published,
+                    date: res.published,
                     body: res.content,
                     link: url,
                     ..Default::default()

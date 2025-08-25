@@ -2,7 +2,7 @@ use super::{GetNewsOpts, News};
 use anyhow::bail;
 use anyhow::{Context, Result};
 use headless_chrome::Tab;
-use log::{error, trace};
+use log::error;
 use std::{sync::Arc, thread, time::Duration};
 
 fn get_articles_links(tab: &Arc<Tab>) -> Result<Vec<String>> {
@@ -35,7 +35,6 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
     if let Ok(cookie) = tab.find_element("#didomi-notice-agree-button") {
         cookie.click().context("clicking on cookie")?;
         std::thread::sleep(std::time::Duration::from_secs(3));
-        trace!("clicked cookie");
     }
 
     let links = get_articles_links(&tab)?;
