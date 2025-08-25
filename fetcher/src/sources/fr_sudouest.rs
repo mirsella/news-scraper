@@ -6,11 +6,11 @@ use log::{debug, error, trace};
 use std::sync::Arc;
 
 fn get_articles_links(tab: &Arc<Tab>) -> Result<Vec<String>> {
-    tab.wait_for_elements(".article-wrapper > a")
-        .context("wait_for_elements .article-wrapper > a")?;
+    tab.wait_for_elements(".highlighted-article > a")
+        .context("wait_for_elements .highlighted-article > a")?;
     let result = tab
         .evaluate(
-            "Array.from(document.querySelectorAll('.article-wrapper > a')).map(e => e.href)",
+            "Array.from(document.querySelectorAll('.highlighted-article > a, .article-feed-content > a, .thematic-sub-block > a')).map(e => e.href)",
             false,
         )
         .unwrap();
@@ -60,7 +60,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
                 title: res.title,
                 caption: res.description,
                 provider: opts.provider.clone(),
-date: res.published,
+                date: res.published,
                 body: res.content,
                 link: url.clone(),
                 ..Default::default()
