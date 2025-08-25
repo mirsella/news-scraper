@@ -108,6 +108,26 @@ async fn main() -> Result<()> {
             .collect(),
         None => SOURCES.iter().collect(),
     };
+
+    // Clean up old news content (older than 90 days)
+    let cleanup_result = db
+        .query("UPDATE news SET html_body = '', text_body = '' WHERE date < time::now() - 60d && string::len(html_body) > 0 RETURN id")
+        .await;
+    match cleanup_result.and_then(|mut r| r.take::<Vec<surrealdb::sql::Thing>>((0, "id"))) {
+        Ok(values) => {
+            info!(
+                "Cleaned up old news content (older than 60 days): {} rows affected",
+                values.len()
+            );
+        }
+        Err(e) => {
+            error!("Failed to clean up old news: {e:#?}");
+            if let Err(te) = telegram.send(format!("fetcher: cleanup failed: {e:#?}")) {
+                error!("telegram.send: {:#?}", te);
+            }
+        }
+    }
+
     let seen_news: Vec<String> = db
         .query("select value link from news parallel")
         .await?
