@@ -3,7 +3,7 @@ use async_openai::{
     config::OpenAIConfig,
     types::{
         ChatCompletionRequestSystemMessage, ChatCompletionRequestUserMessage,
-        CreateChatCompletionRequestArgs, FinishReason,
+        CreateChatCompletionRequestArgs, FinishReason, ReasoningEffort,
     },
     Client as ChatClient,
 };
@@ -74,10 +74,9 @@ impl DbNews {
         ];
         let request = CreateChatCompletionRequestArgs::default()
             .model("gpt-5-nano")
-            .max_completion_tokens(50_u16)
+            .max_completion_tokens(150u32)
+            .reasoning_effort(ReasoningEffort::Low)
             .messages(conv)
-            .n(1)
-            .temperature(0_f32)
             .build()
             .unwrap();
 
@@ -97,7 +96,7 @@ impl DbNews {
             .ok_or(anyhow!("no content in response: {response:?}"))?;
         let split = content
             .split_once(';')
-            .ok_or(anyhow!("invalid response: {content}"))?;
+            .ok_or(anyhow!("invalid response: `{content}`"))?;
         let ratings: (u8, u8) = {
             let lowercase = split.0.to_lowercase();
             let r = lowercase
