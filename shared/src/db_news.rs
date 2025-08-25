@@ -73,7 +73,7 @@ impl DbNews {
             .into(),
         ];
         let request = CreateChatCompletionRequestArgs::default()
-            .model("gpt-4o-mini")
+            .model("gpt-5-nano")
             .max_tokens(50_u16)
             .messages(conv)
             .n(1)
