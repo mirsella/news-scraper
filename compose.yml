@@ -23,8 +23,10 @@ services:
       dockerfile: cargo.dockerfile
       target: fetcher
     depends_on:
-      - article-parser
-      - surrealdb
+      surrealdb:
+        condition: service_healthy
+      article-parser:
+        condition: service_started
     environment:
       ARTICLE_PARSER_URL: "http://article-parser:8081"
       SURREALDB_HOST: "surrealdb:8000"
@@ -36,15 +38,16 @@ services:
     deploy:
       restart_policy:
         condition: on-failure
-        delay: 5s
+        delay: 1m
         max_attempts: 3
-        window: 120s
+        window: 5m
     build:
       context: .
       dockerfile: cargo.dockerfile
       target: rater
     depends_on:
-      - surrealdb
+      surrealdb:
+        condition: service_healthy
     environment:
       RUST_LOG: "rater=debug"
       SURREALDB_HOST: "surrealdb:8000"
@@ -71,5 +74,5 @@ services:
     healthcheck:
       test: ["CMD", "/surreal", "isready"]
       retries: 3
-      start_period: 10s
+      start_period: 30s
       timeout: 10s
