@@ -3,13 +3,22 @@ use async_openai::{
     config::OpenAIConfig,
     types::{
         ChatCompletionRequestSystemMessage, ChatCompletionRequestUserMessage,
-        CreateChatCompletionRequestArgs, FinishReason, ReasoningEffort,
+        CreateChatCompletionRequestArgs, FinishReason, ReasoningEffort, ResponseFormat,
+        ResponseFormatJsonSchema,
     },
     Client as ChatClient,
 };
 use serde::{Deserialize, Serialize};
+use serde_json::json;
 use std::borrow::Cow;
 use surrealdb::Surreal;
+
+#[derive(Debug, Deserialize)]
+struct RatingResponse {
+    positivity_rating: u8,
+    travel_rating: u8,
+    tags: Vec<String>,
+}
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct DbNews {
@@ -52,6 +61,7 @@ impl DbNews {
             String::from_utf8_lossy(&tokenizer._decode_native(&truncated_tokens)).to_string();
         // remove the � from lost bytes
         let truncated_text = truncated_text.trim_end_matches('\u{FFFD}').to_string();
+
         let conv = vec![
             ChatCompletionRequestSystemMessage {
                 content: prompt.into(),
@@ -63,71 +73,82 @@ impl DbNews {
                 ..Default::default()
             }
             .into(),
-            ChatCompletionRequestSystemMessage {
-                content:
-                // "you're a expert journalist. you will answer with exactly the following format `rating1,rating2;tags,tags,tags`. directly put the values."
-                "the article is finished. you will answer with exactly the following format `rating1,rating2;tags,tags,tags`. directly put the values:"
-                    .into(),
-                ..Default::default()
-            }
-            .into(),
         ];
+
+        let schema = json!({
+            "type": "object",
+            "properties": {
+                "positivity_rating": {
+                    "type": "integer",
+                    "description": "Positivity rating from 0-100",
+                    "minimum": 0,
+                    "maximum": 100
+                },
+                "travel_rating": {
+                    "type": "integer",
+                    "description": "Travel-related rating from 0-100",
+                    "minimum": 0,
+                    "maximum": 100
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Array of relevant tags for the article"
+                }
+            },
+            "required": ["positivity_rating", "travel_rating", "tags"],
+            "additionalProperties": false
+        });
+
         let request = CreateChatCompletionRequestArgs::default()
             .model("gpt-5-nano")
             .max_completion_tokens(1000u32)
             .reasoning_effort(ReasoningEffort::Low)
             .messages(conv)
+            .response_format(ResponseFormat::JsonSchema {
+                json_schema: ResponseFormatJsonSchema {
+                    name: "article_rating".to_string(),
+                    description: Some("Structured rating response for news articles".to_string()),
+                    schema: Some(schema),
+                    strict: Some(true),
+                },
+            })
             .build()
             .unwrap();
 
         let response = client
-            .chat() // Get the API "group" (completions, images, etc.) from the client
-            .create(request) // Make the API call in that "group"
+            .chat()
+            .create(request)
             .await
             .context("created openai request")?;
+
         let choice = response
             .choices
             .first()
             .ok_or(anyhow!("no response. {response:?}"))?;
+
         let content = choice
             .message
             .content
             .clone()
             .ok_or(anyhow!("no content in response: {response:?}"))?;
-        let split = content
-            .split_once(';')
-            .ok_or(anyhow!("invalid response: `{content}`"))?;
-        let ratings: (u8, u8) = {
-            let lowercase = split.0.to_lowercase();
-            let r = lowercase
-                .trim_start_matches("rating: ")
-                .split_once(',')
-                .context(content.clone())?;
-            (
-                r.0.trim().parse().context(content.clone())?,
-                r.1.trim().parse().context(content.clone())?,
-            )
-        };
-        let mut tags: Vec<String> = split
-            .1
-            .split(',')
-            .filter_map(|s| {
-                let s = s.trim().to_string();
-                if s.is_empty() {
-                    None
-                } else {
-                    Some(s)
-                }
-            })
-            .collect();
+
+        let rating_response: RatingResponse = serde_json::from_str(&content)
+            .context(format!("failed to parse response JSON: {}", content))?;
+
+        let mut tags = rating_response.tags;
         // if response was truncated, remove the last unfinished tag
         if let Some(FinishReason::Length) = &choice.finish_reason {
             println!("db_news.rate(): response was truncated");
             _ = tags.pop();
         };
-        self.rating = Some(ratings.0);
-        self.rating_travel = Some(ratings.1);
+
+        self.rating = Some(rating_response.positivity_rating);
+        self.rating_travel = Some(rating_response.travel_rating);
         self.tags.extend(tags.clone());
-        Ok((ratings.0, ratings.1, tags))
+
+        Ok((rating_response.positivity_rating, rating_response.travel_rating, tags))
     }
 }
