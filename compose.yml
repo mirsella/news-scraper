@@ -1,7 +1,7 @@
 services:
-  article-parser:
+  article_parser:
     restart: unless-stopped
-    container_name: article-parser
+    container_name: article_parser
     build:
       context: bun-article-parser
       dockerfile: dockerfile
@@ -25,10 +25,10 @@ services:
     depends_on:
       surrealdb:
         condition: service_healthy
-      article-parser:
+      article_parser:
         condition: service_started
     environment:
-      ARTICLE_PARSER_URL: "http://article-parser:8081"
+      ARTICLE_PARSER_URL: "http://article_parser:8081"
       SURREALDB_HOST: "surrealdb:8000"
       CHROME_HEADLESS: "true"
       RUST_LOG: "fetcher=debug"
