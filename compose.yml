@@ -35,12 +35,7 @@ services:
 
   rater:
     container_name: rater
-    deploy:
-      restart_policy:
-        condition: on-failure
-        delay: 5m
-        max_attempts: 3
-        window: 6m
+    restart: unless-stopped
     build:
       context: .
       dockerfile: cargo.dockerfile
