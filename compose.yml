@@ -38,9 +38,9 @@ services:
     deploy:
       restart_policy:
         condition: on-failure
-        delay: 1m
+        delay: 5m
         max_attempts: 3
-        window: 5m
+        window: 6m
     build:
       context: .
       dockerfile: cargo.dockerfile
