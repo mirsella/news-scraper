@@ -6,19 +6,19 @@ use std::{
 
 use crate::sources::{GetNewsOpts, SourceFn};
 use anyhow::Context;
-use futures::{stream::FuturesUnordered, StreamExt};
+use futures::{StreamExt, stream::FuturesUnordered};
 use headless_chrome::{Browser, LaunchOptionsBuilder};
 use log::{error, info};
-use shared::{config::Config, News, Telegram};
+use shared::{News, Telegram, config::Config};
 use tokio::{
-    sync::mpsc::{channel, Receiver},
-    task::{spawn_blocking, JoinHandle},
+    sync::mpsc::{Receiver, channel},
+    task::{JoinHandle, spawn_blocking},
 };
 
 /// this is because the headless chrome crate doesn't support using multiple tab at the same time
 /// if we want some parallelism, we need to spawn a whole new browser for each source
 fn new_browser(headless: bool) -> Browser {
-    let browser = Browser::new(
+    Browser::new(
         LaunchOptionsBuilder::default()
             .window_size(Some((1920, 1080)))
             .headless(headless)
@@ -29,8 +29,7 @@ fn new_browser(headless: bool) -> Browser {
             .build()
             .unwrap(),
     )
-    .unwrap();
-    browser
+    .unwrap()
 }
 
 pub fn init(
@@ -87,7 +86,7 @@ pub fn init(
                     futures.push(spawn_blocking(move || source.1(opts).context(source.0)));
                 }
                 None => break,
-            }
+            };
         }
     });
     rx

@@ -2,25 +2,25 @@ mod launcher;
 mod sources;
 use anyhow::Result;
 use chrono::DateTime;
-use clap::builder::PossibleValuesParser;
 use clap::Parser;
+use clap::builder::PossibleValuesParser;
 use env_logger::Builder;
 use log::{debug, error, info, trace};
-use shared::{config::Config, db_news::DbNews, extract_clean_text, sanitize_html, Telegram};
-use sources::{extract_prefix_from_provider, SOURCES};
+use shared::{Telegram, config::Config, db_news::DbNews, extract_clean_text, sanitize_html};
+use sources::{SOURCES, extract_prefix_from_provider};
 use std::{
     borrow::Cow,
     convert::Into,
     env,
     process::{self, exit},
     sync::{
-        atomic::{AtomicU16, Ordering},
         Arc, RwLock,
+        atomic::{AtomicU16, Ordering},
     },
     thread,
     time::Duration,
 };
-use surrealdb::{engine::remote::http::Http, opt::auth::Root, Surreal};
+use surrealdb::{Surreal, engine::remote::http::Http, opt::auth::Root};
 
 #[derive(Parser, Debug)]
 struct Cli {
@@ -113,7 +113,13 @@ async fn main() -> Result<()> {
     let cleanup_result = db
         .query("UPDATE news SET html_body = '', text_body = '' WHERE date < time::now() - 60d && string::len(html_body) > 0 RETURN id")
         .await;
-    match cleanup_result.and_then(|mut r| r.take::<Vec<surrealdb::sql::Thing>>((0, "id"))) {
+    let cleaned_ids: Result<Vec<surrealdb::sql::Thing>> = match cleanup_result {
+        Ok(mut response) => response
+            .take::<Vec<surrealdb::sql::Thing>>((0, "id"))
+            .map_err(Into::into),
+        Err(e) => Err(e.into()),
+    };
+    match cleaned_ids {
         Ok(values) => {
             info!(
                 "Cleaned up old news content (older than 60 days): {} rows affected",
@@ -158,13 +164,12 @@ async fn main() -> Result<()> {
         };
         trace!(
             "recv news: {}: {:.20?}..., link: {:?}",
-            news.provider,
-            news.title,
-            news.link
+            news.provider, news.title, news.link
         );
         news.tags.push(extract_prefix_from_provider(&news.provider));
         let error: Option<anyhow::Error>;
-        if seen_news.read().unwrap().contains(&news.link) {
+        let already_seen = seen_news.read().unwrap().contains(&news.link);
+        if already_seen {
             debug!(
                 "news already seen with different provider, merging: tags: {:?}, link: {}",
                 news.tags, news.link
@@ -206,7 +211,7 @@ async fn main() -> Result<()> {
             continue;
         } else {
             counter.fetch_add(1, Ordering::Relaxed);
-        }
+        };
     }
     info!("Total news recorded: {}", counter.load(Ordering::Relaxed));
     Ok(())

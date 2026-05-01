@@ -1,12 +1,12 @@
-use anyhow::{anyhow, Context, Result};
+use anyhow::{Context, Result, anyhow};
 use async_openai::{
+    Client as ChatClient,
     config::OpenAIConfig,
     types::{
         ChatCompletionRequestSystemMessage, ChatCompletionRequestUserMessage,
         CreateChatCompletionRequestArgs, FinishReason, ReasoningEffort, ResponseFormat,
         ResponseFormatJsonSchema,
     },
-    Client as ChatClient,
 };
 use serde::{Deserialize, Serialize};
 use serde_json::json;
@@ -149,6 +149,10 @@ impl DbNews {
         self.rating_travel = Some(rating_response.travel_rating);
         self.tags.extend(tags.clone());
 
-        Ok((rating_response.positivity_rating, rating_response.travel_rating, tags))
+        Ok((
+            rating_response.positivity_rating,
+            rating_response.travel_rating,
+            tags,
+        ))
     }
 }

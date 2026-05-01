@@ -3,7 +3,7 @@
 [![Cargo Build & Test](https://github.com/mirsella/news-scraper/actions/workflows/rust.yml/badge.svg)](https://github.com/mirsella/news-scraper/actions/workflows/rust.yml)
 [![Docker Compose](https://github.com/mirsella/news-scraper/actions/workflows/docker.yml/badge.svg)](https://github.com/mirsella/news-scraper/actions/workflows/docker.yml)
 [![Rust](https://img.shields.io/badge/rust-stable-orange.svg)](https://www.rust-lang.org/tools/install)
-[![Edition](https://img.shields.io/badge/edition-2021-blue.svg)](https://doc.rust-lang.org/edition-guide/rust-2021/index.html)
+[![Edition](https://img.shields.io/badge/edition-2024-blue.svg)](https://doc.rust-lang.org/edition-guide/rust-2024/index.html)
 [![SurrealDB](https://img.shields.io/badge/SurrealDB-1.5.6-ff00a0.svg)](https://surrealdb.com)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
@@ -56,7 +56,7 @@ flowchart LR
 
 ## Requirements
 
-- Rust stable, edition 2021.
+- Rust stable, edition 2024.
 - Docker and Docker Compose for the full stack.
 - A SurrealDB instance, or the included Compose service.
 - An OpenAI API key for `rater`.

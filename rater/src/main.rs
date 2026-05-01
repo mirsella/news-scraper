@@ -1,5 +1,5 @@
 use anyhow::{Context, Result};
-use async_openai::{config::OpenAIConfig, Client as ChatClient};
+use async_openai::{Client as ChatClient, config::OpenAIConfig};
 use env_logger::Builder;
 use futures::future::select_all;
 use log::{error, info, trace, warn};
@@ -7,11 +7,11 @@ use shared::Telegram;
 use shared::{config::Config, db_news::DbNews};
 use std::env;
 use std::process::exit;
-use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Duration;
 use surrealdb::engine::remote::http::Http;
-use surrealdb::{opt::auth::Root, Surreal};
+use surrealdb::{Surreal, opt::auth::Root};
 use tokio::sync::Semaphore;
 use tokio::task::JoinHandle;
 
@@ -115,7 +115,7 @@ async fn main() -> Result<()> {
             let running = running.clone();
             let telegram = telegram.clone();
             let handle: JoinHandle<Result<Option<DbNews>>> = tokio::spawn(async move {
-                let _permit = sem.acquire().await;
+                let permit = sem.acquire().await;
                 if !running.load(Ordering::Relaxed) {
                     return Ok(None);
                 }
@@ -148,21 +148,24 @@ async fn main() -> Result<()> {
                     }
                 };
                 info!("{id} rating: {rating:?}");
-                match news.save(&db).await {
+                let save_result = match news.save(&db).await {
                     Ok(_) => Ok(Some(news)),
                     Err(e) => {
                         warn!("saving {id} failed one time: {e:#?}");
                         // telegram.send(format!("rater: saving {id} failed one time: {e:#?}"))?;
                         tokio::time::sleep(Duration::from_secs(5)).await;
-                        let e = match news.save(&db).await {
-                            Ok(_) => return Ok(Some(news)),
-                            Err(e) => e,
-                        };
-                        error!("saving {id} with {rating:?} second time: {e:#?}");
-                        telegram.send(format!("rater: re-saving {id} failed: {e:#?}"))?;
-                        Err(e)
+                        match news.save(&db).await {
+                            Ok(_) => Ok(Some(news)),
+                            Err(e) => {
+                                error!("saving {id} with {rating:?} second time: {e:#?}");
+                                telegram.send(format!("rater: re-saving {id} failed: {e:#?}"))?;
+                                Err(e)
+                            }
+                        }
                     }
-                }
+                };
+                drop(permit);
+                save_result
             });
             handles.push(handle);
         }

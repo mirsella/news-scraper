@@ -1,6 +1,6 @@
 automod::dir!("src/sources");
 
-use anyhow::{anyhow, Context};
+use anyhow::{Context, anyhow};
 use chrono::{DateTime, Local};
 use headless_chrome::Browser;
 use log::{debug, trace};

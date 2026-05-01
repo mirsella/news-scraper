@@ -38,10 +38,8 @@ pub fn extract_clean_text(html: &str) -> String {
     let s = nanohtml2text::html2text(html);
     let re = regex::Regex::new(r"\(?https?://[^\s]+").unwrap();
     let s = re.replace_all(&s, " ").to_string();
-    let s = s
-        .split_whitespace()
+    s.split_whitespace()
         .map(|s| s.trim().replace('\n', ""))
         .collect::<Vec<String>>()
-        .join(" ");
-    s
+        .join(" ")
 }

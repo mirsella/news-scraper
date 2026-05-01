@@ -62,7 +62,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
         if let Err(e) = opts.tx.blocking_send(payload) {
             error!("blocking_send: {e}");
             break;
-        }
+        };
     }
     Ok(())
 }
