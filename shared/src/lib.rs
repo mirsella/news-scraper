@@ -1,6 +1,7 @@
 pub mod config;
 pub mod db_news;
 pub mod telegram;
+pub mod telemetry;
 use chrono::{DateTime, Local};
 pub use config::Config;
 pub use db_news::DbNews;

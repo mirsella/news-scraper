@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@extractus/article-extractor": "^8.0.19",
-    "hono": "^4.9.4"
+    "hono": "^4.9.4",
+    "posthog-node": "^5.64.0"
   }
 }

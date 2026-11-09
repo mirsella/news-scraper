@@ -7,6 +7,12 @@ use serde::Deserialize;
 #[derive(Deserialize, Clone)]
 #[serde(rename_all = "lowercase")]
 pub struct Config {
+    #[serde(default = "default_rating_model")]
+    pub rating_model: String,
+    #[serde(default = "default_rating_effort")]
+    pub rating_reasoning_effort: String,
+    #[serde(default = "default_rating_max_tokens")]
+    pub rating_max_completion_tokens: u32,
     pub db_user: String,
     pub db_password: String,
     pub openai_api_key: String,
@@ -18,6 +24,16 @@ pub struct Config {
     pub chrome_concurrent: Option<usize>,
     pub chrome_data_dir: Option<PathBuf>,
     pub chrome_headless: Option<bool>,
+}
+
+fn default_rating_model() -> String {
+    "gpt-6-luna".into()
+}
+fn default_rating_effort() -> String {
+    "low".into()
+}
+fn default_rating_max_tokens() -> u32 {
+    1000
 }
 impl Config {
     pub fn load(path: &str) -> Result<Config> {

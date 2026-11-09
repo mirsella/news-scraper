@@ -1,7 +1,17 @@
 import { Context, Hono } from "hono";
+import { capture, exception, log } from "./telemetry";
 import { extract, extractFromHtml } from "@extractus/article-extractor";
 
 const app = new Hono();
+app.use("*", async (c, next) => {
+  if (!["/fetch", "/parse"].includes(c.req.path)) return next();
+  const started = performance.now();
+  await next();
+  const properties = { operation: c.req.path, method: c.req.method, status: c.res.status,
+    success: c.res.status < 400, duration_ms: Math.round(performance.now() - started) };
+  capture("parser_request_completed", properties);
+  log("Parser request completed", "INFO", { operation: c.req.path, status: String(c.res.status) });
+});
 
 app.get("/fetch", async (c: Context) => {
   try {
@@ -22,7 +32,8 @@ app.get("/fetch", async (c: Context) => {
     return c.json(data);
   } catch (err) {
     c.status(500);
-    console.error(err);
+    exception(err, "fetch");
+    console.error("Article fetch failed");
     return c.json({ message: err.toString() });
   }
 });
@@ -43,7 +54,8 @@ app.post("/parse", async (c: Context) => {
     return c.json(data);
   } catch (err) {
     c.status(500);
-    console.error(err);
+    exception(err, "parse");
+    console.error("Article parse failed");
     return c.json({ message: err.toString() });
   }
 });

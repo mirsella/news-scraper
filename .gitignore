@@ -5,6 +5,9 @@ data.surql
 history.txt
 *.png
 .env
+.scratch/
+node_modules/
+__pycache__/
 db/
 db.bak/
 *.json
@@ -30,4 +33,3 @@ target/
 
 # MSVC Windows builds of rustc generate these, which store debugging information
 *.pdb
-

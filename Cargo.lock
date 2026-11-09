@@ -3624,6 +3624,7 @@ dependencies = [
  "chrono",
  "dotenvy",
  "envy",
+ "log",
  "maplit",
  "nanohtml2text",
  "regex",

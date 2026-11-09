@@ -13,7 +13,7 @@ anyhow = "1.0.75"
 serde_json = "1.0.108"
 regex = "1.10.2"
 async-openai = "0.29.2"
-ctrlc = "3.4.1"
+ctrlc = { version = "3.4.1", features = ["termination"] }
 surrealdb = { version = "1.5.6", features = ["http", "protocol-http"] }
 futures = "0.3.29"
 rand = "0.8.5"

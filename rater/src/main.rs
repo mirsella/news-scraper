@@ -6,6 +6,7 @@ use log::{error, info, trace, warn};
 use shared::Telegram;
 use shared::{config::Config, db_news::DbNews};
 use std::env;
+use std::io::Write;
 use std::process::exit;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -44,17 +45,29 @@ fn sleep_check(running: &AtomicBool, duration: Duration) {
 async fn main() -> Result<()> {
     Builder::new()
         .parse_filters(&env::var("RUST_LOG").unwrap_or("rater=trace".into()))
+        .format(|buf, record| {
+            shared::telemetry::log(record);
+            writeln!(
+                buf,
+                "[{} {} {}] {}",
+                buf.timestamp(),
+                record.level(),
+                record.target(),
+                record.args()
+            )
+        })
         .init();
 
     let running = Arc::new(AtomicBool::new(true));
     let r = running.clone();
     ctrlc::set_handler(move || match r.load(Ordering::Relaxed) {
         true => {
-            info!("Ctrl-C received!");
+            info!("Shutdown signal received");
             r.store(false, Ordering::Relaxed);
         }
         false => {
-            info!("Ctrl-C received again, exiting!");
+            info!("Second shutdown signal received, exiting");
+            shared::telemetry::flush();
             exit(1);
         }
     })
@@ -64,6 +77,21 @@ async fn main() -> Result<()> {
         error!(".env: {:?}", e);
         exit(1);
     });
+    anyhow::ensure!(
+        ["none", "low", "medium", "high", "xhigh"]
+            .contains(&config.rating_reasoning_effort.as_str()),
+        "unsupported RATING_REASONING_EFFORT (expected none/low/medium/high/xhigh)"
+    );
+    anyhow::ensure!(
+        config.rating_max_completion_tokens > 0,
+        "RATING_MAX_COMPLETION_TOKENS must be positive"
+    );
+    let _telemetry = shared::telemetry::start("rater");
+    info!(
+        "rating model={} effort={} output_limit={}",
+        config.rating_model, config.rating_reasoning_effort, config.rating_max_completion_tokens
+    );
+    let config = Arc::new(config);
 
     let db = Surreal::new::<Http>(&config.surrealdb_host).await?;
     db.signin(Root {
@@ -114,25 +142,26 @@ async fn main() -> Result<()> {
             let db = db.clone();
             let running = running.clone();
             let telegram = telegram.clone();
+            let config = config.clone();
             let handle: JoinHandle<Result<Option<DbNews>>> = tokio::spawn(async move {
                 let permit = sem.acquire().await;
                 if !running.load(Ordering::Relaxed) {
                     return Ok(None);
                 }
                 trace!("processing {}, {}", id.id, news.link);
-                let rating = match news.rate(&openai, prompt).await {
-                    Ok(rating) => Some(rating),
+                let rated = match news.rate(&openai, prompt, &config).await {
+                    Ok(()) => true,
                     Err(e) if e.to_string().to_lowercase().contains("bad gateway") => {
                         error!("bad gateway: {:?}", e.to_string());
                         dbg!(&e);
                         news.rating = None;
-                        None
+                        false
                     }
                     Err(e) if e.to_string().to_lowercase().contains("service unavailable") => {
                         error!("service unavailable: {:?}", e.to_string());
                         dbg!(&e);
                         news.rating = None;
-                        None
+                        false
                     }
                     Err(e) => {
                         error!("rating {id}: {e:?}");
@@ -144,10 +173,21 @@ async fn main() -> Result<()> {
                             telegram
                                 .send(format!("rater: {id} {} rating failed: {e:?}", news.link))?;
                         }
-                        None
+                        false
                     }
                 };
-                info!("{id} rating: {rating:?}");
+                info!(
+                    "{id} positivity: {:?}, travel: {:?}",
+                    news.rating, news.rating_travel
+                );
+                shared::telemetry::capture(
+                    "article_rating_completed",
+                    serde_json::json!({
+                        "success":rated, "provider":news.provider,
+                        "model":config.rating_model, "reasoning_effort":config.rating_reasoning_effort,
+                        "positivity_rating":news.rating, "travel_rating":news.rating_travel,
+                    }),
+                );
                 let save_result = match news.save(&db).await {
                     Ok(_) => Ok(Some(news)),
                     Err(e) => {
@@ -157,7 +197,7 @@ async fn main() -> Result<()> {
                         match news.save(&db).await {
                             Ok(_) => Ok(Some(news)),
                             Err(e) => {
-                                error!("saving {id} with {rating:?} second time: {e:#?}");
+                                error!("saving {id} second time: {e:#?}");
                                 telegram.send(format!("rater: re-saving {id} failed: {e:#?}"))?;
                                 Err(e)
                             }

@@ -12,6 +12,7 @@ use std::{
     borrow::Cow,
     convert::Into,
     env,
+    io::Write,
     process::{self, exit},
     sync::{
         Arc, RwLock,
@@ -49,6 +50,17 @@ struct Cli {
 async fn main() -> Result<()> {
     Builder::new()
         .parse_filters(&env::var("RUST_LOG").unwrap_or("fetcher=debug".into()))
+        .format(|buf, record| {
+            shared::telemetry::log(record);
+            writeln!(
+                buf,
+                "[{} {} {}] {}",
+                buf.timestamp(),
+                record.level(),
+                record.target(),
+                record.args()
+            )
+        })
         .init();
 
     let cli = Cli::parse();
@@ -67,6 +79,8 @@ async fn main() -> Result<()> {
     if let Some(value) = cli.headless {
         config.chrome_headless = Some(value);
     }
+    let _telemetry = shared::telemetry::start("fetcher");
+    let started = std::time::Instant::now();
 
     let telegram = Telegram::new(config.telegram_token.clone(), config.telegram_id);
     let telegram = Arc::new(telegram);
@@ -85,6 +99,7 @@ async fn main() -> Result<()> {
         ctrlc::set_handler(move || {
             info!("ctrl-c received, exiting. ");
             info!("Total news recorded: {}", counter.load(Ordering::Relaxed));
+            shared::telemetry::flush();
             process::exit(0);
         })
         .unwrap();
@@ -96,7 +111,8 @@ async fn main() -> Result<()> {
                 "Exiting due to panic. Number of tasks done: {}",
                 counter.load(Ordering::SeqCst)
             );
-            println!("Panic info: {panic_info}");
+            log::error!("Panic info: {panic_info}");
+            shared::telemetry::flush();
             process::exit(1);
         }));
     }
@@ -169,6 +185,7 @@ async fn main() -> Result<()> {
         news.tags.push(extract_prefix_from_provider(&news.provider));
         let error: Option<anyhow::Error>;
         let already_seen = seen_news.read().unwrap().contains(&news.link);
+        let source = extract_prefix_from_provider(&news.provider);
         if already_seen {
             debug!(
                 "news already seen with different provider, merging: tags: {:?}, link: {}",
@@ -211,8 +228,20 @@ async fn main() -> Result<()> {
             continue;
         } else {
             counter.fetch_add(1, Ordering::Relaxed);
+            shared::telemetry::capture(
+                "article_scraped",
+                serde_json::json!({
+                    "source":source, "duplicate":already_seen,
+                }),
+            );
         };
     }
     info!("Total news recorded: {}", counter.load(Ordering::Relaxed));
+    shared::telemetry::capture(
+        "scrape_run_completed",
+        serde_json::json!({
+            "articles":counter.load(Ordering::Relaxed), "duration_seconds":started.elapsed().as_secs_f64(),
+        }),
+    );
     Ok(())
 }
