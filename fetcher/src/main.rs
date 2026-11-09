@@ -87,8 +87,8 @@ async fn main() -> Result<()> {
 
     let db = Surreal::new::<Http>(&config.surrealdb_host).await?;
     db.signin(Root {
-        username: &config.db_user,
-        password: &config.db_password,
+        username: config.db_user.clone(),
+        password: config.db_password.clone(),
     })
     .await?;
     db.use_ns("news").use_db("news").await?;
@@ -129,9 +129,9 @@ async fn main() -> Result<()> {
     let cleanup_result = db
         .query("UPDATE news SET html_body = '', text_body = '' WHERE date < time::now() - 60d && string::len(html_body) > 0 RETURN id")
         .await;
-    let cleaned_ids: Result<Vec<surrealdb::sql::Thing>> = match cleanup_result {
+    let cleaned_ids: Result<Vec<surrealdb::types::RecordId>> = match cleanup_result {
         Ok(mut response) => response
-            .take::<Vec<surrealdb::sql::Thing>>((0, "id"))
+            .take::<Vec<surrealdb::types::RecordId>>((0, "id"))
             .map_err(Into::into),
         Err(e) => Err(e.into()),
     };
@@ -150,11 +150,7 @@ async fn main() -> Result<()> {
         }
     }
 
-    let seen_news: Vec<String> = db
-        .query("select value link from news parallel")
-        .await?
-        .take(0)
-        .unwrap_or_default();
+    let seen_news: Vec<String> = db.query("select value link from news").await?.take(0)?;
 
     assert!(!seen_news.is_empty() || cli.ignore_empty_db);
     info!(
@@ -204,7 +200,7 @@ async fn main() -> Result<()> {
             debug!("new news: {}", news.link);
             let html_body = sanitize_html(&news.body);
             let text_body = extract_clean_text(&html_body);
-            let result: Result<Vec<DbNews>, surrealdb::Error> = db
+            let result: Result<Option<DbNews>, surrealdb::Error> = db
                 .create("news")
                 .content(DbNews {
                     title: news.title.into(),

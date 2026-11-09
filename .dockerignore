@@ -1,3 +1,7 @@
 .git*
+.scratch
 target
 db
+db-v4
+db.bak
+bun-article-parser/node_modules

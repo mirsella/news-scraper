@@ -2,10 +2,10 @@
 FROM messense/rust-musl-cross:x86_64-musl AS builder
 WORKDIR /app
 COPY . .
-RUN cargo build --release
+RUN cargo build --locked --release
 
 # Fetcher runtime
-FROM alpine:3.18.3 AS fetcher
+FROM alpine:3.24.4 AS fetcher
 SHELL ["/bin/ash", "-eo", "pipefail", "-c"]
 RUN apk add --no-cache chromium ca-certificates tzdata tini
 ENV TZ=Europe/Paris
@@ -16,7 +16,7 @@ CMD ["crond", "-f", "-l", "0"]
 # CMD ["/fetcher"]
 
 # Rater runtime
-FROM alpine:3.18.3 AS rater
+FROM alpine:3.24.4 AS rater
 RUN apk add --no-cache ca-certificates tzdata
 ENV TZ=Europe/Paris
 COPY .env /.env

@@ -12,7 +12,7 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Duration;
 use surrealdb::engine::remote::http::Http;
-use surrealdb::{Surreal, opt::auth::Root};
+use surrealdb::{Surreal, opt::auth::Root, types::ToSql};
 use tokio::sync::Semaphore;
 use tokio::task::JoinHandle;
 
@@ -78,8 +78,11 @@ async fn main() -> Result<()> {
         exit(1);
     });
     anyhow::ensure!(
-        ["none", "low", "medium", "high", "xhigh"]
-            .contains(&config.rating_reasoning_effort.as_str()),
+        !matches!(
+            config.rating_reasoning_effort,
+            async_openai::types::chat::ReasoningEffort::Minimal
+                | async_openai::types::chat::ReasoningEffort::Max
+        ),
         "unsupported RATING_REASONING_EFFORT (expected none/low/medium/high/xhigh)"
     );
     anyhow::ensure!(
@@ -88,15 +91,15 @@ async fn main() -> Result<()> {
     );
     let _telemetry = shared::telemetry::start("rater");
     info!(
-        "rating model={} effort={} output_limit={}",
+        "rating model={} effort={:?} output_limit={}",
         config.rating_model, config.rating_reasoning_effort, config.rating_max_completion_tokens
     );
     let config = Arc::new(config);
 
     let db = Surreal::new::<Http>(&config.surrealdb_host).await?;
     db.signin(Root {
-        username: &config.db_user,
-        password: &config.db_password,
+        username: config.db_user.clone(),
+        password: config.db_password.clone(),
     })
     .await
     .context("connecting to surrealdb")?;
@@ -136,7 +139,11 @@ async fn main() -> Result<()> {
         let mut handles = Vec::with_capacity(db_news.len());
 
         for mut news in db_news {
-            let id = news.id.clone().expect("no id wtf");
+            let id = news
+                .id
+                .as_ref()
+                .context("news record is missing its ID")?
+                .to_sql();
             let sem = sem.clone();
             let openai = openai.clone();
             let db = db.clone();
@@ -148,7 +155,7 @@ async fn main() -> Result<()> {
                 if !running.load(Ordering::Relaxed) {
                     return Ok(None);
                 }
-                trace!("processing {}, {}", id.id, news.link);
+                trace!("processing {id}, {}", news.link);
                 let rated = match news.rate(&openai, prompt, &config).await {
                     Ok(()) => true,
                     Err(e) if e.to_string().to_lowercase().contains("bad gateway") => {
@@ -222,7 +229,10 @@ async fn main() -> Result<()> {
                 }
                 Ok(Some(news)) => {
                     news_done += 1;
-                    info!("{} {news_done}/{total_news} done.", news.id.expect("no id"));
+                    info!(
+                        "{} {news_done}/{total_news} done.",
+                        news.id.expect("no id").to_sql()
+                    );
                 }
                 _ => (),
             }

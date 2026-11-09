@@ -50,7 +50,7 @@ services:
   surrealdb:
     container_name: surrealdb
     restart: unless-stopped
-    image: surrealdb/surrealdb:v1.5.6
+    image: surrealdb/surrealdb:v4.0.1
     env_file:
       - .env
     user: root
@@ -59,15 +59,16 @@ services:
       - SURREAL_CAPS_ALLOW_FUNC
       - SURREAL_USER=${DB_USER}
       - SURREAL_PASS=${DB_PASSWORD}
-      - SURREAL_AUTH=true
-      - SURREAL_PATH=file:/db
-    entrypoint: /surreal start
+      - SURREAL_PATH=surrealkv:/data/news
+      - SURREAL_BIND=0.0.0.0:8000
+    command: start
     volumes:
-      - ./db:/db
+      # Never open the legacy ./db directory with a newer server. See README migration steps.
+      - ./db-v4:/data
     ports:
       - 8000:8000
     healthcheck:
-      test: ["CMD", "/surreal", "isready"]
+      test: ["CMD", "/surreal", "is-ready", "--endpoint", "http://localhost:8000"]
       retries: 3
       start_period: 30s
       timeout: 10s

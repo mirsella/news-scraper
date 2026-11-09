@@ -1,6 +1,6 @@
 automod::dir!("src/sources");
 
-use anyhow::{Context, anyhow};
+use anyhow::Context;
 use chrono::{DateTime, Local};
 use headless_chrome::Browser;
 use log::{debug, trace};
@@ -65,20 +65,16 @@ pub fn fetch_article(url: impl AsRef<str>) -> Result<ApiResponse, anyhow::Error>
         std::env::var("ARTICLE_PARSER_URL").expect("ARTICLE_PARSER_URL not set"),
         url
     );
-    let response = ureq::get(&endpoint).timeout(Duration::from_secs(6)).call();
-    let response = match response {
-        Ok(response) => response.into_string()?,
-        Err(ureq::Error::Status(code, res)) => {
-            return Err(anyhow!("{url} returned: {code} {res:#?}"));
-        }
-        Err(e) => {
-            return Err(anyhow!("{url}: {e}"));
-        }
-    };
-    let json_result = serde_json::from_str(&response)
-        .or_else(|_| serde_json::from_str(&response.replace('"', "'")))
-        .context("deserialize json response to ApiResponse struct")?;
-    Ok(json_result)
+    let mut response = ureq::get(&endpoint)
+        .config()
+        .timeout_global(Some(Duration::from_secs(6)))
+        .build()
+        .call()
+        .with_context(|| format!("fetching article {url}"))?;
+    response
+        .body_mut()
+        .read_json()
+        .context("deserialize json response to ApiResponse struct")
 }
 
 pub fn parse_article(str: impl AsRef<str>) -> Result<ApiResponse, anyhow::Error> {
@@ -87,22 +83,17 @@ pub fn parse_article(str: impl AsRef<str>) -> Result<ApiResponse, anyhow::Error>
         "{}/parse",
         std::env::var("ARTICLE_PARSER_URL").expect("ARTICLE_PARSER_URL not set")
     );
-    let response = ureq::post(&endpoint)
-        .timeout(Duration::from_secs(5))
-        .send_string(str);
-    let response = match response {
-        Ok(response) => response,
-        Err(ureq::Error::Status(code, res)) => {
-            return Err(anyhow!("{}: {:#?}", code, res));
-        }
-        Err(e) => {
-            return Err(anyhow!("{}", e));
-        }
-    };
-    let json_result: ApiResponse = response
-        .into_json()
-        .context("deserialize json response to ApiResponse struct")?;
-    Ok(json_result)
+    let mut response = ureq::post(&endpoint)
+        .config()
+        .timeout_global(Some(Duration::from_secs(5)))
+        .build()
+        .header("Content-Type", "text/plain; charset=utf-8")
+        .send(str)
+        .context("requesting article parsing")?;
+    response
+        .body_mut()
+        .read_json()
+        .context("deserialize json response to ApiResponse struct")
 }
 
 pub type SourceFn = fn(GetNewsOpts) -> anyhow::Result<()>;

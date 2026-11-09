@@ -2,6 +2,7 @@ use core::fmt;
 use std::path::PathBuf;
 
 use anyhow::{Context, Result};
+use async_openai::types::chat::ReasoningEffort;
 use serde::Deserialize;
 
 #[derive(Deserialize, Clone)]
@@ -10,7 +11,7 @@ pub struct Config {
     #[serde(default = "default_rating_model")]
     pub rating_model: String,
     #[serde(default = "default_rating_effort")]
-    pub rating_reasoning_effort: String,
+    pub rating_reasoning_effort: ReasoningEffort,
     #[serde(default = "default_rating_max_tokens")]
     pub rating_max_completion_tokens: u32,
     pub db_user: String,
@@ -29,8 +30,8 @@ pub struct Config {
 fn default_rating_model() -> String {
     "gpt-6-luna".into()
 }
-fn default_rating_effort() -> String {
-    "low".into()
+fn default_rating_effort() -> ReasoningEffort {
+    ReasoningEffort::Low
 }
 fn default_rating_max_tokens() -> u32 {
     1000

@@ -12,10 +12,10 @@
 # DEFINE PARAM $PROD VALUE 1;
 
 -- ------------------------------
--- SCOPES
+-- RECORD ACCESS
 -- ------------------------------
 
-DEFINE SCOPE user SESSION 1w
+DEFINE ACCESS user ON DATABASE TYPE RECORD
   SIGNUP {
     IF string::len($name) < 1 {
       THROW "invalid name";
@@ -34,7 +34,8 @@ DEFINE SCOPE user SESSION 1w
       THROW "invalid password";
     };
     RETURN $user;
-  };
+  }
+  DURATION FOR TOKEN 1w, FOR SESSION 1w;
 
 -- ------------------------------
 -- TABLE: news
@@ -46,7 +47,7 @@ DEFINE FIELD html_body ON news TYPE string ASSERT $value != NONE;
 DEFINE FIELD text_body ON news TYPE string ASSERT $value != NONE;
 DEFINE FIELD caption ON news TYPE string ASSERT $value != NONE;
 DEFINE FIELD date ON news TYPE datetime ASSERT $value != NONE;
-DEFINE FIELD link ON news TYPE string ASSERT string::is::url($value);
+DEFINE FIELD link ON news TYPE string ASSERT string::is_url($value);
 DEFINE FIELD note ON news TYPE string DEFAULT "";
 DEFINE FIELD provider ON news TYPE string ASSERT $value != NONE;
 DEFINE FIELD rating ON news TYPE option<int> ASSERT $value = NONE OR ($value >= 0 AND $value <= 100);
@@ -66,8 +67,8 @@ DEFINE INDEX link ON news FIELDS link UNIQUE;
 -- DEFINE INDEX date ON news FIELDS date;
 
 -- DEFINE ANALYZER news_analyzer TOKENIZERS blank,class,camel,punct FILTERS ascii,lowercase;
--- DEFINE INDEX news_body ON news FIELDS text_body SEARCH ANALYZER news_analyzer BM25(1.2,0.75);
--- DEFINE INDEX news_tags ON news FIELDS tags SEARCH ANALYZER news_analyzer BM25(1.2,0.75);
+-- DEFINE INDEX news_body ON news FIELDS text_body FULLTEXT ANALYZER news_analyzer BM25(1.2,0.75);
+-- DEFINE INDEX news_tags ON news FIELDS tags FULLTEXT ANALYZER news_analyzer BM25(1.2,0.75);
 
 -- ------------------------------
 -- TABLE: user

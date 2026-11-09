@@ -2,7 +2,7 @@ use anyhow::{Context, Result, anyhow};
 use async_openai::{
     Client as ChatClient,
     config::OpenAIConfig,
-    types::{
+    types::chat::{
         ChatCompletionRequestSystemMessage, ChatCompletionRequestUserMessage,
         CreateChatCompletionRequestArgs, CreateChatCompletionResponse, FinishReason,
         ResponseFormat, ResponseFormatJsonSchema,
@@ -11,7 +11,10 @@ use async_openai::{
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use std::{borrow::Cow, sync::OnceLock};
-use surrealdb::Surreal;
+use surrealdb::{
+    Surreal,
+    types::{Datetime, RecordId, SurrealValue},
+};
 
 #[derive(Debug, Deserialize)]
 struct RatingResponse {
@@ -20,13 +23,13 @@ struct RatingResponse {
     tags: Vec<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default, SurrealValue)]
 pub struct DbNews {
-    pub id: Option<surrealdb::opt::RecordId>,
+    pub id: Option<RecordId>,
     pub html_body: Cow<'static, str>,
     pub text_body: Cow<'static, str>,
     pub caption: Cow<'static, str>,
-    pub date: surrealdb::sql::Datetime,
+    pub date: Datetime,
     pub link: Cow<'static, str>,
     pub note: Cow<'static, str>,
     pub provider: Cow<'static, str>,
@@ -39,10 +42,13 @@ pub struct DbNews {
 
 impl DbNews {
     pub async fn save<T: surrealdb::Connection>(&self, db: &Surreal<T>) -> Result<DbNews> {
-        let id = self.id.clone().unwrap();
+        let id = self
+            .id
+            .clone()
+            .context("cannot save news without a record ID")?;
         let news = db
-            .update::<Option<DbNews>>(("news", id))
-            .content(self)
+            .update::<Option<DbNews>>(id)
+            .content(self.clone())
             .await
             .context("surrealdb error")?
             .ok_or(anyhow!("no news found"))?;
@@ -54,12 +60,12 @@ impl DbNews {
         prompt: &str,
         config: &crate::Config,
     ) -> Result<()> {
-        let text = format!("{}\n{}", &self.title, &self.text_body);
+        let text = format!("{}\n{}", self.title, self.text_body);
         static TOKENIZER: OnceLock<tiktoken_rs::CoreBPE> = OnceLock::new();
         let tokenizer =
             TOKENIZER.get_or_init(|| tiktoken_rs::p50k_base().expect("built-in p50k tokenizer"));
         let tokens = tokenizer.encode_with_special_tokens(&text);
-        let truncated_bytes = tokenizer._decode_native(&tokens[..tokens.len().min(600)]);
+        let truncated_bytes = tokenizer.decode_bytes(&tokens[..tokens.len().min(600)])?;
         let truncated_text = String::from_utf8_lossy(&truncated_bytes);
         // remove the � from lost bytes
         let truncated_text = truncated_text.trim_end_matches('\u{FFFD}').to_string();
@@ -107,21 +113,20 @@ impl DbNews {
         let request = CreateChatCompletionRequestArgs::default()
             .model(&config.rating_model)
             .max_completion_tokens(config.rating_max_completion_tokens)
+            .reasoning_effort(config.rating_reasoning_effort.clone())
             .messages(conv)
             .response_format(ResponseFormat::JsonSchema {
                 json_schema: ResponseFormatJsonSchema {
                     name: "article_rating".to_string(),
                     description: Some("Structured rating response for news articles".to_string()),
-                    schema: Some(schema),
+                    schema,
                     strict: Some(true),
                 },
             })
             .build()
-            .unwrap();
+            .context("building rating request")?;
 
-        // The SDK's old enum predates Luna's `none` and `xhigh` efforts.
-        let mut request = serde_json::to_value(request)?;
-        request["reasoning_effort"] = json!(config.rating_reasoning_effort);
+        // Keep the raw response for usage fields not exposed by the SDK (e.g. cache writes).
         let started = std::time::Instant::now();
         let trace_id = format!(
             "rating-{}-{}",
@@ -185,7 +190,7 @@ impl DbNews {
             .as_deref()
             .ok_or(anyhow!("OpenAI returned no rating content"))?;
 
-        let rating_response: RatingResponse = serde_json::from_str(&content)
+        let rating_response: RatingResponse = serde_json::from_str(content)
             .context("failed to parse rating JSON (response body omitted)")?;
 
         anyhow::ensure!(

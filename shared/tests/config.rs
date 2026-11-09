@@ -12,7 +12,10 @@ fn test_load_config_default_path() {
     assert_eq!(config.surrealdb_host, "localhost:8000");
     assert_eq!(config.parallel_rating, 10);
     assert_eq!(config.rating_model, "gpt-6-luna");
-    assert_eq!(config.rating_reasoning_effort, "low");
+    assert_eq!(
+        config.rating_reasoning_effort,
+        async_openai::types::chat::ReasoningEffort::Low
+    );
     assert_eq!(config.rating_max_completion_tokens, 1000);
     assert_eq!(config.chrome_headless, None);
     assert_eq!(config.chrome_concurrent, Some(10));

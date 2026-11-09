@@ -9,6 +9,7 @@ history.txt
 node_modules/
 __pycache__/
 db/
+db-v4/
 db.bak/
 *.json
 .bacon*

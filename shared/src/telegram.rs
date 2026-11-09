@@ -1,5 +1,5 @@
 use anyhow::bail;
-use ureq::Response;
+use ureq::http::Response;
 
 pub struct Telegram {
     token: String,
@@ -13,7 +13,7 @@ impl Telegram {
             chat_id,
         }
     }
-    pub fn send(&self, msg: impl Into<String>) -> anyhow::Result<Response> {
+    pub fn send(&self, msg: impl Into<String>) -> anyhow::Result<Response<ureq::Body>> {
         if std::env::var("NO_TELEGRAM").is_ok() {
             bail!("telegram disabled by NO_TELEGRAM env");
         }

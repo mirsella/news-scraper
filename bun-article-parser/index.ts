@@ -1,4 +1,4 @@
-import { Context, Hono } from "hono";
+import { Hono } from "hono";
 import { capture, exception, log } from "./telemetry";
 import { extract, extractFromHtml } from "@extractus/article-extractor";
 
@@ -13,22 +13,20 @@ app.use("*", async (c, next) => {
   log("Parser request completed", "INFO", { operation: c.req.path, status: String(c.res.status) });
 });
 
-app.get("/fetch", async (c: Context) => {
+app.get("/fetch", async (c) => {
   try {
     const url = c.req.query("url");
     if (!url) {
       c.status(400);
       return c.json({ message: "url is required" });
     }
-    const controller = new AbortController();
-    setTimeout(() => controller.abort(), 5000);
-    const data = await extract(url, undefined, {
-      signal: controller.signal,
+    const data = await extract(url, undefined, (target) => fetch(target, {
+      signal: AbortSignal.timeout(5000),
       headers: {
         "user-agent":
           "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.3",
       },
-    });
+    }));
     return c.json(data);
   } catch (err) {
     c.status(500);

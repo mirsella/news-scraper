@@ -4,7 +4,7 @@
 [![Docker Compose](https://github.com/mirsella/news-scraper/actions/workflows/docker.yml/badge.svg)](https://github.com/mirsella/news-scraper/actions/workflows/docker.yml)
 [![Rust](https://img.shields.io/badge/rust-stable-orange.svg)](https://www.rust-lang.org/tools/install)
 [![Edition](https://img.shields.io/badge/edition-2024-blue.svg)](https://doc.rust-lang.org/edition-guide/rust-2024/index.html)
-[![SurrealDB](https://img.shields.io/badge/SurrealDB-1.5.6-ff00a0.svg)](https://surrealdb.com)
+[![SurrealDB](https://img.shields.io/badge/SurrealDB-4.0.1-ff00a0.svg)](https://surrealdb.com)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 A Rust workspace for collecting, normalizing, storing, and rating news articles at scale. It fetches thousands of articles from curated sources, parses the article content through a lightweight parser service, stores everything in SurrealDB, then uses OpenAI to score and tag each article for positivity, travel potential, and editorial discovery.
@@ -56,15 +56,18 @@ flowchart LR
 
 ## Requirements
 
-- Rust stable, edition 2024.
+- Rust 1.90 or newer, edition 2024.
 - Docker and Docker Compose for the full stack.
-- A SurrealDB instance, or the included Compose service.
+- SurrealDB 4.0.1, or the included Compose service.
+- Bun 1.4.4 for local parser development.
 - An OpenAI API key for `rater`.
 - Chromium when running `fetcher` outside Docker.
 
-CI builds and tests the workspace on Rust stable with `cargo build --verbose` and `cargo test --verbose`.
+CI builds and tests the workspace on Rust stable with `cargo build --locked --verbose` and `cargo test --locked --verbose`.
 
 ## Quick Start
+
+These instructions are for a fresh database. Existing installations must follow [the migration notes](#migrating-an-existing-surrealdb-1x-installation) before starting the new stack.
 
 ```bash
 git clone git@github.com:mirsella/news-scraper.git
@@ -79,6 +82,8 @@ The Compose stack starts:
 - `article_parser` on `127.0.0.1:8081`
 - `fetcher`, scheduled by cron in the container
 - `rater`, running continuously
+
+Import `schema.surql` into namespace `news`, database `news`, before processing articles. The fetcher requires `--ignore-empty-db` for its first run against an empty database.
 
 ## Configuration
 
@@ -111,8 +116,8 @@ Create `.env` from `.env.example` and fill the required values:
 Build and test everything:
 
 ```bash
-cargo build
-cargo test
+cargo build --locked
+cargo test --locked
 ```
 
 List available source adapters:
@@ -135,6 +140,15 @@ cargo run -p rater
 
 The fetcher reads `.env` by default. Use `--env-file path/to/file` if you need another configuration file.
 
+Test the parser and infrastructure monitor:
+
+```bash
+(cd bun-article-parser && bun install --frozen-lockfile && bun test)
+python -m unittest discover -s observability
+```
+
+The ignored database integration test requires a disposable SurrealDB 4.0.1 server. It creates and removes its own namespace, checks article creation/rating updates, and tests signup, signin, and activation permissions. Set `SURREALDB_TEST_HOST` (for example `127.0.0.1:18000`), `SURREALDB_TEST_USER`, and `SURREALDB_TEST_PASSWORD`, then run `cargo test --locked -p shared --test database -- --ignored`. It does not read application credentials from `.env`.
+
 ## Database
 
 The SurrealDB schema is defined in [`schema.surql`](schema.surql). The primary table is `news`, with fields for:
@@ -145,6 +159,25 @@ The SurrealDB schema is defined in [`schema.surql`](schema.surql). The primary t
 - tags, notes, and `used` state
 
 `gusnews` consumes this dataset directly and provides the human-facing UI for filtering, searching, and selecting articles.
+
+### Migrating an existing SurrealDB 1.x installation
+
+Compose runs SurrealDB **4.0.1** with a separate `./db-v4` directory, using SurrealKV. It never mounts the legacy `./db` directory into the new server. An empty `db-v4` means an empty database, not an automatic migration. The 4.x Rust client must not connect to the old 1.x server.
+
+Do not deploy this Compose file over an existing installation until a migration rehearsal has succeeded:
+
+1. Stop all writers, including frontends. Save the old Compose/environment files, keep the 1.5.6 image, make a logical export, and take a consistent physical backup of `./db`. Verify that the backups can be restored. Keep the originals unchanged.
+2. On a **copy** of the old datastore, follow the [1.x to 2.x migration](https://surrealdb.com/docs/build/migrating/from-old-surrealdb-versions/1x-to-2x). Run the datastore fix with a 2.x binary before opening that copy with 2.x. Never point 4.x at the original 1.x datastore.
+3. Follow the [2.x to 3.x migration](https://surrealdb.com/docs/build/migrating/from-old-surrealdb-versions/2x-to-3x), including its compatibility checks and `surreal v2 export --v3` command from a 3.0.3+ CLI. Import into a clean 3.x datastore and verify the result.
+4. Follow the [3.x to 4.x migration](https://surrealdb.com/docs/build/migrating/from-old-surrealdb-versions/3x-to-4x). Prefer a logical export/import into a fresh 4.0.1 SurrealKV datastore at `./db-v4`. The experimental in-place upgrade is irreversible and is not enabled here. Inspect every import error; an import can process other statements after a failure.
+5. Update imported schema definitions to match `schema.surql`: record access `user` replaces the old scope, and URL validation uses `string::is_url`. Recreate record access with valid signing keys if an export contains redacted placeholders. Preserve users' existing password hashes and activation flags. Compare record counts, IDs, article dates, ratings, tags, and user data with the source; test signup/signin and inactive-user restrictions.
+6. Deploy the coordinated updates to the private gusnews and lmenews frontends before switching traffic. They use SurrealDB JS SDK 2.2.2, typed record IDs and dates, and managed live subscriptions. Record signin uses access method `user` (`access`/`AC` rather than legacy `scope`/`SC`). Existing sessions must sign in again after the access signing key is recreated.
+
+The production-copy rehearsal used 2.7.0 `fix`, 2.7.0 `export --v3`, a clean 3.3.5 import/export, then a clean 4.0.1 import. All 505,286 articles and 12 users matched across stages, including body hashes, ratings, tags, activation state, and password hashes. The 3.x export's redacted `DEFINE ACCESS user` was excluded before importing into 4.x; the canonical record-access definition was then recreated with a fresh key. Export to a named file rather than stdout, because CLI log messages can corrupt a redirected dump.
+
+The original datastore and stack configuration are backed up under `/opt/backups/deps-20261109/`. Keep that backup and the old images until the cutover and restore checks are complete. A fresh final snapshot is still required after stopping writers; the rehearsal copy is not a replacement for the cutover backup.
+
+Keep application rollback images compatible with their database version. To roll back to 1.x, stop the 4.x stack and restore the old stack against the untouched 1.x datastore. Do not attach a 1.x image to `db-v4`. Reconcile any writes made after cutover before rollback.
 
 ## Docker Images
 

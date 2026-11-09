@@ -18,7 +18,18 @@ jobs:
           # - beta
           # - nightly
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v7
       - run: rustup update ${{ matrix.toolchain }} && rustup default ${{ matrix.toolchain }}
-      - run: cargo build --verbose
-      - run: cargo test --verbose
+      - name: Start disposable SurrealDB
+        run: docker run --detach --name surreal-test --publish 127.0.0.1:18000:8000 --env SURREAL_USER=deps-test --env SURREAL_PASS=deps-test surrealdb/surrealdb:v4.0.1 start --bind 0.0.0.0:8000 memory
+      - run: cargo build --locked --verbose
+      - run: cargo test --locked --verbose
+      - name: Test SurrealDB record access and persistence
+        env:
+          SURREALDB_TEST_HOST: 127.0.0.1:18000
+          SURREALDB_TEST_USER: deps-test
+          SURREALDB_TEST_PASSWORD: deps-test
+        run: cargo test --locked -p shared --test database -- --ignored
+      - name: Stop disposable SurrealDB
+        if: always()
+        run: docker rm --force surreal-test

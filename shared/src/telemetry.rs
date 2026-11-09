@@ -47,9 +47,10 @@ pub fn start(service: &'static str) -> Guard {
     let (tx, rx) = mpsc::sync_channel(2048);
     assert!(CLIENT.set(tx).is_ok(), "PostHog initialized more than once");
     let worker = thread::spawn(move || {
-        let agent = ureq::AgentBuilder::new()
-            .timeout(Duration::from_secs(5))
-            .build();
+        let agent: ureq::Agent = ureq::Agent::config_builder()
+            .timeout_global(Some(Duration::from_secs(5)))
+            .build()
+            .into();
         let distinct_id = format!("service:{service}:{instance}");
         let mut heartbeat = Instant::now();
         let event = |name: String, props: Value| {
@@ -124,7 +125,7 @@ pub fn start(service: &'static str) -> Guard {
             for (path, payload) in requests {
                 if let Err(error) = agent
                     .post(&format!("{}{path}", host.trim_end_matches('/')))
-                    .set("Authorization", &format!("Bearer {key}"))
+                    .header("Authorization", &format!("Bearer {key}"))
                     .send_json(payload)
                 {
                     // Do not recurse through the application logger, or print request bodies/keys.

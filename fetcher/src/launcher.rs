@@ -91,3 +91,21 @@ pub fn init(
     });
     rx
 }
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    #[ignore = "requires a local Chromium installation"]
+    fn headless_browser_can_read_a_page() -> anyhow::Result<()> {
+        let browser = super::new_browser(true);
+        let tab = browser.new_tab()?;
+        tab.navigate_to(
+            "data:text/html,<html><body><h1>Browser dependency smoke test</h1></body></html>",
+        )?
+        .wait_until_navigated()?;
+        anyhow::ensure!(
+            tab.wait_for_element("h1")?.get_inner_text()? == "Browser dependency smoke test"
+        );
+        Ok(())
+    }
+}
