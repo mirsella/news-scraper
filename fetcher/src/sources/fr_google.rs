@@ -8,7 +8,7 @@ use std::time::Duration;
 
 const KEYWORDS: [&str; 4] = ["bonne nouvelle", "joie", "optimisme", "entraide"];
 
-fn dismiss_consent(tab: &Arc<Tab>) -> Result<()> {
+fn dismiss_consent(tab: &Arc<Tab>) {
     let clicked = tab
         .evaluate(
             r#"(() => {
@@ -31,7 +31,6 @@ fn dismiss_consent(tab: &Arc<Tab>) -> Result<()> {
         trace!("accepted Google consent");
         std::thread::sleep(Duration::from_secs(2));
     }
-    Ok(())
 }
 
 fn search(tab: &Arc<Tab>, keyword: &str) -> Result<()> {
@@ -39,7 +38,7 @@ fn search(tab: &Arc<Tab>, keyword: &str) -> Result<()> {
         .context("navigate_to google homepage")?
         .wait_until_navigated()
         .context("wait_until_navigated google homepage")?;
-    dismiss_consent(tab)?;
+    dismiss_consent(tab);
 
     let input = tab
         .find_element("textarea[name='q'], input[name='q']")
@@ -49,7 +48,7 @@ fn search(tab: &Arc<Tab>, keyword: &str) -> Result<()> {
     tab.press_key("Enter").context("submitting Google query")?;
     tab.wait_for_element("#center_col")
         .context("waiting for Google results")?;
-    dismiss_consent(tab)?;
+    dismiss_consent(tab);
 
     if let Ok(news) = tab.find_element("a[href*='tbm=nws']") {
         news.click().context("clicking Google news tab")?;

@@ -180,10 +180,10 @@ async fn main() -> Result<()> {
             "recv news: {}: {:.20?}..., link: {:?}",
             news.provider, news.title, news.link
         );
-        news.tags.push(extract_prefix_from_provider(&news.provider));
+        let source = extract_prefix_from_provider(&news.provider);
+        news.tags.push(source.clone());
         let error: Option<anyhow::Error>;
         let already_seen = seen_news.read().unwrap().contains(&news.link);
-        let source = extract_prefix_from_provider(&news.provider);
         if already_seen {
             debug!(
                 "news already seen with different provider, merging: tags: {:?}, link: {}",

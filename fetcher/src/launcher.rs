@@ -4,14 +4,12 @@ use std::{
     time::Duration,
 };
 
-use crate::sources::{GetNewsOpts, SourceFn};
+use crate::sources::{CHROME_USER_AGENT, GetNewsOpts, SourceFn};
 use anyhow::Context;
 use futures::{StreamExt, stream::FuturesUnordered};
 use headless_chrome::{Browser, LaunchOptionsBuilder};
 use log::{error, info};
 use shared::{News, Telegram, config::Config};
-
-const USER_AGENT: &str = "--user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36";
 use tokio::{
     sync::mpsc::{Receiver, channel},
     task::{JoinHandle, spawn_blocking},
@@ -20,6 +18,7 @@ use tokio::{
 /// this is because the headless chrome crate doesn't support using multiple tab at the same time
 /// if we want some parallelism, we need to spawn a whole new browser for each source
 fn new_browser(headless: bool) -> Browser {
+    let user_agent_arg = format!("--user-agent={CHROME_USER_AGENT}");
     Browser::new(
         LaunchOptionsBuilder::default()
             .window_size(Some((1920, 1080)))
@@ -31,7 +30,7 @@ fn new_browser(headless: bool) -> Browser {
                 OsStr::new("--disable-blink-features=AutomationControlled"),
                 OsStr::new("--lang=fr-FR"),
                 OsStr::new("--accept-lang=fr-FR,fr;q=0.9,en;q=0.8"),
-                OsStr::new(USER_AGENT),
+                OsStr::new(user_agent_arg.as_str()),
             ])
             .idle_browser_timeout(Duration::from_secs(120))
             .sandbox(false)

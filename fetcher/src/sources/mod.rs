@@ -11,6 +11,15 @@ use std::sync::{Arc, RwLock};
 use std::time::Duration;
 use tokio::sync::mpsc::Sender;
 
+pub fn extract_prefix_from_provider(provider: &str) -> String {
+    provider
+        .split_once("::")
+        .map_or(provider, |(prefix, _)| prefix)
+        .to_string()
+}
+
+pub const CHROME_USER_AGENT: &str = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36";
+
 pub struct GetNewsOpts {
     pub browser: Browser,
     pub tx: Sender<anyhow::Result<News>>,
@@ -24,16 +33,18 @@ impl GetNewsOpts {
 
     // is the link seen with the current provider?
     pub fn is_seen(&self, link: &str) -> bool {
-        if self.seen_links.read().unwrap().contains(&link.to_string()) {
+        if self
+            .seen_links
+            .read()
+            .unwrap()
+            .iter()
+            .any(|seen| seen.as_str() == link)
+        {
             trace!("already seen {} with provider {}", link, self.provider);
             return true;
         }
         false
     }
-}
-
-pub fn extract_prefix_from_provider(module: &str) -> String {
-    module.split_once("::").unwrap().0.to_string()
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -155,19 +166,13 @@ pub fn parse_url_with_browser(tab: &Arc<Tab>, url: &str) -> Result<ApiResponse, 
     parse_article(document)
 }
 
-fn new_plain_tab(browser: &Browser) -> Result<Arc<Tab>> {
-    browser.new_tab().context("opening tab")
-}
-
 fn new_stealth_tab(browser: &Browser) -> Result<Arc<Tab>> {
     let tab = browser.new_tab().context("opening tab")?;
     tab.enable_stealth_mode().context("enabling stealth mode")?;
     let user_agent = browser
         .get_version()
         .map(|version| version.user_agent.replace("HeadlessChrome", "Chrome"))
-        .unwrap_or_else(|_| {
-            "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36".to_string()
-        });
+        .unwrap_or_else(|_| CHROME_USER_AGENT.to_string());
     tab.set_user_agent(
         &user_agent,
         Some("fr-FR,fr;q=0.9,en;q=0.8"),
@@ -181,7 +186,7 @@ pub fn fetch_article_with_browser(
     browser: &Browser,
     url: &str,
 ) -> Result<ApiResponse, anyhow::Error> {
-    let tab = new_plain_tab(browser).context("opening article tab")?;
+    let tab = browser.new_tab().context("opening article tab")?;
     tab.set_default_timeout(Duration::from_secs(30));
     let result = parse_url_with_browser(&tab, url);
     let _ = tab.close(false);
