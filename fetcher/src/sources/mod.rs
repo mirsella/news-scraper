@@ -225,13 +225,28 @@ fn validate_article(article: ApiResponse, url: &str) -> Result<ApiResponse, anyh
     Ok(article)
 }
 
+fn encode_query_value(value: &str) -> String {
+    const HEX: &[u8; 16] = b"0123456789ABCDEF";
+    let mut encoded = String::with_capacity(value.len());
+    for byte in value.bytes() {
+        if byte.is_ascii_alphanumeric() || matches!(byte, b'-' | b'_' | b'.' | b'~') {
+            encoded.push(byte as char);
+        } else {
+            encoded.push('%');
+            encoded.push(HEX[(byte >> 4) as usize] as char);
+            encoded.push(HEX[(byte & 0xf) as usize] as char);
+        }
+    }
+    encoded
+}
+
 pub fn fetch_article(url: impl AsRef<str>) -> Result<ApiResponse, anyhow::Error> {
     let url = url.as_ref();
     debug!("fetching {}", url);
     let endpoint = format!(
         "{}/fetch?url={}",
         std::env::var("ARTICLE_PARSER_URL").expect("ARTICLE_PARSER_URL not set"),
-        url
+        encode_query_value(url)
     );
     let mut response = ureq::get(&endpoint)
         .config()
@@ -322,3 +337,16 @@ pub static SOURCES: &[(&str, SourceFn)] = &[
     ("quebec::24heures", quebec_24heures::get_news),
     ("quebec::tvanouvelles", quebec_tvanouvelles::get_news),
 ];
+
+#[cfg(test)]
+mod tests {
+    use super::encode_query_value;
+
+    #[test]
+    fn encodes_query_values() {
+        assert_eq!(
+            encode_query_value("https://example.com/story?a=1&b=2"),
+            "https%3A%2F%2Fexample.com%2Fstory%3Fa%3D1%26b%3D2"
+        );
+    }
+}

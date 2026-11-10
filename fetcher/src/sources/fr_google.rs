@@ -50,12 +50,21 @@ fn search(tab: &Arc<Tab>, keyword: &str) -> Result<()> {
         .context("waiting for Google results")?;
     dismiss_consent(tab);
 
-    if let Ok(news) = tab.find_element("a[href*='tbm=nws']") {
-        news.click().context("clicking Google news tab")?;
-        std::thread::sleep(Duration::from_secs(2));
-        tab.wait_for_element("#center_col")
-            .context("waiting for Google news results")?;
+    let news = tab
+        .find_element("a[href*='tbm=nws']")
+        .context("finding Google News tab")?;
+    news.click().context("clicking Google News tab")?;
+    for _ in 0..20 {
+        if tab.get_url().contains("tbm=nws") {
+            break;
+        }
+        std::thread::sleep(Duration::from_millis(250));
     }
+    if !tab.get_url().contains("tbm=nws") {
+        bail!("Google did not switch to the news tab: {}", tab.get_url());
+    }
+    tab.wait_for_element("div[data-async-context^='query:']")
+        .context("waiting for Google News results")?;
     Ok(())
 }
 
