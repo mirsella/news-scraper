@@ -163,7 +163,7 @@ pub fn parse_url_with_browser(tab: &Arc<Tab>, url: &str) -> Result<ApiResponse, 
     }
     std::thread::sleep(Duration::from_millis(300));
     let document = tab.get_content().context("get_content")?;
-    parse_article(document)
+    parse_article(document, Some(url))
 }
 
 fn new_stealth_tab(browser: &Browser) -> Result<Arc<Tab>> {
@@ -261,12 +261,16 @@ pub fn fetch_article(url: impl AsRef<str>) -> Result<ApiResponse, anyhow::Error>
     validate_article(article, url)
 }
 
-pub fn parse_article(str: impl AsRef<str>) -> Result<ApiResponse, anyhow::Error> {
+pub fn parse_article(
+    str: impl AsRef<str>,
+    url: Option<&str>,
+) -> Result<ApiResponse, anyhow::Error> {
     let str = str.as_ref();
-    let endpoint = format!(
-        "{}/parse",
-        std::env::var("ARTICLE_PARSER_URL").expect("ARTICLE_PARSER_URL not set")
-    );
+    let base = std::env::var("ARTICLE_PARSER_URL").expect("ARTICLE_PARSER_URL not set");
+    let endpoint = match url {
+        Some(url) => format!("{base}/parse?url={}", encode_query_value(url)),
+        None => format!("{base}/parse"),
+    };
     let mut response = ureq::post(&endpoint)
         .config()
         .timeout_global(Some(Duration::from_secs(20)))

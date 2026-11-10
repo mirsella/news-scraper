@@ -47,7 +47,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
                 .wait_until_navigated()
                 .context("wait_until_navigated url")?;
             let body = tab.get_content()?;
-            let payload = match parse_article(&body) {
+            let payload = match parse_article(&body, Some(&url)) {
                 Ok(res) => Ok(News {
                     title: res.title,
                     caption: res.description,

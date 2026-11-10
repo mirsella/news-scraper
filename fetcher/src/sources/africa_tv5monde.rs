@@ -53,7 +53,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
             .context("wait_until_navigated article")?;
         std::thread::sleep(std::time::Duration::from_secs(1));
         let doc = tab.get_content().context("get_content")?;
-        let res = super::parse_article(&doc);
+        let res = super::parse_article(&doc, Some(&url));
         let payload = match res {
             Ok(res) => Ok(News {
                 title: res.title,

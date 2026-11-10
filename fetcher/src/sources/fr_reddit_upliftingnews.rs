@@ -71,7 +71,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
             let doc = tab
                 .get_content()
                 .context("reddit-upliftingnews: tab.get_content()")?;
-            res = super::parse_article(&doc);
+            res = super::parse_article(&doc, Some(&url));
         }
         let payload = match res {
             Ok(res) => Ok(News {
