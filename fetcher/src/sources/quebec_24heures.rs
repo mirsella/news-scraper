@@ -1,4 +1,3 @@
-#![allow(dead_code)] // adapter intentionally unregistered while Akamai blocks article pages
 use super::{GetNewsOpts, News};
 use anyhow::{bail, Context, Result};
 use headless_chrome::Tab;

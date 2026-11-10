@@ -155,6 +155,10 @@ pub fn parse_url_with_browser(tab: &Arc<Tab>, url: &str) -> Result<ApiResponse, 
     parse_article(document)
 }
 
+fn new_plain_tab(browser: &Browser) -> Result<Arc<Tab>> {
+    browser.new_tab().context("opening tab")
+}
+
 fn new_stealth_tab(browser: &Browser) -> Result<Arc<Tab>> {
     let tab = browser.new_tab().context("opening tab")?;
     tab.enable_stealth_mode().context("enabling stealth mode")?;
@@ -177,7 +181,7 @@ pub fn fetch_article_with_browser(
     browser: &Browser,
     url: &str,
 ) -> Result<ApiResponse, anyhow::Error> {
-    let tab = new_stealth_tab(browser).context("opening article tab")?;
+    let tab = new_plain_tab(browser).context("opening article tab")?;
     tab.set_default_timeout(Duration::from_secs(30));
     let result = parse_url_with_browser(&tab, url);
     let _ = tab.close(false);
@@ -304,12 +308,12 @@ pub static SOURCES: &[(&str, SourceFn)] = &[
     ("be::rtl", be_rtl::get_news),
     ("be::lalibre", be_lalibre::get_news),
     ("quebec::lapresse", quebec_lapresse::get_news),
-    // Quebecor category pages load, but article pages return Akamai "Access Denied"
-    // even with a stealth browser, cleared cookies, and no automation flag.
+    // Journal de Québec loads one article, then Akamai rate-limits the rest
+    // with "Access Denied"; leave it disabled rather than save partial runs.
     // ("quebec::journaldequebec", quebec_journaldequebec::get_news),
     ("quebec::montrealgazette", quebec_montrealgazette::get_news),
     ("quebec::qctonline", quebec_qctonline::get_news),
     ("quebec::thesuburban", quebec_thesuburban::get_news),
-    // ("quebec::24heures", quebec_24heures::get_news),
-    // ("quebec::tvanouvelles", quebec_tvanouvelles::get_news),
+    ("quebec::24heures", quebec_24heures::get_news),
+    ("quebec::tvanouvelles", quebec_tvanouvelles::get_news),
 ];

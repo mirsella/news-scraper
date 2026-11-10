@@ -10,6 +10,8 @@ use futures::{StreamExt, stream::FuturesUnordered};
 use headless_chrome::{Browser, LaunchOptionsBuilder};
 use log::{error, info};
 use shared::{News, Telegram, config::Config};
+
+const USER_AGENT: &str = "--user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36";
 use tokio::{
     sync::mpsc::{Receiver, channel},
     task::{JoinHandle, spawn_blocking},
@@ -28,6 +30,8 @@ fn new_browser(headless: bool) -> Browser {
                 OsStr::new("--blink-settings=imagesEnabled=false"),
                 OsStr::new("--disable-blink-features=AutomationControlled"),
                 OsStr::new("--lang=fr-FR"),
+                OsStr::new("--accept-lang=fr-FR,fr;q=0.9,en;q=0.8"),
+                OsStr::new(USER_AGENT),
             ])
             .idle_browser_timeout(Duration::from_secs(120))
             .sandbox(false)
