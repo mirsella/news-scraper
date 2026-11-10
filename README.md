@@ -175,7 +175,9 @@ Do not deploy this Compose file over an existing installation until a migration 
 
 The production-copy rehearsal used 2.7.0 `fix`, 2.7.0 `export --v3`, a clean 3.3.5 import/export, then a clean 4.0.1 import. All 505,286 articles and 12 users matched across stages, including body hashes, ratings, tags, activation state, and password hashes. The 3.x export's redacted `DEFINE ACCESS user` was excluded before importing into 4.x; the canonical record-access definition was then recreated with a fresh key. Export to a named file rather than stdout, because CLI log messages can corrupt a redirected dump.
 
-The original datastore and stack configuration are backed up under `/opt/backups/deps-20261109/`. Keep that backup and the old images until the cutover and restore checks are complete. A fresh final snapshot is still required after stopping writers; the rehearsal copy is not a replacement for the cutover backup.
+The production cutover completed on 2026-11-10. Writers were stopped and public database access was fenced before taking the final snapshot. The frozen 1.5.6 dataset and deployed 4.0.1 dataset matched the same canonical SHA-256: `5ac9a64131d8e81ce59c773f5d945d8cff1119fb4b1d403c5efe06d9dd661ef0` (505,286 articles and 12 users). Access was reopened only after signup, activation, signin, typed records, updates, and live subscriptions passed against the deployed database.
+
+The untouched legacy datastore remains at `/opt/stacks/news-scraper/data/db`; production 4.x uses `/opt/stacks/news-scraper/data/db-v4`. Final configuration backups and the stopped 1.x snapshot are under `/opt/backups/deps-20261109/cutover-final/`. Keep these backups and the old images. The earlier rehearsal files are not a substitute for the final cutover backup.
 
 Keep application rollback images compatible with their database version. To roll back to 1.x, stop the 4.x stack and restore the old stack against the untouched 1.x datastore. Do not attach a 1.x image to `db-v4`. Reconcile any writes made after cutover before rollback.
 
@@ -235,9 +237,9 @@ Luna has higher per-token prices but used fewer reasoning/output tokens in this 
 
 ### Deployment and rollback
 
-The 2026-11-09 production deployment on `root@109.176.199.207` uses `/opt/stacks/{news-scraper,gusnews,lmenews,news-observability}`. Original Compose and environment files are preserved in `/opt/backups/posthog-20261109/`; original application images have `:pre-posthog-20261109` tags. Do not overwrite these backups. No database image or volume was replaced.
+Production on `root@109.176.199.207` uses `/opt/stacks/{news-scraper,gusnews,lmenews,news-observability}`. The 2026-11-10 release runs scraper/parser/monitor images tagged `:deps-6ef559c`, gusnews `:deps-e3219d4`, lmenews `:deps-ce83415`, and SurrealDB 4.0.1. The final cutover backup contains the preceding Compose/environment files and a consistent 1.5.6 datastore snapshot. Follow the version-matched database rollback instructions above; never run a legacy client image against the 4.x database.
 
-To roll back one application stack, restore that stack's backed-up Compose and environment files, point the affected application image at its `:pre-posthog-20261109` tag, and recreate only the affected services with `docker compose up -d --no-deps <service>`. Do not recreate SurrealDB. To revert only the model, set `RATING_MODEL=gpt-5-nano` and `RATING_REASONING_EFFORT=low` in `rater.env`, then recreate `rater`.
+The earlier 2026-11-09 observability-only release is preserved in `/opt/backups/posthog-20261109/` and `:pre-posthog-20261109` image tags. Do not overwrite those backups. They predate the database upgrade and are not standalone application rollback targets for the current server. To revert only the rating model, set `RATING_MODEL=gpt-5-nano` and `RATING_REASONING_EFFORT=low` in `rater.env`, then recreate `rater`.
 
 ## License
 
