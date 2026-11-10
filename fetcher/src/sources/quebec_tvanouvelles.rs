@@ -1,4 +1,4 @@
-#![allow(dead_code)] // adapter intentionally unregistered while the site blocks automated access
+#![allow(dead_code)] // adapter intentionally unregistered while Akamai blocks article pages
 use super::{GetNewsOpts, News};
 use anyhow::{bail, Context, Result};
 use headless_chrome::Tab;
@@ -16,7 +16,7 @@ fn get_articles_links(tab: &Arc<Tab>) -> Result<HashSet<String>> {
 }
 
 pub fn get_news(opts: GetNewsOpts) -> Result<()> {
-    let tab = opts.browser.new_tab()?;
+    let tab = opts.new_tab()?;
     tab.set_default_timeout(std::time::Duration::from_secs(120));
     let user_agent = opts.browser.get_version()?.user_agent;
     let user_agent = user_agent.replace("HeadlessChrome", "Chrome");
@@ -40,13 +40,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
         if opts.is_seen(&url) {
             continue;
         }
-        tab.navigate_to(&url)
-            .context("navigate_to article")?
-            .wait_until_navigated()
-            .context("wait_until_navigated article")?;
-        std::thread::sleep(std::time::Duration::from_secs(1));
-        let doc = tab.get_content().context("get_content")?;
-        let res = super::parse_article(&doc);
+        let res = super::fetch_article_with_browser(&opts.browser, &url);
         let payload = match res {
             Ok(res) => Ok(News {
                 title: res.title,
@@ -58,7 +52,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
                 ..Default::default()
             }),
             Err(err) => {
-                error!("parse_article on {url}: {err:?}");
+                error!("fetch_article on {url}: {err:?}");
                 continue;
             }
         };

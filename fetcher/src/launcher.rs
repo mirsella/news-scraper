@@ -23,7 +23,11 @@ fn new_browser(headless: bool) -> Browser {
             .window_size(Some((1920, 1080)))
             .headless(headless)
             .devtools(false)
-            .args(vec![OsStr::new("--blink-settings=imagesEnabled=false")])
+            .args(vec![
+                OsStr::new("--blink-settings=imagesEnabled=false"),
+                OsStr::new("--disable-blink-features=AutomationControlled"),
+                OsStr::new("--lang=fr-FR"),
+            ])
             .idle_browser_timeout(Duration::from_secs(120))
             .sandbox(false)
             .build()

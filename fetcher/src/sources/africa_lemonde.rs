@@ -1,4 +1,3 @@
-#![allow(dead_code)] // adapter intentionally unregistered while the site blocks automated access
 use super::{GetNewsOpts, News};
 use anyhow::{bail, Context, Result};
 use headless_chrome::Tab;
@@ -16,7 +15,7 @@ fn get_articles_links(tab: &Arc<Tab>) -> Result<Vec<String>> {
 }
 
 pub fn get_news(opts: GetNewsOpts) -> Result<()> {
-    let tab = opts.browser.new_tab()?;
+    let tab = opts.new_tab()?;
     tab.set_default_timeout(std::time::Duration::from_secs(120));
     let user_agent = opts.browser.get_version()?.user_agent;
     let user_agent = user_agent.replace("HeadlessChrome", "Chrome");
@@ -32,10 +31,11 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
     }
 
     for _ in 0..2 {
-        tab.find_element("#js-more-teaser")
-            .context("find_element #js-more-teaser")?
-            .click()
-            .context("click #js-more-teaser")?;
+        let Ok(more) = tab.find_element("#js-more-teaser") else {
+            trace!("no more teasers button");
+            break;
+        };
+        more.click().context("click #js-more-teaser")?;
         thread::sleep(Duration::from_secs(1));
     }
 

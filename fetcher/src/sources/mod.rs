@@ -1,8 +1,8 @@
 automod::dir!("src/sources");
 
-use anyhow::Context;
+use anyhow::{Context, Result};
 use chrono::{DateTime, Local};
-use headless_chrome::{Browser, Tab};
+use headless_chrome::{Browser, Tab, protocol::cdp::Network};
 use log::{debug, trace};
 use serde::{Deserialize, Deserializer, Serialize};
 use shared::News;
@@ -18,6 +18,10 @@ pub struct GetNewsOpts {
     pub provider: String,
 }
 impl GetNewsOpts {
+    pub fn new_tab(&self) -> Result<Arc<Tab>> {
+        new_stealth_tab(&self.browser)
+    }
+
     // is the link seen with the current provider?
     pub fn is_seen(&self, link: &str) -> bool {
         if self.seen_links.read().unwrap().contains(&link.to_string()) {
@@ -89,11 +93,57 @@ fn has_article_element(tab: &Arc<Tab>) -> bool {
         .unwrap_or(false)
 }
 
-pub fn parse_url_with_browser(tab: &Arc<Tab>, url: &str) -> Result<ApiResponse, anyhow::Error> {
+fn is_challenge_page(tab: &Arc<Tab>) -> bool {
+    tab.evaluate(
+        "(() => {
+            const title = (document.title || '').toLowerCase();
+            const body = (document.body?.innerText || '').slice(0, 3000).toLowerCase();
+            return title.includes('just a moment')
+                || title.includes('un instant')
+                || title.includes('access denied')
+                || title.includes('attention required')
+                || body.includes('vérification de sécurité')
+                || body.includes('checking your browser')
+                || body.includes('enable javascript and cookies');
+        })()",
+        false,
+    )
+    .ok()
+    .and_then(|result| result.value)
+    .and_then(|value| value.as_bool())
+    .unwrap_or(false)
+}
+
+fn clear_cookies(tab: &Arc<Tab>) -> Result<()> {
+    tab.call_method(Network::ClearBrowserCookies(None))
+        .context("clearing browser cookies")?;
+    Ok(())
+}
+
+fn navigate(tab: &Arc<Tab>, url: &str) -> Result<()> {
     tab.navigate_to(url)
         .with_context(|| format!("navigate_to {url}"))?
         .wait_until_navigated()
         .with_context(|| format!("wait_until_navigated {url}"))?;
+    Ok(())
+}
+
+pub fn parse_url_with_browser(tab: &Arc<Tab>, url: &str) -> Result<ApiResponse, anyhow::Error> {
+    navigate(tab, url)?;
+    if is_challenge_page(tab) {
+        debug!("challenge page for {url}; clearing cookies and retrying");
+        clear_cookies(tab)?;
+        tab.call_method(Network::ClearBrowserCache(None))
+            .context("clearing browser cache")?;
+        navigate(tab, "about:blank")?;
+        navigate(tab, url)?;
+        for _ in 0..24 {
+            if !is_challenge_page(tab) && has_article_element(tab) {
+                break;
+            }
+            std::thread::sleep(Duration::from_millis(500));
+        }
+    }
     for _ in 0..10 {
         if has_article_element(tab) {
             break;
@@ -105,6 +155,35 @@ pub fn parse_url_with_browser(tab: &Arc<Tab>, url: &str) -> Result<ApiResponse, 
     parse_article(document)
 }
 
+fn new_stealth_tab(browser: &Browser) -> Result<Arc<Tab>> {
+    let tab = browser.new_tab().context("opening tab")?;
+    tab.enable_stealth_mode().context("enabling stealth mode")?;
+    let user_agent = browser
+        .get_version()
+        .map(|version| version.user_agent.replace("HeadlessChrome", "Chrome"))
+        .unwrap_or_else(|_| {
+            "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36".to_string()
+        });
+    tab.set_user_agent(
+        &user_agent,
+        Some("fr-FR,fr;q=0.9,en;q=0.8"),
+        Some("Linux x86_64"),
+    )
+    .context("setting browser user agent")?;
+    Ok(tab)
+}
+
+pub fn fetch_article_with_browser(
+    browser: &Browser,
+    url: &str,
+) -> Result<ApiResponse, anyhow::Error> {
+    let tab = new_stealth_tab(browser).context("opening article tab")?;
+    tab.set_default_timeout(Duration::from_secs(30));
+    let result = parse_url_with_browser(&tab, url);
+    let _ = tab.close(false);
+    result
+}
+
 pub fn fetch_article_with_browser_fallback(
     browser: &Browser,
     url: &str,
@@ -113,17 +192,28 @@ pub fn fetch_article_with_browser_fallback(
         Ok(article) => Ok(article),
         Err(error) => {
             debug!("fetch failed for {url}: {error:#}; retrying in browser");
-            let tab = browser.new_tab().context("opening fallback tab")?;
-            if let Ok(version) = browser.get_version() {
-                let user_agent = version.user_agent.replace("HeadlessChrome", "Chrome");
-                let _ = tab.set_user_agent(&user_agent, None, None);
-            }
-            tab.set_default_timeout(Duration::from_secs(30));
-            let result = parse_url_with_browser(&tab, url);
-            let _ = tab.close(false);
-            result
+            fetch_article_with_browser(browser, url)
         }
     }
+}
+
+fn validate_article(article: ApiResponse, url: &str) -> Result<ApiResponse, anyhow::Error> {
+    let text = shared::extract_clean_text(&article.content);
+    let title = article.title.to_lowercase();
+    let text_lower = text.to_lowercase();
+    let blocked = title.contains("access denied")
+        || title.contains("just a moment")
+        || title.contains("un instant")
+        || title.contains("attention required")
+        || text_lower.contains("you don't have permission to access")
+        || text_lower.contains("reference #18.")
+        || text_lower.contains("vérification de sécurité")
+        || text_lower.contains("checking your browser")
+        || text_lower.contains("enable javascript and cookies");
+    if blocked || text.len() < 200 {
+        anyhow::bail!("parser returned no usable article text for {url}");
+    }
+    Ok(article)
 }
 
 pub fn fetch_article(url: impl AsRef<str>) -> Result<ApiResponse, anyhow::Error> {
@@ -144,10 +234,7 @@ pub fn fetch_article(url: impl AsRef<str>) -> Result<ApiResponse, anyhow::Error>
         .body_mut()
         .read_json()
         .context("deserialize json response to ApiResponse struct")?;
-    if shared::extract_clean_text(&article.content).len() < 50 {
-        anyhow::bail!("parser returned no article text for {url}");
-    }
-    Ok(article)
+    validate_article(article, url)
 }
 
 pub fn parse_article(str: impl AsRef<str>) -> Result<ApiResponse, anyhow::Error> {
@@ -167,10 +254,7 @@ pub fn parse_article(str: impl AsRef<str>) -> Result<ApiResponse, anyhow::Error>
         .body_mut()
         .read_json()
         .context("deserialize json response to ApiResponse struct")?;
-    if shared::extract_clean_text(&article.content).len() < 50 {
-        anyhow::bail!("parser returned no article text");
-    }
-    Ok(article)
+    validate_article(article, "parsed html")
 }
 
 pub type SourceFn = fn(GetNewsOpts) -> anyhow::Result<()>;
@@ -201,8 +285,7 @@ pub static SOURCES: &[(&str, SourceFn)] = &[
     // ("lme::bbc", lme_bbc::get_news),
     ("lme::capturetheatlas", lme_capturetheatlas::get_news),
     ("lme::bbcearth", lme_bbcearth::get_news),
-    // Cloudflare blocks headless article requests.
-    // ("lme::smithsonianmag", lme_smithsonianmag::get_news),
+    ("lme::smithsonianmag", lme_smithsonianmag::get_news),
     ("lme::geo", lme_geo::get_news),
     ("lme::nationalgeographic", lme_nationalgeographic::get_news),
     ("lme::theguardian", lme_theguardian::get_news),
@@ -212,9 +295,8 @@ pub static SOURCES: &[(&str, SourceFn)] = &[
     ("lme::journaldesfemmes", lme_journaldesfemmes::get_news),
     ("lme::demotivateur", lme_demotivateur::get_news),
     ("lme::huffingtonpost", lme_huffingtonpost::get_news),
-    // Cloudflare / paywall blocks headless article requests.
-    // ("africa::lemonde", africa_lemonde::get_news),
-    // ("africa::apanews", africa_apanews::get_news),
+    ("africa::lemonde", africa_lemonde::get_news),
+    ("africa::apanews", africa_apanews::get_news),
     ("africa::abidjan", africa_abidjan::get_news),
     ("africa::linfodrome", africa_linfodrome::get_news),
     ("africa::tv5monde", africa_tv5monde::get_news),
@@ -223,7 +305,8 @@ pub static SOURCES: &[(&str, SourceFn)] = &[
     ("be::rtl", be_rtl::get_news),
     ("be::lalibre", be_lalibre::get_news),
     ("quebec::lapresse", quebec_lapresse::get_news),
-    // Quebecor sites return Access Denied for article pages from data centres.
+    // Quebecor category pages load, but article pages return Akamai "Access Denied"
+    // even with a stealth browser and cleared cookies.
     // ("quebec::journaldequebec", quebec_journaldequebec::get_news),
     ("quebec::montrealgazette", quebec_montrealgazette::get_news),
     ("quebec::qctonline", quebec_qctonline::get_news),
