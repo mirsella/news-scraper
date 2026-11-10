@@ -23,6 +23,7 @@ fn new_browser(headless: bool) -> Browser {
             .window_size(Some((1920, 1080)))
             .headless(headless)
             .devtools(false)
+            .ignore_default_args(vec![OsStr::new("--enable-automation")])
             .args(vec![
                 OsStr::new("--blink-settings=imagesEnabled=false"),
                 OsStr::new("--disable-blink-features=AutomationControlled"),

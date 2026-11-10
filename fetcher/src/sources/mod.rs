@@ -259,8 +259,7 @@ pub fn parse_article(str: impl AsRef<str>) -> Result<ApiResponse, anyhow::Error>
 
 pub type SourceFn = fn(GetNewsOpts) -> anyhow::Result<()>;
 pub static SOURCES: &[(&str, SourceFn)] = &[
-    // Google search and its RSS links hit a consent/CAPTCHA wall from this host.
-    // ("fr::google", fr_google::get_news),
+    ("fr::google", fr_google::get_news),
     ("fr::bing", fr_bing::get_news),
     ("fr::lavoixdunord", fr_lavoixdunord::get_news),
     ("fr::goodnewsnetwork", fr_goodnewsnetwork::get_news),
@@ -306,7 +305,7 @@ pub static SOURCES: &[(&str, SourceFn)] = &[
     ("be::lalibre", be_lalibre::get_news),
     ("quebec::lapresse", quebec_lapresse::get_news),
     // Quebecor category pages load, but article pages return Akamai "Access Denied"
-    // even with a stealth browser and cleared cookies.
+    // even with a stealth browser, cleared cookies, and no automation flag.
     // ("quebec::journaldequebec", quebec_journaldequebec::get_news),
     ("quebec::montrealgazette", quebec_montrealgazette::get_news),
     ("quebec::qctonline", quebec_qctonline::get_news),
