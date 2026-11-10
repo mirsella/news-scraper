@@ -48,6 +48,12 @@ function textLength(html: string): number {
   return doc.documentElement.textContent?.trim().length ?? 0;
 }
 
+function stripUnsafe(doc: any): void {
+  for (const element of doc.querySelectorAll("script,style,noscript,iframe,form,button,input,svg,canvas")) {
+    element.remove();
+  }
+}
+
 // extractus removes unknown elements together with their children. Some sites
 // (notably La Voix du Nord and RTL) put article text in custom elements, which
 // makes the library return null even though Readability found the article.
@@ -62,9 +68,7 @@ function fallbackExtract(html: string, inputUrl = ""): ArticleData | null {
     doc.head?.appendChild(base);
   }
 
-  for (const element of doc.querySelectorAll("script,style,noscript,iframe,form,button,input,svg,canvas")) {
-    element.remove();
-  }
+  stripUnsafe(doc);
 
   let article: ReturnType<Readability["parse"]>;
   try {
@@ -78,9 +82,7 @@ function fallbackExtract(html: string, inputUrl = ""): ArticleData | null {
   }
 
   const contentDoc = new DOMParser().parseFromString(article.content, "text/html");
-  for (const element of contentDoc.querySelectorAll("script,style,noscript,iframe,form,button,input,svg,canvas")) {
-    element.remove();
-  }
+  stripUnsafe(contentDoc);
   for (const element of contentDoc.querySelectorAll("*")) {
     for (const attribute of [...element.attributes]) {
       if (attribute.name.toLowerCase().startsWith("on")) element.removeAttribute(attribute.name);
