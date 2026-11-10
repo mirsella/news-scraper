@@ -1,4 +1,4 @@
-use super::GetNewsOpts;
+use super::{absolute_url, dedupe_links, GetNewsOpts};
 use crate::sources::parse_article;
 use anyhow::bail;
 use anyhow::{Context, Result};
@@ -8,18 +8,18 @@ use shared::News;
 use std::sync::Arc;
 
 fn get_articles_links(tab: &Arc<Tab>) -> Result<Vec<String>> {
-    Ok(tab
-        .find_elements("h2.articlePreview-title > a")
-        .context("finding articles links")?
-        .iter()
-        .filter_map(|a| {
-            let link = a.get_attribute_value("href").unwrap().expect("a href");
-            if link.ends_with("geo.fr/") {
-                return None;
-            }
-            Some(link)
-        })
-        .collect())
+    Ok(dedupe_links(
+        tab.find_elements("a.contentCard")
+            .context("finding articles links")?
+            .iter()
+            .filter_map(|a| {
+                let link = a.get_attribute_value("href").unwrap()?;
+                if link.ends_with("geo.fr/") {
+                    return None;
+                }
+                Some(absolute_url("https://www.geo.fr", &link))
+            }),
+    ))
 }
 
 pub fn get_news(opts: GetNewsOpts) -> Result<()> {

@@ -56,7 +56,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
             continue;
         }
 
-        let mut res = super::fetch_article(&url);
+        let mut res = super::fetch_article_with_browser_fallback(&opts.browser, &url);
         if let Err(err) = res {
             log::warn!("fetch_article on {url}: {err:?}");
             if let Err(e) = tab.navigate_to(&url) {

@@ -1,5 +1,4 @@
-use super::GetNewsOpts;
-use crate::sources::fetch_article;
+use super::{absolute_url, dedupe_links, GetNewsOpts};
 use anyhow::bail;
 use anyhow::{Context, Result};
 use headless_chrome::Tab;
@@ -8,15 +7,15 @@ use shared::News;
 use std::sync::Arc;
 
 fn get_articles_links(tab: &Arc<Tab>) -> Result<Vec<String>> {
-    Ok(tab
-        .find_elements(".card a")
-        .context("find_elements links")?
-        .iter()
-        .map(|el| {
-            "https://www.nhm.ac.uk".to_string()
-                + &el.get_attribute_value("href").unwrap().expect("a href")
-        })
-        .collect())
+    Ok(dedupe_links(
+        tab.find_elements("a[class*='Feed_card__'], a[class*='FeaturedArticle_link__']")
+            .context("find_elements links")?
+            .iter()
+            .filter_map(|el| {
+                let link = el.get_attribute_value("href").unwrap()?;
+                Some(absolute_url("https://www.nhm.ac.uk", &link))
+            }),
+    ))
 }
 
 pub fn get_news(opts: GetNewsOpts) -> Result<()> {
@@ -38,7 +37,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
         if opts.is_seen(&url) {
             continue;
         }
-        let payload = match fetch_article(&url) {
+        let payload = match super::fetch_article_with_browser_fallback(&opts.browser, &url) {
             Ok(res) => Ok(News {
                 title: res.title,
                 caption: res.description,

@@ -11,7 +11,7 @@ fn get_articles_links(tab: &Arc<Tab>) -> Result<HashSet<String>> {
         .iter()
         .map(|el| {
             let href = el.get_attribute_value("href").unwrap().expect("no href ??");
-            tab.get_url() + &href
+            super::absolute_url(&tab.get_url(), &href)
         })
         .collect();
     Ok(links)
@@ -38,7 +38,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
             if opts.is_seen(&url) {
                 continue;
             }
-            let res = super::fetch_article(&url);
+            let res = super::fetch_article_with_browser_fallback(&opts.browser, &url);
             let payload = match res {
                 Ok(res) => Ok(News {
                     title: res.title,

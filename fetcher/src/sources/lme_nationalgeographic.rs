@@ -1,29 +1,30 @@
-use super::GetNewsOpts;
-use crate::sources::fetch_article;
+use super::{absolute_url, dedupe_links, GetNewsOpts};
 use anyhow::bail;
 use anyhow::{Context, Result};
 use headless_chrome::Tab;
 use log::{info, trace};
 use shared::News;
-use std::collections::HashSet;
 use std::sync::Arc;
 
 fn get_articles_links(tab: &Arc<Tab>) -> Result<Vec<String>> {
-    Ok(tab
-        .find_elements("#hub-page-first-page-content a[title][href]:not([target])")
-        .context("finding articles links")?
-        .iter()
-        .filter_map(|a| {
-            let mut link = a.get_attribute_value("href").unwrap().expect("a href");
-            if link.contains("contenu-sponsorise") {
-                return None;
-            }
-            link.insert_str(0, "https://www.nationalgeographic.fr");
-            Some(link)
-        })
-        .collect::<HashSet<_>>()
-        .into_iter()
-        .collect())
+    Ok(dedupe_links(
+        tab.find_elements("a[href*='/voyage/'], a[href*='/environnement/'], a[href*='/histoire/']")
+            .context("finding articles links")?
+            .iter()
+            .filter_map(|a| {
+                let link = a.get_attribute_value("href").unwrap()?;
+                if link.contains("contenu-sponsorise")
+                    || link.contains("/thematique/")
+                    || link.ends_with("/destinations")
+                    || link.ends_with("/voyage")
+                    || link.ends_with("/environnement")
+                    || link.ends_with("/histoire")
+                {
+                    return None;
+                }
+                Some(absolute_url("https://www.nationalgeographic.fr", &link))
+            }),
+    ))
 }
 
 pub fn get_news(opts: GetNewsOpts) -> Result<()> {
@@ -47,7 +48,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
             if opts.is_seen(&url) {
                 continue;
             }
-            let payload = match fetch_article(&url) {
+            let payload = match super::fetch_article_with_browser_fallback(&opts.browser, &url) {
                 Ok(res) => Ok(News {
                     title: res.title,
                     caption: res.description,

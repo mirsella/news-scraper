@@ -12,7 +12,7 @@ fn get_articles_links(tab: &Arc<Tab>) -> Result<HashSet<String>> {
         .iter()
         .map(|el| {
             let href = el.get_attribute_value("href").unwrap().expect("no href ??");
-            tab.get_url() + &href
+            super::absolute_url(&tab.get_url(), &href)
         })
         .filter(|url| !BLACKLIST.iter().any(|&b| url.contains(b)))
         .collect();
@@ -28,6 +28,8 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
     tab.navigate_to("https://www.thesuburban.com/")
         .context("navigate_to")?;
     tab.wait_until_navigated().context("wait_until_navigated")?;
+    tab.wait_for_element(".card-headline a.tnt-asset-link")
+        .context("waiting for article links")?;
 
     let links = get_articles_links(&tab)?;
     info!("found {} articles", links.len());
@@ -39,13 +41,13 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
         if opts.is_seen(&url) {
             continue;
         }
-        let res = super::fetch_article(&url);
+        let res = super::fetch_article_with_browser_fallback(&opts.browser, &url);
         let payload = match res {
             Ok(res) => Ok(News {
                 title: res.title,
                 caption: res.description,
                 provider: opts.provider.clone(),
-date: res.published,
+                date: res.published,
                 body: res.content,
                 link: url,
                 ..Default::default()

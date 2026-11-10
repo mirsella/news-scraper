@@ -1,4 +1,4 @@
-use super::{GetNewsOpts, News};
+use super::{absolute_url, dedupe_links, GetNewsOpts, News};
 use anyhow::bail;
 use anyhow::{Context, Result};
 use headless_chrome::Tab;
@@ -21,25 +21,19 @@ const CATEGORIES: &[&str] = &[
 const NUMBER_OF_ARTICLES_PER_CATEGORY: usize = 14;
 
 fn get_articles_links(tab: &Arc<Tab>) -> Result<Vec<String>> {
-    let mut articles = tab
+    let articles = tab
         .find_elements(
-            ".card-article-m__link, .card-article-majeure__link, .card-article-l__link, .card-article-list-l__link, .card-article-list-s__link",
+            ".card-article-m__link, .card-article-base__link, .card-article-majeure__link, .card-article-l__link, .card-article-list-l__link, .card-article-list-s__link",
         )
         .context("gettings articles __links")?;
-    articles.truncate(NUMBER_OF_ARTICLES_PER_CATEGORY);
-    let links = articles
-        .iter()
-        .map(|el| el.get_attribute_value("href").unwrap().expect("no href ??"))
-        .map(|mut link| {
-            if !link.starts_with("http") {
-                if !link.starts_with('/') {
-                    link.insert(0, '/');
-                }
-                link.insert_str(0, "https://www.francetvinfo.fr");
-            }
-            link
-        })
-        .collect();
+    let mut links = dedupe_links(
+        articles
+            .iter()
+            .filter_map(|el| el.get_attribute_value("href").unwrap())
+            .filter(|link| link.ends_with(".html"))
+            .map(|link| absolute_url("https://www.francetvinfo.fr", &link)),
+    );
+    links.truncate(NUMBER_OF_ARTICLES_PER_CATEGORY);
     Ok(links)
 }
 
@@ -69,7 +63,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
                 continue;
             }
 
-            let res = super::fetch_article(&url);
+            let res = super::fetch_article_with_browser_fallback(&opts.browser, &url);
             let payload = match res {
                 Ok(res) => Ok(News {
                     title: res.title,

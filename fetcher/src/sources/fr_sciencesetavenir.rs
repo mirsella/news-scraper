@@ -1,4 +1,4 @@
-use super::{fetch_article, GetNewsOpts, News};
+use super::{GetNewsOpts, News};
 use anyhow::bail;
 use anyhow::{Context, Result};
 use headless_chrome::Tab;
@@ -53,7 +53,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
                 continue;
             }
 
-            let res = fetch_article(&url);
+            let res = super::fetch_article_with_browser_fallback(&opts.browser, &url);
             let payload = match res {
                 Ok(res) => Ok(News {
                     title: res.title,

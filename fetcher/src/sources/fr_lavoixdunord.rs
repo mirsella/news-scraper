@@ -1,4 +1,4 @@
-use super::{GetNewsOpts, News};
+use super::{absolute_url, dedupe_links, parse_url_with_browser, GetNewsOpts, News};
 use anyhow::bail;
 use anyhow::{Context, Result};
 use headless_chrome::Tab;
@@ -6,15 +6,14 @@ use log::{debug, error};
 use std::sync::Arc;
 
 fn get_articles_links(tab: &Arc<Tab>) -> Result<Vec<String>> {
-    let links: Vec<String> = tab
-        .find_elements(".r-direct--link")?
-        .iter()
-        .map(|el| {
-            let mut link = el.get_attribute_value("href").unwrap().unwrap();
-            link.insert_str(0, "https://www.lavoixdunord.fr");
-            link
-        })
-        .collect();
+    let links = dedupe_links(
+        tab.find_elements(".r-direct--link")?
+            .iter()
+            .filter_map(|el| {
+                let href = el.get_attribute_value("href").unwrap()?;
+                Some(absolute_url("https://www.lavoixdunord.fr", &href))
+            }),
+    );
     Ok(links)
 }
 
@@ -36,7 +35,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
         if opts.is_seen(&url) {
             continue;
         }
-        let payload = match super::fetch_article(&url) {
+        let payload = match parse_url_with_browser(&tab, &url) {
             Ok(res) => Ok(News {
                 title: res.title,
                 caption: res.description,

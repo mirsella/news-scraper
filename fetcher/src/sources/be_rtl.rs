@@ -1,19 +1,19 @@
-use super::{GetNewsOpts, News};
+use super::{absolute_url, dedupe_links, parse_url_with_browser, GetNewsOpts, News};
 use anyhow::{bail, Context, Result};
 use headless_chrome::Tab;
 use log::{error, info};
 use std::{sync::Arc, thread, time::Duration};
 
 fn get_articles_links(tab: &Arc<Tab>) -> Result<Vec<String>> {
-    let links: Vec<String> = tab
-        .find_elements(".r-article--link")
-        .context("find_elements articles links")?
-        .iter()
-        .map(|el| {
-            let href = el.get_attribute_value("href").unwrap().expect("no href ??");
-            tab.get_url() + &href
-        })
-        .collect();
+    let links = dedupe_links(
+        tab.find_elements(".r-article--link")
+            .context("find_elements articles links")?
+            .iter()
+            .filter_map(|el| {
+                let href = el.get_attribute_value("href").unwrap()?;
+                Some(absolute_url("https://www.rtl.be", &href))
+            }),
+    );
     Ok(links)
 }
 
@@ -42,13 +42,13 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
         if opts.is_seen(&url) {
             continue;
         }
-        let res = super::fetch_article(&url);
+        let res = parse_url_with_browser(&tab, &url);
         let payload = match res {
             Ok(res) => Ok(News {
                 title: res.title,
                 caption: res.description,
                 provider: opts.provider.clone(),
-date: res.published,
+                date: res.published,
                 body: res.content,
                 link: url,
                 ..Default::default()

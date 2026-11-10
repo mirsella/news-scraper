@@ -45,7 +45,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
         if opts.is_seen(&url) {
             continue;
         }
-        let payload = match super::fetch_article(&url) {
+        let payload = match super::fetch_article_with_browser_fallback(&opts.browser, &url) {
             Ok(res) => Ok(News {
                 title: res.title,
                 caption: res.description,

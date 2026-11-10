@@ -64,7 +64,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
                 continue;
             }
 
-            let res = super::fetch_article(&url);
+            let res = super::fetch_article_with_browser_fallback(&opts.browser, &url);
             let payload = match res {
                 Ok(res) => Ok(News {
                     tags: vec![category.to_string()],

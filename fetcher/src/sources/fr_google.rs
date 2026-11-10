@@ -1,3 +1,4 @@
+#![allow(dead_code)] // adapter intentionally unregistered while the site blocks automated access
 use super::GetNewsOpts;
 use anyhow::bail;
 use anyhow::{Context, Result};
@@ -5,8 +6,30 @@ use headless_chrome::Tab;
 use log::{error, trace};
 use shared::News;
 use std::sync::Arc;
+use std::time::Duration;
 
 const KEYWORDS: [&str; 4] = ["bonne nouvelle", "joie", "optimisme", "entraide"];
+
+fn dismiss_consent(tab: &Arc<Tab>) -> Result<()> {
+    if !tab.get_url().contains("consent.google.com") {
+        return Ok(());
+    }
+    let _ = tab.evaluate(
+        r#"(() => {
+            let clicked = false;
+            for (const button of document.querySelectorAll('button')) {
+                if ((button.innerText || '').includes('Tout refuser')) {
+                    button.click();
+                    clicked = true;
+                }
+            }
+            return clicked;
+        })()"#,
+        false,
+    );
+    std::thread::sleep(Duration::from_secs(2));
+    Ok(())
+}
 
 fn get_articles_links(tab: &Arc<Tab>) -> Result<Vec<String>> {
     let parent = tab
@@ -28,7 +51,7 @@ fn get_articles_links(tab: &Arc<Tab>) -> Result<Vec<String>> {
 
 pub fn get_news(opts: GetNewsOpts) -> Result<()> {
     let tab = opts.browser.new_tab()?;
-    tab.set_default_timeout(std::time::Duration::from_secs(120));
+    tab.set_default_timeout(Duration::from_secs(30));
     let user_agent = opts.browser.get_version().unwrap().user_agent;
     let user_agent = user_agent.replace("HeadlessChrome", "Chrome");
     tab.set_user_agent(&user_agent, None, None)?;
@@ -39,9 +62,15 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
         ))
         .context("navigate_to")?;
         tab.wait_until_navigated().context("wait_until_navigated")?;
-        if let Ok(cookies) = tab.find_element_by_xpath("//span[contains(text(), 'Tout refuser')]") {
-            cookies.click().context("clicking on cookies")?;
-            tab.wait_until_navigated()?;
+        dismiss_consent(&tab)?;
+        if tab.get_url().contains("consent.google.com") {
+            tab.navigate_to(&format!(
+                "https://www.google.com/search?q={keyword}&tbm=nws&tbs=qdr%3Ad"
+            ))
+            .context("navigate_to after consent")?;
+            tab.wait_until_navigated()
+                .context("wait_until_navigated after consent")?;
+            dismiss_consent(&tab)?;
         }
         tab.wait_for_element("#center_col")
             .context("waiting on #center_col")?;
@@ -56,7 +85,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
                 continue;
             }
 
-            let mut res = super::fetch_article(&url);
+            let mut res = super::fetch_article_with_browser_fallback(&opts.browser, &url);
             if let Err(err) = res {
                 log::warn!("fetch_article on {url}: {err:?}");
                 if tab.navigate_to(&url).is_err() {

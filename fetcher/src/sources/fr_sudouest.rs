@@ -51,7 +51,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
         }
 
         let cookiewall = "En acceptant les cookies, vous pourrez accéder aux contenus";
-        let payload = match super::fetch_article(&url) {
+        let payload = match super::fetch_article_with_browser_fallback(&opts.browser, &url) {
             Ok(res) if res.content.contains(cookiewall) => {
                 log::warn!("cookiewall on {url}");
                 continue;

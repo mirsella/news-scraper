@@ -1,3 +1,4 @@
+#![allow(dead_code)] // adapter intentionally unregistered while the site blocks automated access
 use super::{GetNewsOpts, News};
 use anyhow::{bail, Context, Result};
 use headless_chrome::Tab;
@@ -35,7 +36,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
             continue;
         }
 
-        let res = super::fetch_article(&url);
+        let res = super::fetch_article_with_browser_fallback(&opts.browser, &url);
         let payload = match res {
             Ok(res) => Ok(News {
                 title: res.title,

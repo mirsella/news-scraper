@@ -1,19 +1,23 @@
-use super::{GetNewsOpts, News};
+use super::{absolute_url, dedupe_links, GetNewsOpts, News};
 use anyhow::{bail, Context, Result};
 use headless_chrome::Tab;
 use log::{error, info};
 use std::{sync::Arc, thread, time::Duration};
 
 fn get_articles_links(tab: &Arc<Tab>) -> Result<Vec<String>> {
-    let links: Vec<String> = tab
-        .find_elements(".views-row:not(.with-video) > a[href]")
-        .context("finding articles links")?
-        .iter()
-        .map(|el| {
-            let href = el.get_attribute_value("href").unwrap().expect("no href ??");
-            format!("https://information.tv5monde.com{href}")
-        })
-        .collect();
+    let links = dedupe_links(
+        tab.find_elements(".views-row:not(.with-video) > a[href]")
+            .context("finding articles links")?
+            .iter()
+            .filter_map(|el| {
+                let href = el.get_attribute_value("href").unwrap()?;
+                let id = href.rsplit_once('-')?.1;
+                if !id.chars().all(|c| c.is_ascii_digit()) {
+                    return None;
+                }
+                Some(absolute_url("https://information.tv5monde.com", &href))
+            }),
+    );
     Ok(links)
 }
 
@@ -31,13 +35,6 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
     if let Ok(cookie) = tab.find_element("#didomi-notice-disagree-button") {
         cookie.click().context("clicking on cookie")?;
         thread::sleep(Duration::from_secs(3));
-    }
-
-    for _ in 0..3 {
-        tab.wait_for_element(".pager_more")
-            .context("wait_for_element .pager_more")?
-            .click()?;
-        thread::sleep(Duration::from_secs(5));
     }
 
     let links = get_articles_links(&tab)?;

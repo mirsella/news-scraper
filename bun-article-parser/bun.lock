@@ -6,7 +6,9 @@
       "name": "bun-article-parser",
       "dependencies": {
         "@extractus/article-extractor": "^9.0.1",
+        "@mozilla/readability": "0.6.0",
         "hono": "^4.13.17",
+        "linkedom": "0.18.15",
         "posthog-node": "^5.64.0",
       },
       "devDependencies": {

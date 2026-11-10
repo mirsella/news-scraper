@@ -34,6 +34,25 @@ describe("article parser", () => {
     expect(article.published).toBe("2026-11-09T10:00:00.000Z");
   });
 
+  test("falls back to Readability when extractus drops custom elements", async () => {
+    const customHtml = `<!doctype html><html lang="fr"><head>
+      <title>Une bonne nouvelle</title>
+      <link rel="canonical" href="https://example.fr/bonne-nouvelle">
+      <meta property="og:title" content="Une bonne nouvelle">
+      </head><body><main><article>
+      <r-article--header><h1>Une bonne nouvelle</h1></r-article--header>
+      <r-article--chapo><p>${paragraph.repeat(3)}</p></r-article--chapo>
+      <r-article--body><p>${paragraph.repeat(8)}</p></r-article--body>
+      </article></main></body></html>`;
+    const response = await app.fetch(new Request("http://localhost/parse", {
+      method: "POST", body: customHtml, headers: { "Content-Type": "text/html" },
+    }));
+    expect(response.status).toBe(200);
+    const article = await response.json();
+    expect(article.url).toBe("https://example.fr/bonne-nouvelle");
+    expect(article.content).toContain("Volunteers planted trees");
+  });
+
   test("fetches and extracts an article with the v9 fetch callback", async () => {
     let userAgent: string | null = null;
     const source = Bun.serve({

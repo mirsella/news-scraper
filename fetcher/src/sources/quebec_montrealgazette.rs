@@ -1,19 +1,19 @@
-use super::{GetNewsOpts, News};
+use super::{absolute_url, dedupe_links, fetch_article_with_browser_fallback, GetNewsOpts, News};
 use anyhow::{bail, Context, Result};
 use headless_chrome::Tab;
 use log::{error, info};
-use std::{collections::HashSet, sync::Arc};
+use std::sync::Arc;
 
-fn get_articles_links(tab: &Arc<Tab>) -> Result<HashSet<String>> {
-    let links = tab
-        .find_elements("a.article-card__link")
-        .context("find_elements articles links")?
-        .iter()
-        .map(|el| {
-            let href = el.get_attribute_value("href").unwrap().expect("no href ??");
-            tab.get_url() + &href
-        })
-        .collect();
+fn get_articles_links(tab: &Arc<Tab>) -> Result<Vec<String>> {
+    let links = dedupe_links(
+        tab.find_elements("a.pm-card__heading-link")
+            .context("find_elements articles links")?
+            .iter()
+            .filter_map(|el| {
+                let href = el.get_attribute_value("href").unwrap()?;
+                Some(absolute_url("https://montrealgazette.com", &href))
+            }),
+    );
     Ok(links)
 }
 
@@ -37,13 +37,13 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
         if opts.is_seen(&url) {
             continue;
         }
-        let res = super::fetch_article(&url);
+        let res = fetch_article_with_browser_fallback(&opts.browser, &url);
         let payload = match res {
             Ok(res) => Ok(News {
                 title: res.title,
                 caption: res.description,
                 provider: opts.provider.clone(),
-date: res.published,
+                date: res.published,
                 body: res.content,
                 link: url,
                 ..Default::default()

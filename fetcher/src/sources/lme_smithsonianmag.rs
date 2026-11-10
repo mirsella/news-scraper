@@ -1,5 +1,5 @@
-use super::GetNewsOpts;
-use crate::sources::fetch_article;
+#![allow(dead_code)] // adapter intentionally unregistered while the site blocks automated access
+use super::{absolute_url, dedupe_links, parse_url_with_browser, GetNewsOpts};
 use anyhow::bail;
 use anyhow::{Context, Result};
 use headless_chrome::Tab;
@@ -8,16 +8,15 @@ use shared::News;
 use std::sync::Arc;
 
 fn get_articles_links(tab: &Arc<Tab>) -> Result<Vec<String>> {
-    Ok(tab
-        .find_elements(".article-list-text > h3 > a")
-        .context("finding articles links")?
-        .iter()
-        .map(|el| {
-            let mut link = el.get_attribute_value("href").unwrap().expect("a href");
-            link.insert_str(0, "https://www.smithsonianmag.com");
-            link
-        })
-        .collect())
+    Ok(dedupe_links(
+        tab.find_elements(".article-list-text > h3 > a")
+            .context("finding articles links")?
+            .iter()
+            .filter_map(|el| {
+                let href = el.get_attribute_value("href").unwrap()?;
+                Some(absolute_url("https://www.smithsonianmag.com", &href))
+            }),
+    ))
 }
 
 pub fn get_news(opts: GetNewsOpts) -> Result<()> {
@@ -40,7 +39,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
             continue;
         }
 
-        let payload = match fetch_article(&url) {
+        let payload = match parse_url_with_browser(&tab, &url) {
             Ok(res) => Ok(News {
                 title: res.title,
                 caption: res.description,

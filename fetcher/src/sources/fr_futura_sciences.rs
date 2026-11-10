@@ -1,5 +1,4 @@
-use super::GetNewsOpts;
-use crate::sources::fetch_article;
+use super::{absolute_url, dedupe_links, GetNewsOpts};
 use anyhow::bail;
 use anyhow::{Context, Result};
 use headless_chrome::Tab;
@@ -8,21 +7,22 @@ use shared::News;
 use std::sync::Arc;
 
 fn get_articles_links(tab: &Arc<Tab>) -> Result<Vec<String>> {
-    let links = tab
-        .find_elements(".article-card-box, .keen-slider__slide")
-        .context("finding .article-card-box")?
-        .iter()
-        .filter_map(|a| {
-            if let Some(mut link) = a.get_attribute_value("href").unwrap() {
-                if link.contains("/personnalites") || link.contains("/live") {
+    let links = dedupe_links(
+        tab.find_elements("a.article-link.article-title")
+            .context("finding article links")?
+            .iter()
+            .filter_map(|a| {
+                let link = a.get_attribute_value("href").unwrap()?;
+                let slug = link.trim_end_matches('/').rsplit('/').next()?;
+                if link.contains("/personnalites")
+                    || link.contains("/live")
+                    || !slug.ends_with(|c: char| c.is_ascii_digit())
+                {
                     return None;
                 }
-                link.insert_str(0, "https://futura-sciences.com");
-                return Some(link);
-            }
-            None
-        })
-        .collect();
+                Some(absolute_url("https://futura-sciences.com", &link))
+            }),
+    );
     Ok(links)
 }
 
@@ -55,7 +55,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
             .map(str::to_string)
             .collect();
 
-        let res = fetch_article(&url);
+        let res = super::fetch_article_with_browser_fallback(&opts.browser, &url);
         let payload = match res {
             Ok(res) => Ok(News {
                 title: res.title,

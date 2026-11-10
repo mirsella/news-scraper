@@ -1,3 +1,4 @@
+#![allow(dead_code)] // adapter intentionally unregistered while the site blocks automated access
 use super::{GetNewsOpts, News};
 use anyhow::{bail, Context, Result};
 use headless_chrome::Tab;

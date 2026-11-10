@@ -1,4 +1,4 @@
-use super::{GetNewsOpts, News};
+use super::{absolute_url, dedupe_links, fetch_article_with_browser_fallback, GetNewsOpts, News};
 use anyhow::bail;
 use anyhow::{Context, Result};
 use headless_chrome::Tab;
@@ -7,13 +7,18 @@ use std::{sync::Arc, thread, time::Duration};
 
 const BLACKLIST: &[&str] = &["ouestfrance-auto", "ouestfrance-immo", "ouestfrance-emploi"];
 fn get_articles_links(tab: &Arc<Tab>) -> Result<Vec<String>> {
-    let links: Vec<String> = tab
-        .find_elements(".titre-lien")
-        .context(".titre-lien")?
-        .iter()
-        .map(|el| el.get_attribute_value("href").unwrap().expect("no href ??"))
-        .filter(|url| !BLACKLIST.iter().any(|b| url.contains(b)))
-        .collect();
+    let links = dedupe_links(
+        tab.find_elements(".su-articles-list-item a[href]")
+            .context("finding article links")?
+            .iter()
+            .filter_map(|el| {
+                let link = el.get_attribute_value("href").unwrap()?;
+                if BLACKLIST.iter().any(|b| link.contains(b)) {
+                    return None;
+                }
+                Some(absolute_url("https://www.ouest-france.fr", &link))
+            }),
+    );
     Ok(links)
 }
 
@@ -43,7 +48,7 @@ pub fn get_news(opts: GetNewsOpts) -> Result<()> {
         }
 
         thread::sleep(Duration::from_secs(1)); // seems to be blocked when fecthing a lot of articles
-        let res = super::fetch_article(&url);
+        let res = fetch_article_with_browser_fallback(&opts.browser, &url);
         let payload = match res {
             Ok(res) => Ok(News {
                 title: res.title,
