@@ -53,6 +53,29 @@ describe("article parser", () => {
     expect(article.content).toContain("Volunteers planted trees");
   });
 
+  test("falls back on /fetch when extractus drops custom elements", async () => {
+    const customHtml = `<!doctype html><html lang="fr"><head>
+      <title>Une bonne nouvelle</title>
+      <link rel="canonical" href="https://example.fr/bonne-nouvelle">
+      </head><body><main><article>
+      <r-article--body><p>${paragraph.repeat(10)}</p></r-article--body>
+      </article></main></body></html>`;
+    const source = Bun.serve({
+      hostname: "127.0.0.1", port: 0,
+      fetch() {
+        return new Response(customHtml, { headers: { "Content-Type": "text/html" } });
+      },
+    });
+    try {
+      const response = await app.fetch(new Request(`http://localhost/fetch?url=${encodeURIComponent(source.url.href)}`));
+      expect(response.status).toBe(200);
+      const article = await response.json();
+      expect(article.content).toContain("Volunteers planted trees");
+    } finally {
+      await source.stop(true);
+    }
+  });
+
   test("fetches and extracts an article with the v9 fetch callback", async () => {
     let userAgent: string | null = null;
     const source = Bun.serve({

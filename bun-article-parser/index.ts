@@ -129,6 +129,33 @@ function fallbackExtract(html: string, inputUrl = ""): ArticleData | null {
   };
 }
 
+const PAGE_HEADERS = {
+  "user-agent":
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.3",
+};
+
+function fetchPage(target: string): Promise<Response> {
+  return fetch(target, {
+    signal: AbortSignal.timeout(5000),
+    headers: PAGE_HEADERS,
+  });
+}
+
+async function fetchArticle(url: string): Promise<ArticleData | null> {
+  try {
+    const extracted = await extract(url, undefined, fetchPage);
+    if (extracted?.content && textLength(extracted.content) >= 200) {
+      return extracted as ArticleData;
+    }
+  } catch (err) {
+    exception(err, "extract");
+  }
+
+  const response = await fetchPage(url);
+  if (!response.ok) throw new Error(`fetching ${url}: HTTP ${response.status}`);
+  return parseArticle(await response.text(), url);
+}
+
 async function parseArticle(html: string, url = ""): Promise<ArticleData | null> {
   try {
     const extracted = await extractFromHtml(html, url);
@@ -148,13 +175,11 @@ app.get("/fetch", async (c) => {
       c.status(400);
       return c.json({ message: "url is required" });
     }
-    const data = await extract(url, undefined, (target) => fetch(target, {
-      signal: AbortSignal.timeout(5000),
-      headers: {
-        "user-agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.3",
-      },
-    }));
+    const data = await fetchArticle(url);
+    if (data == null) {
+      c.status(500);
+      return c.json({ message: "no article found" });
+    }
     return c.json(data);
   } catch (err) {
     c.status(500);
