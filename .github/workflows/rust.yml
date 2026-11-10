@@ -29,7 +29,9 @@ jobs:
           SURREALDB_TEST_HOST: 127.0.0.1:18000
           SURREALDB_TEST_USER: deps-test
           SURREALDB_TEST_PASSWORD: deps-test
-        run: cargo test --locked -p shared --test database -- --ignored
+        run: |
+          cargo test --locked -p shared --test database -- --ignored
+          cargo test --locked -p fetcher seen_links_fit_bounded_websocket_messages -- --ignored
       - name: Stop disposable SurrealDB
         if: always()
         run: docker rm --force surreal-test

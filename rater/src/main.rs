@@ -11,7 +11,7 @@ use std::process::exit;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Duration;
-use surrealdb::engine::remote::http::Http;
+use surrealdb::engine::remote::ws::Ws;
 use surrealdb::{Surreal, opt::auth::Root, types::ToSql};
 use tokio::sync::Semaphore;
 use tokio::task::JoinHandle;
@@ -96,7 +96,7 @@ async fn main() -> Result<()> {
     );
     let config = Arc::new(config);
 
-    let db = Surreal::new::<Http>(&config.surrealdb_host).await?;
+    let db = Surreal::new::<Ws>(&config.surrealdb_host).await?;
     db.signin(Root {
         username: config.db_user.clone(),
         password: config.db_password.clone(),
@@ -104,6 +104,7 @@ async fn main() -> Result<()> {
     .await
     .context("connecting to surrealdb")?;
     db.use_ns("news").use_db("news").await?;
+    info!("connected to surrealdb over WebSocket");
     let db = Arc::new(db);
 
     let openai =

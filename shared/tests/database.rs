@@ -2,8 +2,8 @@ use anyhow::{Context, Result, ensure};
 use shared::DbNews;
 use surrealdb::{
     Surreal,
-    engine::remote::http::Http,
-    opt::auth::{Record, Root},
+    engine::remote::{http::Http, ws::Ws},
+    opt::auth::{Namespace, Record, Root},
     types::{RecordId, object},
 };
 
@@ -12,7 +12,7 @@ use surrealdb::{
 #[ignore = "requires SURREALDB_TEST_HOST, SURREALDB_TEST_USER and SURREALDB_TEST_PASSWORD"]
 async fn database_round_trip_and_record_access() -> Result<()> {
     let host = std::env::var("SURREALDB_TEST_HOST")?;
-    let db = Surreal::new::<Http>(&host).await?;
+    let db = Surreal::new::<Ws>(&host).await?;
     db.signin(Root {
         username: std::env::var("SURREALDB_TEST_USER")?,
         password: std::env::var("SURREALDB_TEST_PASSWORD")?,
@@ -70,7 +70,7 @@ async fn database_round_trip_and_record_access() -> Result<()> {
         let duplicate: surrealdb::Result<Option<DbNews>> = db.create("news").content(article).await;
         ensure!(duplicate.is_err(), "unique link index allowed a duplicate");
 
-        let reader = Surreal::new::<Http>(&host).await?;
+        let reader = Surreal::new::<Ws>(&host).await?;
         reader
             .signup(Record {
                 namespace: namespace.clone(),
@@ -123,6 +123,87 @@ async fn database_round_trip_and_record_access() -> Result<()> {
     }
     .await;
     db.query("REMOVE NAMESPACE $namespace")
+        .bind(("namespace", namespace))
+        .await?
+        .check()?;
+    result
+}
+
+/// Reproduce the hourly HTTP failure in seconds and exercise the workers' transport.
+#[tokio::test]
+#[ignore = "requires SURREALDB_TEST_HOST, SURREALDB_TEST_USER and SURREALDB_TEST_PASSWORD"]
+async fn websocket_session_outlives_signin_token() -> Result<()> {
+    let host = std::env::var("SURREALDB_TEST_HOST")?;
+    let admin = Surreal::new::<Ws>(&host).await?;
+    admin
+        .signin(Root {
+            username: std::env::var("SURREALDB_TEST_USER")?,
+            password: std::env::var("SURREALDB_TEST_PASSWORD")?,
+        })
+        .await?;
+    let namespace = format!(
+        "auth_expiry_{}_{}",
+        std::process::id(),
+        chrono::Utc::now().timestamp_micros()
+    );
+    admin.use_ns(&namespace).use_db("news").await?;
+
+    let result: Result<()> = async {
+        admin
+            .query(
+                "DEFINE TABLE auth_probe SCHEMALESS; \
+                 DEFINE USER worker ON NAMESPACE PASSWORD 'test-password' \
+                 ROLES EDITOR DURATION FOR TOKEN 3s;",
+            )
+            .await?
+            .check()?;
+        let credentials = Namespace {
+            namespace: namespace.clone(),
+            username: "worker".into(),
+            password: "test-password".into(),
+        };
+        let websocket = Surreal::new::<Ws>(&host).await?;
+        websocket.signin(credentials.clone()).await?;
+        websocket.use_ns(&namespace).use_db("news").await?;
+        websocket
+            .query("CREATE auth_probe:record SET value = 1")
+            .await?
+            .check()?;
+
+        let http = Surreal::new::<Http>(&host).await?;
+        http.signin(credentials).await?;
+        http.use_ns(&namespace).use_db("news").await?;
+        http.query("RETURN 1").await?.check()?;
+
+        // Let the three-second access token expire, without expiring the system session.
+        tokio::time::sleep(std::time::Duration::from_secs(4)).await;
+        let error = http
+            .query("RETURN 1")
+            .await
+            .err()
+            .context("HTTP unexpectedly accepted the expired token")?;
+        ensure!(
+            error.to_string().contains("401"),
+            "expected HTTP 401: {error}"
+        );
+
+        let value: Option<i64> = websocket
+            .query(
+                "UPDATE auth_probe:record SET value = 2; \
+                 SELECT VALUE value FROM ONLY auth_probe:record;",
+            )
+            .await?
+            .check()?
+            .take(1)?;
+        ensure!(
+            value == Some(2),
+            "WebSocket read/write failed after token expiry"
+        );
+        Ok(())
+    }
+    .await;
+    admin
+        .query("REMOVE NAMESPACE $namespace")
         .bind(("namespace", namespace))
         .await?
         .check()?;

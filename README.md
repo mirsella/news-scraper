@@ -94,7 +94,7 @@ Create `.env` from `.env.example` and fill the required values:
 | `DB_USER` | SurrealDB root username. |
 | `DB_PASSWORD` | SurrealDB root password. |
 | `ARTICLE_PARSER_URL` | URL of the article parser service. Compose uses `http://article_parser:8081`. |
-| `SURREALDB_HOST` | SurrealDB HTTP host, for example `127.0.0.1:8000`. |
+| `SURREALDB_HOST` | SurrealDB host and port, for example `127.0.0.1:8000`. Rust workers use WebSocket RPC. |
 | `OPENAI_API_KEY` | OpenAI API key used by `rater`. |
 | `RATING_CHAT_PROMPT` | Rating prompt override value kept in env compatibility; the binary currently embeds `rating-prompt.md`. |
 | `PARALLEL_RATING` | Maximum number of concurrent OpenAI rating tasks. |
@@ -110,6 +110,8 @@ Create `.env` from `.env.example` and fill the required values:
 | `CHROME_HEADLESS` | Optional `fetcher` Chrome headless mode. |
 | `CHROME_CONCURRENT` | Optional number of concurrent Chrome-backed fetch tasks. |
 | `CHROME_DATA_DIR` | Optional Chrome profile/data directory. |
+
+The Rust workers keep authenticated WebSocket sessions so they can continue after the sign-in token expires. HTTP RPC sends that token with every request and returns 401 after its default one-hour lifetime. Do not disable authentication or extend token lifetimes to work around this.
 
 ## Running Locally
 
@@ -237,7 +239,7 @@ Luna has higher per-token prices but used fewer reasoning/output tokens in this 
 
 ### Deployment and rollback
 
-Production on `root@109.176.199.207` uses `/opt/stacks/{news-scraper,gusnews,lmenews,news-observability}`. The 2026-11-10 release runs scraper/parser/monitor images tagged `:deps-6ef559c`, gusnews `:deps-e3219d4`, lmenews `:deps-ce83415`, and SurrealDB 4.0.1. The final cutover backup contains the preceding Compose/environment files and a consistent 1.5.6 datastore snapshot. Follow the version-matched database rollback instructions above; never run a legacy client image against the 4.x database.
+Production on `root@109.176.199.207` uses `/opt/stacks/{news-scraper,gusnews,lmenews,news-observability}`. The initial 2026-11-10 database cutover used scraper/parser/monitor images tagged `:deps-6ef559c`, gusnews `:deps-e3219d4`, lmenews `:deps-ce83415`, and SurrealDB 4.0.1. The final cutover backup contains the preceding Compose/environment files and a consistent 1.5.6 datastore snapshot. Follow the version-matched database rollback instructions above; never run a legacy client image against the 4.x database.
 
 The earlier 2026-11-09 observability-only release is preserved in `/opt/backups/posthog-20261109/` and `:pre-posthog-20261109` image tags. Do not overwrite those backups. They predate the database upgrade and are not standalone application rollback targets for the current server. To revert only the rating model, set `RATING_MODEL=gpt-5-nano` and `RATING_REASONING_EFFORT=low` in `rater.env`, then recreate `rater`.
 

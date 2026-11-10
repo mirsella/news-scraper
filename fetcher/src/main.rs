@@ -1,3 +1,4 @@
+mod db;
 mod launcher;
 mod sources;
 use anyhow::Result;
@@ -21,7 +22,7 @@ use std::{
     thread,
     time::Duration,
 };
-use surrealdb::{Surreal, engine::remote::http::Http, opt::auth::Root};
+use surrealdb::{Surreal, engine::remote::ws::Ws, opt::auth::Root};
 
 #[derive(Parser, Debug)]
 struct Cli {
@@ -85,13 +86,14 @@ async fn main() -> Result<()> {
     let telegram = Telegram::new(config.telegram_token.clone(), config.telegram_id);
     let telegram = Arc::new(telegram);
 
-    let db = Surreal::new::<Http>(&config.surrealdb_host).await?;
+    let db = Surreal::new::<Ws>(&config.surrealdb_host).await?;
     db.signin(Root {
         username: config.db_user.clone(),
         password: config.db_password.clone(),
     })
     .await?;
     db.use_ns("news").use_db("news").await?;
+    info!("connected to surrealdb over WebSocket");
 
     let counter = Arc::new(AtomicU16::default());
     {
@@ -150,7 +152,7 @@ async fn main() -> Result<()> {
         }
     }
 
-    let seen_news: Vec<String> = db.query("select value link from news").await?.take(0)?;
+    let seen_news = db::seen_links(&db).await?;
 
     assert!(!seen_news.is_empty() || cli.ignore_empty_db);
     info!(
