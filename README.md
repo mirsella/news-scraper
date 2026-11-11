@@ -194,11 +194,11 @@ The fetcher container is scheduled at `07:00`, `09:00`, `13:00`, `16:00`, and `1
 
 ## Frontend
 
-[gusnews](https://github.com/mirsella/gusnews) is the companion UI frontend for this service. Use it to browse the SurrealDB news database, combine search filters, inspect ratings/tags, and work with the articles collected by this scraper.
+[gusnews](https://github.com/mirsella/gusnews) is the companion UI frontend for this service. It builds both the gusnews and lmenews (Le Média Expérience) sites. Use it to browse the SurrealDB news database, combine search filters, inspect ratings/tags, and work with the articles collected by this scraper.
 
 ## Production observability
 
-The deployment uses the private `lemediapositif/gusnews` and `lemediapositif/lmenews` frontends, not the newer public gusnews checkout. Both remain on their existing Nuxt 3 stack. Runtime configuration uses `NUXT_PUBLIC_POSTHOG_KEY`, `NUXT_PUBLIC_POSTHOG_HOST`, and `NUXT_PUBLIC_POSTHOG_ENVIRONMENT`. Only the public project token belongs in browser configuration.
+Both websites are built from [gusnews](https://github.com/mirsella/gusnews) (mirrored to `lemediapositif/gusnews`), which builds the gusnews and lmenews sites from one codebase: `docker build --build-arg SITE=gusnews|lmenews .`. They run Nuxt 3. The separate lmenews repository was merged into gusnews and deleted on 2026-11-11. Runtime configuration uses `NUXT_PUBLIC_POSTHOG_KEY`, `NUXT_PUBLIC_POSTHOG_HOST`, and `NUXT_PUBLIC_POSTHOG_ENVIRONMENT`. Only the public project token belongs in browser configuration.
 
 The personal EU PostHog project is [LMP News production](https://eu.posthog.com/project/342382). Its [traffic and pipeline dashboard](https://eu.posthog.com/project/342382/dashboard/1099393) separates:
 
@@ -239,7 +239,7 @@ Luna has higher per-token prices but used fewer reasoning/output tokens in this 
 
 ### Deployment and rollback
 
-Production on `root@109.176.199.207` uses `/opt/stacks/{news-scraper,gusnews,lmenews,news-observability}`. The initial 2026-11-10 database cutover used scraper/parser/monitor images tagged `:deps-6ef559c`, gusnews `:deps-e3219d4`, lmenews `:deps-ce83415`, and SurrealDB 4.0.1. The final cutover backup contains the preceding Compose/environment files and a consistent 1.5.6 datastore snapshot. Follow the version-matched database rollback instructions above; never run a legacy client image against the 4.x database.
+Production on `root@109.176.199.207` uses `/opt/stacks/{news-scraper,gusnews,lmenews,news-observability}`. The initial 2026-11-10 database cutover used scraper/parser/monitor images tagged `:deps-6ef559c`, gusnews `:deps-e3219d4`, lmenews `:deps-ce83415`, and SurrealDB 4.0.1. On 2026-11-11 both frontends moved to `local/gusnews:b9cfe47` and `local/lmenews:b9cfe47`, built from the merged gusnews repository; the previous Compose files are kept as `compose.yaml.bak-20261111-151957` and the old images are kept for rollback. The final cutover backup contains the preceding Compose/environment files and a consistent 1.5.6 datastore snapshot. Follow the version-matched database rollback instructions above; never run a legacy client image against the 4.x database.
 
 The earlier 2026-11-09 observability-only release is preserved in `/opt/backups/posthog-20261109/` and `:pre-posthog-20261109` image tags. Do not overwrite those backups. They predate the database upgrade and are not standalone application rollback targets for the current server. To revert only the rating model, set `RATING_MODEL=gpt-5-nano` and `RATING_REASONING_EFFORT=low` in `rater.env`, then recreate `rater`.
 
