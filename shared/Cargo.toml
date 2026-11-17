@@ -9,7 +9,7 @@ rust-version = "1.90"
 [dependencies]
 ammonia = "4.2.4"
 anyhow = "1.0.104"
-async-openai = { version = "0.43.0", features = ["byot", "chat-completion"] }
+async-openai = { version = "0.43.0", features = ["byot", "chat-completion", "middleware"] }
 chrono = "0.4.45"
 dotenvy = "0.15.7"
 envy = "0.4.2"
@@ -17,10 +17,12 @@ maplit = "1.0.2"
 log = "0.4.35"
 nanohtml2text = "0.3.0"
 regex = "1.13.1"
+reqwest = { version = "0.13.5", default-features = false }
 serde = { version = "1.0.229", features = ["derive"] }
 serde_json = "1.0.154"
 surrealdb = { version = "4.0.1", default-features = false, features = ["protocol-ws", "rustls"] }
 tiktoken-rs = "0.12.1"
+tower = { version = "0.5.3", features = ["util"] }
 ureq = { version = "3.5.1", features = ["json"] }
 
 [dev-dependencies]

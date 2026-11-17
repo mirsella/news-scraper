@@ -3,7 +3,15 @@ use std::path::PathBuf;
 
 use anyhow::{Context, Result};
 use async_openai::types::chat::ReasoningEffort;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Default, Deserialize, Serialize, Clone, Copy, PartialEq, Eq)]
+#[serde(rename_all = "lowercase")]
+pub enum RatingServiceTier {
+    #[default]
+    Standard,
+    Flex,
+}
 
 #[derive(Deserialize, Clone)]
 #[serde(rename_all = "lowercase")]
@@ -14,6 +22,10 @@ pub struct Config {
     pub rating_reasoning_effort: ReasoningEffort,
     #[serde(default = "default_rating_max_tokens")]
     pub rating_max_completion_tokens: u32,
+    #[serde(default)]
+    pub rating_service_tier: RatingServiceTier,
+    #[serde(default)]
+    pub rating_reuse_exact_duplicates: bool,
     pub db_user: String,
     pub db_password: String,
     pub openai_api_key: String,

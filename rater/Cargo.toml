@@ -15,4 +15,4 @@ regex = "1.13.1"
 async-openai = { version = "0.43.0", features = ["chat-completion"] }
 ctrlc = { version = "3.5.2", features = ["termination"] }
 surrealdb = { version = "4.0.1", default-features = false, features = ["protocol-ws", "rustls"] }
-futures = "0.3.34"
+sha2 = "0.10.9"

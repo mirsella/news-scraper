@@ -1,10 +1,15 @@
+mod rating_cache;
+
 use anyhow::{Context, Result};
-use async_openai::{Client as ChatClient, config::OpenAIConfig};
+use async_openai::config::OpenAIConfig;
 use env_logger::Builder;
-use futures::future::select_all;
 use log::{error, info, trace, warn};
+use rating_cache::RatingCache;
 use shared::Telegram;
-use shared::{config::Config, db_news::DbNews};
+use shared::{
+    config::Config,
+    db_news::{DbNews, is_temporary_rating_error, rating_client},
+};
 use std::env;
 use std::io::Write;
 use std::process::exit;
@@ -14,7 +19,13 @@ use std::time::Duration;
 use surrealdb::engine::remote::ws::Ws;
 use surrealdb::{Surreal, opt::auth::Root, types::ToSql};
 use tokio::sync::Semaphore;
-use tokio::task::JoinHandle;
+use tokio::task::JoinSet;
+
+enum RatingOutcome {
+    Saved(String),
+    Deferred,
+    Shutdown,
+}
 
 async fn retrieve_db_news<T: surrealdb::Connection>(db: &Surreal<T>) -> Result<Vec<DbNews>> {
     let db_news: Vec<DbNews> = db
@@ -30,14 +41,12 @@ ORDER BY date DESC limit 500",
     Ok(db_news)
 }
 
-fn sleep_check(running: &AtomicBool, duration: Duration) {
-    let mut slept = Duration::from_secs(0);
-    while slept < duration {
+async fn wait_before_next_pass(running: &AtomicBool) {
+    for _ in 0..60 {
         if !running.load(Ordering::Relaxed) {
             return;
         }
-        std::thread::sleep(Duration::from_secs(1));
-        slept += Duration::from_secs(1);
+        tokio::time::sleep(Duration::from_secs(1)).await;
     }
 }
 
@@ -91,8 +100,12 @@ async fn main() -> Result<()> {
     );
     let _telemetry = shared::telemetry::start("rater");
     info!(
-        "rating model={} effort={:?} output_limit={}",
-        config.rating_model, config.rating_reasoning_effort, config.rating_max_completion_tokens
+        "rating model={} effort={:?} tier={:?} reuse_duplicates={} output_limit={}",
+        config.rating_model,
+        config.rating_reasoning_effort,
+        config.rating_service_tier,
+        config.rating_reuse_exact_duplicates,
+        config.rating_max_completion_tokens
     );
     let config = Arc::new(config);
 
@@ -107,14 +120,19 @@ async fn main() -> Result<()> {
     info!("connected to surrealdb over WebSocket");
     let db = Arc::new(db);
 
-    let openai =
-        ChatClient::with_config(OpenAIConfig::default().with_api_key(&config.openai_api_key));
+    let openai = rating_client(
+        OpenAIConfig::default().with_api_key(&config.openai_api_key),
+        config.rating_service_tier,
+    );
     let openai = Arc::new(openai);
 
     let telegram = Telegram::new(config.telegram_token.clone(), config.telegram_id);
     let telegram = Arc::new(telegram);
     let sem = Arc::new(Semaphore::new(config.parallel_rating));
     let prompt = include_str!("../../rating-prompt.md");
+    let rating_cache = config
+        .rating_reuse_exact_duplicates
+        .then(|| Arc::new(RatingCache::default()));
 
     loop {
         if !running.load(Ordering::Relaxed) {
@@ -126,7 +144,7 @@ async fn main() -> Result<()> {
         let db_news = match db_news {
             Ok(news) if news.is_empty() => {
                 info!("no news to process");
-                sleep_check(&running, Duration::from_secs(60));
+                wait_before_next_pass(&running).await;
                 continue;
             }
             Ok(news) => {
@@ -137,7 +155,7 @@ async fn main() -> Result<()> {
             Err(e) => return Err(e.context("failed to get news from db")),
         };
 
-        let mut handles = Vec::with_capacity(db_news.len());
+        let mut tasks = JoinSet::new();
 
         for mut news in db_news {
             let id = news
@@ -151,25 +169,40 @@ async fn main() -> Result<()> {
             let running = running.clone();
             let telegram = telegram.clone();
             let config = config.clone();
-            let handle: JoinHandle<Result<Option<DbNews>>> = tokio::spawn(async move {
-                let permit = sem.acquire().await;
+            let rating_cache = rating_cache.clone();
+            tasks.spawn(async move {
+                let _permit = sem.acquire().await?;
                 if !running.load(Ordering::Relaxed) {
-                    return Ok(None);
+                    return Ok(RatingOutcome::Shutdown);
                 }
                 trace!("processing {id}, {}", news.link);
-                let rated = match news.rate(&openai, prompt, &config).await {
-                    Ok(()) => true,
-                    Err(e) if e.to_string().to_lowercase().contains("bad gateway") => {
-                        error!("bad gateway: {:?}", e.to_string());
-                        dbg!(&e);
-                        news.rating = None;
-                        false
-                    }
-                    Err(e) if e.to_string().to_lowercase().contains("service unavailable") => {
-                        error!("service unavailable: {:?}", e.to_string());
-                        dbg!(&e);
-                        news.rating = None;
-                        false
+                let result = if let Some(cache) = rating_cache {
+                    cache
+                        .rate(&mut news, async |article| {
+                            article.request_rating(&openai, prompt, &config).await
+                        })
+                        .await
+                } else {
+                    news.request_rating(&openai, prompt, &config)
+                        .await
+                        .map(|rating| {
+                            news.apply_rating(&rating);
+                            false
+                        })
+                };
+                let (rated, reused) = match result {
+                    Ok(reused) => (true, reused),
+                    Err(e) if is_temporary_rating_error(&e) => {
+                        warn!("rating {id} temporarily unavailable: {e:#}");
+                        shared::telemetry::capture(
+                            "article_rating_deferred",
+                            serde_json::json!({
+                                "provider":news.provider, "model":config.rating_model,
+                                "reasoning_effort":config.rating_reasoning_effort,
+                                "service_tier":config.rating_service_tier,
+                            }),
+                        );
+                        return Ok(RatingOutcome::Deferred);
                     }
                     Err(e) => {
                         error!("rating {id}: {e:?}");
@@ -181,7 +214,7 @@ async fn main() -> Result<()> {
                             telegram
                                 .send(format!("rater: {id} {} rating failed: {e:?}", news.link))?;
                         }
-                        false
+                        (false, false)
                     }
                 };
                 info!(
@@ -194,32 +227,23 @@ async fn main() -> Result<()> {
                         "success":rated, "provider":news.provider,
                         "model":config.rating_model, "reasoning_effort":config.rating_reasoning_effort,
                         "positivity_rating":news.rating, "travel_rating":news.rating_travel,
+                        "rating_reused":reused,
                     }),
                 );
-                let save_result = match news.save(&db).await {
-                    Ok(_) => Ok(Some(news)),
-                    Err(e) => {
-                        warn!("saving {id} failed one time: {e:#?}");
-                        // telegram.send(format!("rater: saving {id} failed one time: {e:#?}"))?;
-                        tokio::time::sleep(Duration::from_secs(5)).await;
-                        match news.save(&db).await {
-                            Ok(_) => Ok(Some(news)),
-                            Err(e) => {
-                                error!("saving {id} second time: {e:#?}");
-                                telegram.send(format!("rater: re-saving {id} failed: {e:#?}"))?;
-                                Err(e)
-                            }
-                        }
+                if let Err(e) = news.save(&db).await {
+                    warn!("saving {id} failed one time: {e:#?}");
+                    tokio::time::sleep(Duration::from_secs(5)).await;
+                    if let Err(e) = news.save(&db).await {
+                        error!("saving {id} second time: {e:#?}");
+                        telegram.send(format!("rater: re-saving {id} failed: {e:#?}"))?;
+                        return Err(e);
                     }
-                };
-                drop(permit);
-                save_result
+                }
+                Ok(RatingOutcome::Saved(id))
             });
-            handles.push(handle);
         }
-        while !handles.is_empty() {
-            let (handle, _index, remaining) = select_all(handles).await;
-            handles = remaining;
+        let mut retry_next_pass = false;
+        while let Some(handle) = tasks.join_next().await {
             match handle? {
                 Err(e) => {
                     running.store(false, Ordering::Relaxed);
@@ -228,16 +252,17 @@ async fn main() -> Result<()> {
                     }
                     return Err(e);
                 }
-                Ok(Some(news)) => {
+                Ok(RatingOutcome::Saved(id)) => {
                     news_done += 1;
-                    info!(
-                        "{} {news_done}/{total_news} done.",
-                        news.id.expect("no id").to_sql()
-                    );
+                    info!("{id} {news_done}/{total_news} done.");
                 }
-                _ => (),
+                Ok(RatingOutcome::Deferred) => retry_next_pass = true,
+                Ok(RatingOutcome::Shutdown) => (),
             }
         }
         info!("finished this batch {news_done}/{total_news}.");
+        if retry_next_pass {
+            wait_before_next_pass(&running).await;
+        }
     }
 }

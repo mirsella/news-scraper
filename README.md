@@ -100,6 +100,8 @@ Create `.env` from `.env.example` and fill the required values:
 | `PARALLEL_RATING` | Maximum number of concurrent OpenAI rating tasks. |
 | `RATING_MODEL` | OpenAI model. Defaults to `gpt-6-luna`; set `gpt-5-nano` to restore the previous model. |
 | `RATING_REASONING_EFFORT` | Defaults to `low`. Luna accepts `none`, `low`, `medium`, `high`, or `xhigh`; the live API rejects `max`. |
+| `RATING_SERVICE_TIER` | `standard` (default) or `flex`. The rater retries an explicit Flex capacity `429` once on Standard. |
+| `RATING_REUSE_EXACT_DUPLICATES` | Defaults to `false`. When enabled, the rater reuses successful AI ratings and tags for identical titles and full article text of at least 300 characters. It keeps each source record and its source tags. The in-memory cache holds up to 16,384 entries and starts empty after a restart. |
 | `RATING_MAX_COMPLETION_TOKENS` | Completion budget including reasoning tokens. Defaults to `1000`. |
 | `POSTHOG_PROJECT_TOKEN` | Optional public `phc_` project token. Unset disables telemetry with a startup warning. |
 | `POSTHOG_HOST` | HTTPS ingestion host. Defaults to `https://eu.i.posthog.com`. |
@@ -236,6 +238,12 @@ On 2026-11-09, eight recent articles were compared with the same embedded prompt
 | GPT-6 Luna xhigh | 0.2190 | 5.45 | 3.81 s |
 
 Luna has higher per-token prices but used fewer reasoning/output tokens in this sample. Reasoning effort changes token consumption, not the per-token price. Luna also gave different scores; thresholds may need recalibration after reviewing real articles. Pricing sources: [Luna](https://developers.openai.com/api/docs/models/gpt-6-luna) and [nano](https://developers.openai.com/api/docs/models/gpt-5-nano). The live API, unlike the model page at benchmark time, rejected Luna `max`.
+
+On 2026-11-17, a replay of 33 articles selected near example cutoffs found Luna `none` cost about 20% less, but changed which articles cleared 80 on positivity (11 of 33) and travel (8 of 33). These are not overall disagreement rates or fixed publishing rules; the frontend's positivity filter is configurable. Keep `low` unless the editorial trade-off is acceptable.
+
+In a separate 12-article Luna `low` trial, Flex served 7 requests and the other 5 succeeded on Standard after a Flex capacity error. Estimated cost was 25% lower than Standard alone. Median latency rose from 2.5 to 16.2 seconds including fallback. A seven-day audit found 746 extra ratings for identical titles and bodies among 9,738 rated records. It found no additional duplicate URLs from stripping known tracking parameters, so the scraper still leaves URLs unchanged.
+
+To enable both optimizations, set `RATING_SERVICE_TIER=flex` and `RATING_REUSE_EXACT_DUPLICATES=true` in `rater.env`, then recreate the rater with the updated image. In PostHog, `$ai_generation` records the requested and served tiers, whether a fallback occurred (`flex_fallback`), total latency, and estimated cost. `article_rating_completed.rating_reused` tracks when a duplicate saves an API call. `article_rating_deferred` counts temporary errors that leave articles pending. Revert with `RATING_SERVICE_TIER=standard` and `RATING_REUSE_EXACT_DUPLICATES=false`. Neither option changes the scrape schedule or uses the Batch API.
 
 ### Deployment and rollback
 

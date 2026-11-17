@@ -36,6 +36,8 @@ services:
   rater:
     container_name: rater
     restart: unless-stopped
+    # Let an in-flight Flex request and its Standard fallback finish on shutdown.
+    stop_grace_period: 5m
     build:
       context: .
       dockerfile: cargo.dockerfile
